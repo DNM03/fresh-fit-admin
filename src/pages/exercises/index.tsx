@@ -1,9 +1,7 @@
-import { useMemo } from "react";
-import {
-  MantineReactTable,
-  useMantineReactTable,
-  type MRT_ColumnDef,
-} from "mantine-react-table";
+import { useMemo, useState } from "react";
+import { type MRT_ColumnDef } from "mantine-react-table";
+import { Table } from "@/components/ui/mantine-table";
+import ExerciseTabs from "@/features/exercises/exercise-tabs";
 type Person = {
   name: {
     firstName: string;
@@ -15,55 +13,55 @@ type Person = {
 };
 
 //nested data is ok, see accessorKeys in ColumnDef below
-const data: Person[] = [
-  {
-    name: {
-      firstName: "Zachary",
-      lastName: "Davis",
-    },
-    address: "261 Battle Ford",
-    city: "Columbus",
-    state: "Ohio",
-  },
-  {
-    name: {
-      firstName: "Robert",
-      lastName: "Smith",
-    },
-    address: "566 Brakus Inlet",
-    city: "Westerville",
-    state: "West Virginia",
-  },
-  {
-    name: {
-      firstName: "Kevin",
-      lastName: "Yan",
-    },
-    address: "7777 Kuhic Knoll",
-    city: "South Linda",
-    state: "West Virginia",
-  },
-  {
-    name: {
-      firstName: "John",
-      lastName: "Upton",
-    },
-    address: "722 Emie Stream",
-    city: "Huntington",
-    state: "Washington",
-  },
-  {
-    name: {
-      firstName: "Nathan",
-      lastName: "Harris",
-    },
-    address: "1 Kuhic Knoll",
-    city: "Ohiowa",
-    state: "Nebraska",
-  },
-];
 
 function ManageExercises() {
+  const [data, setData] = useState<Person[]>([
+    {
+      name: {
+        firstName: "Zachary",
+        lastName: "Davis",
+      },
+      address: "261 Battle Ford",
+      city: "Columbus",
+      state: "Ohio",
+    },
+    {
+      name: {
+        firstName: "Robert",
+        lastName: "Smith",
+      },
+      address: "566 Brakus Inlet",
+      city: "Westerville",
+      state: "West Virginia",
+    },
+    {
+      name: {
+        firstName: "Kevin",
+        lastName: "Yan",
+      },
+      address: "7777 Kuhic Knoll",
+      city: "South Linda",
+      state: "West Virginia",
+    },
+    {
+      name: {
+        firstName: "John",
+        lastName: "Upton",
+      },
+      address: "722 Emie Stream",
+      city: "Huntington",
+      state: "Washington",
+    },
+    {
+      name: {
+        firstName: "Nathan",
+        lastName: "Harris",
+      },
+      address: "1 Kuhic Knoll",
+      city: "Ohiowa",
+      state: "Nebraska",
+    },
+  ]);
   const columns = useMemo<MRT_ColumnDef<Person>[]>(
     () => [
       {
@@ -90,14 +88,10 @@ function ManageExercises() {
     []
   );
 
-  const table = useMantineReactTable({
-    columns,
-    data, //must be memoized or stable (useState, useMemo, defined outside of this component, etc.)
-  });
-
   return (
     <div className="p-4">
-      <MantineReactTable table={table} />
+      {/* <Table columns={columns} data={data} /> */}
+      <ExerciseTabs />
     </div>
   );
 }

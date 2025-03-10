@@ -1,8 +1,32 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Suspense } from "react";
 import LoginPage from "../pages/login";
 import MainLayout from "@/components/layout/main-layout";
 import DashboardPage from "@/pages/dashboard";
-import ManageExercises from "@/pages/exercises";
+import React from "react";
+import AddExercisePlanPage from "@/pages/exercises/add-exercise-plan";
+import AddExercisePage from "@/pages/exercises/add-exercise";
+import OverlayLoading from "@/components/overlay-loading/overlay-loading";
+const ManageExercises = React.lazy(() => import("@/pages/exercises"));
+const ManageMeals = React.lazy(() => import("@/pages/meals"));
+const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
+const Community = React.lazy(() => import("@/pages/community"));
+const Statistics = React.lazy(() => import("@/pages/statistics"));
+const Settings = React.lazy(() => import("@/pages/settings"));
+
+const withSuspense = (
+  Component: React.LazyExoticComponent<React.ComponentType<any>>
+) => (
+  <Suspense
+    fallback={
+      <div className="w-full h-full flex justify-center items-center">
+        <OverlayLoading />
+      </div>
+    }
+  >
+    <Component />
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
@@ -15,27 +39,40 @@ const router = createBrowserRouter([
       },
       {
         path: "/manage-exercises",
-        element: <ManageExercises />,
+        children: [
+          {
+            index: true,
+            element: withSuspense(ManageExercises),
+          },
+          {
+            path: "/manage-exercises/add-exercise-plan",
+            element: <AddExercisePlanPage />,
+          },
+          {
+            path: "/manage-exercises/add-exercise",
+            element: <AddExercisePage />,
+          },
+        ],
       },
       {
         path: "/manage-meals",
-        element: <div>Manage meals</div>,
+        element: withSuspense(ManageMeals),
       },
       {
         path: "/manage-challenges",
-        element: <div>Manage challenges</div>,
+        element: withSuspense(ManageChallenges),
       },
       {
         path: "/community",
-        element: <div>Community</div>,
+        element: withSuspense(Community),
       },
       {
         path: "/statistics",
-        element: <div>Statistics</div>,
+        element: withSuspense(Statistics),
       },
       {
         path: "/settings",
-        element: <div>Settingss</div>,
+        element: withSuspense(Settings),
       },
     ],
   },
