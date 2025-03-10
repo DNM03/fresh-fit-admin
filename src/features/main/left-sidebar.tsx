@@ -61,13 +61,21 @@ function LeftSidebar() {
           <div
             className="w-[6px] h-full rounded-r-sm"
             style={{
-              backgroundColor: location.pathname === item.path ? "#176219" : "",
+              backgroundColor:
+                (location.pathname === item.path && item.path === "/") ||
+                (location.pathname.includes(item.path) && item.path !== "/")
+                  ? "#176219"
+                  : "",
             }}
           ></div>
           <div
             className="flex flex-row items-center w-full gap-x-2 hover:bg-green-50 p-2 rounded-lg cursor-default mr-2 px-4"
             style={{
-              backgroundColor: location.pathname === item.path ? "#dcfce7" : "",
+              backgroundColor:
+                (location.pathname === item.path && item.path === "/") ||
+                (location.pathname.includes(item.path) && item.path !== "/")
+                  ? "#dcfce7"
+                  : "",
             }}
             onClick={() => navigate(item.path)}
           >
