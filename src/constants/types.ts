@@ -1,9 +1,10 @@
 export type ExercisePlanType = {
   name: string;
   description: string;
-  duration: number;
   sets: number;
-  reps: number;
+  type: "beginner" | "intermediate" | "advanced";
+  startDate: Date;
+  endDate: Date;
 };
 
 export type ExerciseType = {
@@ -13,4 +14,20 @@ export type ExerciseType = {
   calories_burned_per_minute: number;
   image: string;
   video: string;
+};
+
+export type CreateExerciseSetType = {
+  name: string;
+  type: "beginner" | "intermediate" | "advanced";
+  description: string;
+  numberOfExercises: number;
+};
+
+export type CreateExerciseInSetType = {
+  exerciseId: string;
+  duration?: number;
+  reps?: number;
+  rounds?: number;
+  restPerRound?: number;
+  estimatedCaloriesBurned?: number;
 };
