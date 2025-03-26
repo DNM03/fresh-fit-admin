@@ -7,6 +7,7 @@ import React from "react";
 import AddExercisePlanPage from "@/pages/exercises/add-exercise-plan";
 import AddExercisePage from "@/pages/exercises/add-exercise";
 import OverlayLoading from "@/components/overlay-loading/overlay-loading";
+import AddExerciseSetPage from "@/pages/exercises/add-exercise-set";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
           {
             path: "/manage-exercises/add-exercise",
             element: <AddExercisePage />,
+          },
+          {
+            path: "/manage-exercises/add-exercise-set",
+            element: <AddExerciseSetPage />,
           },
         ],
       },

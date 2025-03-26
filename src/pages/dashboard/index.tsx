@@ -1,3 +1,14 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -6,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Dumbbell, Trophy, Users } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -21,7 +32,10 @@ import {
   YAxis,
 } from "recharts";
 
+import { ExerciseTooltip, MealTooltip } from "@/components/ui/custom-tooltip";
+
 function DashboardPage() {
+  // Data for exercise plans
   const exercises = [
     {
       planName: "Legs Extreme",
@@ -54,6 +68,8 @@ function DashboardPage() {
       chosenBy: 180,
     },
   ];
+
+  // Data for meal plans
   const meals = [
     {
       planName: "Keto Diet",
@@ -74,7 +90,7 @@ function DashboardPage() {
       chosenBy: 130,
     },
     {
-      planName: "Mediterranean Diet",
+      planName: "Mediterranean",
       type: "Breakfast",
       calories: 450,
       chosenBy: 95,
@@ -87,51 +103,82 @@ function DashboardPage() {
     },
   ];
 
+  // Data for challenges
   const challenges = [
     {
       title: "30 Day Plank Challenge",
       description: "Hold a plank for 30 days",
       duration: "30 days",
       participants: 100,
-      thumbnail: "https://placehold.co/64x40",
+      progress: 65,
+      thumbnail: "/placeholder.svg?height=80&width=120",
     },
     {
       title: "100 Pushups Challenge",
       description: "Do 100 pushups in a day",
       duration: "1 day",
       participants: 50,
-      thumbnail: "https://placehold.co/64x40",
+      progress: 80,
+      thumbnail: "/placeholder.svg?height=80&width=120",
     },
     {
       title: "30 Day Squat Challenge",
       description: "Do squats for 30 days",
       duration: "30 days",
       participants: 80,
-      thumbnail: "https://placehold.co/64x40",
+      progress: 45,
+      thumbnail: "/placeholder.svg?height=80&width=120",
     },
   ];
 
+  // Data for top contributors
   const users = [
     {
-      avatar: "https://placehold.co/40",
+      avatar: "/placeholder.svg?height=40&width=40",
       name: "John Doe",
       posts: 10,
       point: 1000,
+      level: "Gold",
     },
     {
-      avatar: "https://placehold.co/40",
+      avatar: "/placeholder.svg?height=40&width=40",
       name: "Jane Smith",
       posts: 15,
       point: 1500,
+      level: "Platinum",
     },
     {
-      avatar: "https://placehold.co/40",
+      avatar: "/placeholder.svg?height=40&width=40",
       name: "Alice Johnson",
       posts: 8,
       point: 800,
+      level: "Silver",
     },
   ];
 
+  // Summary data
+  const summaryData = [
+    {
+      title: "Active Users",
+      value: "2,845",
+      change: "+12.5%",
+      icon: Users,
+    },
+    {
+      title: "Active Challenges",
+      value: "24",
+      change: "+3.2%",
+      icon: Trophy,
+    },
+    {
+      title: "Workout Plans",
+      value: "156",
+      change: "+8.1%",
+      icon: Dumbbell,
+    },
+  ];
+
+  // Colors for charts
   const COLORS = [
     "#FF6B6B", // Coral Red
     "#4ECDC4", // Turquoise
@@ -140,183 +187,254 @@ function DashboardPage() {
     "#FFEEAD", // Cream Yellow
   ];
 
-  const totalParticipants = exercises.reduce((sum, ex) => sum + ex.chosenBy, 0);
-
-  const CustomExerciseTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: any[];
-  }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-4 rounded shadow-lg border">
-          <p className="font-bold">{data.planName}</p>
-          <p>Participants: {data.chosenBy}</p>
-          <p>Duration: {data.duration}</p>
-          <p>Type: {data.type}</p>
-          <p>
-            Share: {((data.chosenBy / totalParticipants) * 100).toFixed(1)}%
-          </p>
-        </div>
-      );
+  // Get level badge color
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case "Gold":
+        return "bg-amber-500 hover:bg-amber-600";
+      case "Platinum":
+        return "bg-slate-400 hover:bg-slate-500";
+      case "Silver":
+        return "bg-gray-300 hover:bg-gray-400 text-gray-800";
+      default:
+        return "bg-primary hover:bg-primary/90";
     }
-    return null;
-  };
-  const CustomMealTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean;
-    payload?: any[];
-    label?: string;
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 rounded shadow-lg border">
-          <p className="font-bold">{label}</p>
-          <p className="text-[#ecaa74]">Calories: {payload[0].value}</p>
-          <p className="text-blue-500">Participants: {payload[1].value}</p>
-          <p className="text-gray-600">
-            Meal Type: {meals.find((m) => m.planName === label)?.type}
-          </p>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (
-    <div className="w-full">
-      <div className="flex flex-row w-full p-4 gap-x-4 h-1/2">
-        <div className="w-full border rounded-md shadow p-4 flex flex-col">
-          <p className="font-semibold text-2xl">Top 5 Exercise Plans</p>
-          <div className="h-full">
-            <PieChart width={520} height={300}>
-              <Pie
-                data={exercises}
-                cx="50%"
-                cy="50%"
-                labelLine={true}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="chosenBy"
-                nameKey="planName"
-                label={({ name, percent }) =>
-                  `${name} (${(percent * 100).toFixed(1)}%)`
-                }
-              >
-                {exercises.map((_entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomExerciseTooltip />} />
-              {/* <Legend layout="vertical" align="right" verticalAlign="middle" /> */}
-            </PieChart>
-          </div>
-        </div>
-        <div className="w-full border rounded-md shadow p-4">
-          <p className="font-semibold text-2xl">Top 5 Meals</p>
-          <ResponsiveContainer width="100%" height="90%">
-            <BarChart
-              data={meals}
-              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="planName"
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip content={<CustomMealTooltip />} />
-              <Legend />
-              <Bar
-                yAxisId="left"
-                dataKey="calories"
-                fill="#ecaa74"
-                name="Calories"
-              />
-              <Bar
-                yAxisId="right"
-                dataKey="chosenBy"
-                fill="#3b82f6"
-                name="Chosen By"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+    <div className="container mx-auto p-4 space-y-6">
+      {/* Dashboard Header */}
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Fitness Dashboard</h1>
+        <p className="text-muted-foreground">
+          Track your fitness community's progress and engagement
+        </p>
       </div>
-      <div className="flex flex-row w-full p-4 gap-x-4 h-1/2">
-        <div className="w-full border rounded-md shadow p-4 flex flex-col h-full overflow-y-auto">
-          <p className="font-semibold text-2xl">Current Challenges</p>
-          <div className="flex flex-col h-full">
-            {challenges.map((challenge, index) => {
-              return (
+
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {summaryData.map((item, index) => (
+          <Card key={index} className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {item.title}
+              </CardTitle>
+              <item.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{item.value}</div>
+              <p className="text-xs text-muted-foreground">
+                <span
+                  className={
+                    item.change.startsWith("+")
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }
+                >
+                  {item.change}
+                </span>{" "}
+                from last month
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Exercise Plans Chart */}
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle>Top Exercise Plans</CardTitle>
+            <CardDescription>
+              Most popular workout plans by participation
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={exercises}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={100}
+                    dataKey="chosenBy"
+                    nameKey="planName"
+                    label={({ name, percent }) => {
+                      return percent > 0.1
+                        ? `${name} (${(percent * 100).toFixed(0)}%)`
+                        : "";
+                    }}
+                  >
+                    {exercises.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<ExerciseTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Meal Plans Chart */}
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle>Top Meal Plans</CardTitle>
+            <CardDescription>
+              Calories and popularity comparison
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={meals}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="planName"
+                    tick={{ fontSize: 12 }}
+                    tickMargin={10}
+                  />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip content={<MealTooltip />} />
+                  <Legend />
+                  <Bar
+                    yAxisId="left"
+                    dataKey="calories"
+                    fill="#FF6B6B"
+                    radius={4}
+                  />
+                  <Bar
+                    yAxisId="right"
+                    dataKey="chosenBy"
+                    fill="#4ECDC4"
+                    radius={4}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Current Challenges */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Challenges</CardTitle>
+            <CardDescription>
+              Active fitness challenges with participation
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {challenges.map((challenge, index) => (
                 <div
                   key={index}
-                  className="flex flex-row gap-x-4 p-4 border-b items-center hover:bg-green-50"
+                  className="flex items-center gap-4 p-4 transition-colors hover:bg-muted/50"
                 >
-                  <div className="w-1/4">
+                  <div className="hidden sm:block">
                     <img
-                      src={challenge.thumbnail}
-                      alt="thumbnail"
-                      className="w-16 h-10 object-cover rounded-md"
+                      src={challenge.thumbnail || "/placeholder.svg"}
+                      alt={challenge.title}
+                      className="h-16 w-24 rounded-md object-cover"
                     />
                   </div>
-                  <div className="w-3/4 flex flex-row justify-between">
-                    <p className="font-semibold">{challenge.title}</p>
-                    <p>{challenge.participants} participants</p>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">{challenge.title}</h4>
+                      <Badge variant="outline">{challenge.duration}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {challenge.description}
+                    </p>
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center text-sm">
+                        <Users className="mr-1 h-3.5 w-3.5" />
+                        <span>{challenge.participants}</span>
+                      </div>
+                      <div className="flex w-1/2 items-center gap-2">
+                        <Progress value={challenge.progress} className="h-2" />
+                        <span className="text-xs">{challenge.progress}%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-          <p className="font-medium items-center justify-center mb-2 flex flex-row gap-x-2">
-            Show more <ChevronRight size={16} />
-          </p>
-        </div>
-        <div className="w-full border rounded-md shadow p-4 flex flex-col">
-          <p className="font-semibold text-2xl">Top Contributors</p>
-          {/* <div className="w-full overflow-auto"> */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Avatar</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="text-right">Posts</TableHead>
-                <TableHead className="text-right">Points</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user, index) => {
-                return (
-                  <TableRow key={index}>
+              ))}
+            </div>
+            <div className="p-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between"
+              >
+                View all challenges
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Contributors */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Contributors</CardTitle>
+            <CardDescription>Most active community members</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Level</TableHead>
+                  <TableHead className="text-right">Posts</TableHead>
+                  <TableHead className="text-right">Points</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user, index) => (
+                  <TableRow key={index} className="hover:bg-muted/50">
                     <TableCell>
-                      <img
-                        src={user.avatar}
-                        alt="avatar"
-                        className="h-10 object-cover rounded-full"
-                      />
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatar} alt={user.name} />
+                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{user.name}</span>
+                      </div>
                     </TableCell>
-                    <TableCell>{user.name}</TableCell>
+                    <TableCell>
+                      <Badge className={getLevelColor(user.level)}>
+                        {user.level}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">{user.posts}</TableCell>
-                    <TableCell className="text-right">{user.point}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {user.point.toLocaleString()}
+                    </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-          <p className="font-medium items-center justify-center mb-2 mt-auto flex flex-row gap-x-2">
-            Show more <ChevronRight size={16} />
-          </p>
-          {/* </div> */}
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="p-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between"
+              >
+                View all contributors
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
