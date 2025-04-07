@@ -8,6 +8,10 @@ import AddExercisePlanPage from "@/pages/exercises/add-exercise-plan";
 import AddExercisePage from "@/pages/exercises/add-exercise";
 import OverlayLoading from "@/components/overlay-loading/overlay-loading";
 import AddExerciseSetPage from "@/pages/exercises/add-exercise-set";
+import AddMealPlan from "@/pages/meals/add-meal-plan";
+import AddMeal from "@/pages/meals/add-meal";
+import AddIngredient from "@/pages/meals/add-ingredient";
+import AddDish from "@/pages/meals/add-dish";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -61,7 +65,28 @@ const router = createBrowserRouter([
       },
       {
         path: "/manage-meals",
-        element: withSuspense(ManageMeals),
+        children: [
+          {
+            index: true,
+            element: withSuspense(ManageMeals),
+          },
+          {
+            path: "/manage-meals/add-meal-plan",
+            element: <AddMealPlan />,
+          },
+          {
+            path: "/manage-meals/add-meal",
+            element: <AddMeal />,
+          },
+          {
+            path: "/manage-meals/add-ingredient",
+            element: <AddIngredient />,
+          },
+          {
+            path: "/manage-meals/add-dish",
+            element: <AddDish />,
+          },
+        ],
       },
       {
         path: "/manage-challenges",
