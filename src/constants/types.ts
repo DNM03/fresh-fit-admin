@@ -77,3 +77,68 @@ export type DishIngredientType = {
   quantity: number;
   unit: string;
 };
+
+export type MealType = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  calories: number;
+  prepTime: number;
+  mealType: "breakfast" | "lunch" | "dinner";
+  date: Date;
+};
+
+export type MealDishType = {
+  mealId: string;
+  dishId: string;
+};
+
+export type ChallengeType = {
+  id: string;
+  uuid: string;
+  name: string;
+  description: string;
+  type: "exercise" | "meal" | "combined";
+  prize_image: string;
+  prize_title: string;
+  target:
+    | "weight_loss"
+    | "muscle_gain"
+    | "endurance"
+    | "flexibility"
+    | "general";
+  target_image: string;
+  fat_percent: number;
+  weight_loss_target: number;
+  image: string;
+  status: "draft" | "active" | "completed" | "cancelled";
+  start_date: Date;
+  end_date: Date;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type PlanType = {
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  challenge_id?: string;
+};
+
+export type SetType = {
+  id: string;
+  name: string;
+  estimatedCaloriesBurned: number;
+  description: string;
+};
+
+export type SetInPlanType = {
+  id: string;
+  setId: string;
+  week: number;
+  day: number;
+  caloriesBurned: number;
+  name: string;
+};

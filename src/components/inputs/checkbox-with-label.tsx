@@ -13,9 +13,15 @@ type Props<S> = {
   fieldTitle: string;
   nameInSchema: keyof S & string;
   message: string;
+  required?: boolean;
 };
 
-function CheckboxWithLabel<S>({ fieldTitle, nameInSchema, message }: Props<S>) {
+function CheckboxWithLabel<S>({
+  fieldTitle,
+  nameInSchema,
+  message,
+  required,
+}: Props<S>) {
   const form = useFormContext();
   return (
     <FormField
@@ -24,7 +30,7 @@ function CheckboxWithLabel<S>({ fieldTitle, nameInSchema, message }: Props<S>) {
       render={({ field }) => (
         <FormItem className="w-full flex items-center gap-2">
           <FormLabel className="text-base w-1/3 mt-2" htmlFor={nameInSchema}>
-            {fieldTitle}
+            {fieldTitle} {required && <span className="text-red-500">*</span>}
           </FormLabel>
 
           <div className="flex items-center gap-2">

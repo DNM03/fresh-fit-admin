@@ -16,9 +16,14 @@ import { Calendar } from "../ui/calendar";
 type Props<S> = {
   fieldTitle: string;
   nameInSchema: keyof S & string;
+  required?: boolean;
 };
 
-function DatePickerWithLabel<S>({ fieldTitle, nameInSchema }: Props<S>) {
+function DatePickerWithLabel<S>({
+  fieldTitle,
+  nameInSchema,
+  required,
+}: Props<S>) {
   const form = useFormContext();
 
   return (
@@ -28,7 +33,7 @@ function DatePickerWithLabel<S>({ fieldTitle, nameInSchema }: Props<S>) {
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel htmlFor={nameInSchema} className="text-base">
-            {fieldTitle}
+            {fieldTitle} {required && <span className="text-red-500">*</span>}
           </FormLabel>
           <Popover>
             <PopoverTrigger asChild>
@@ -37,7 +42,7 @@ function DatePickerWithLabel<S>({ fieldTitle, nameInSchema }: Props<S>) {
                   id={nameInSchema}
                   variant={"outline"}
                   className={cn(
-                    "w-[240px] pl-3 text-left font-normal",
+                    "w-full h-10 pl-3 text-left font-normal shadow-none",
                     !field.value && "text-muted-foreground"
                   )}
                 >
@@ -55,9 +60,7 @@ function DatePickerWithLabel<S>({ fieldTitle, nameInSchema }: Props<S>) {
                 mode="single"
                 selected={field.value}
                 onSelect={field.onChange}
-                disabled={(date) =>
-                  date > new Date() || date < new Date("1900-01-01")
-                }
+                disabled={(date) => date < new Date("1900-01-01")}
                 initialFocus
               />
             </PopoverContent>
