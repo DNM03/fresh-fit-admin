@@ -29,7 +29,8 @@ function InputWithLabel<S>({
       render={({ field }) => (
         <FormItem>
           <FormLabel className="text-base" htmlFor={nameInSchema}>
-            {fieldTitle}
+            {fieldTitle}{" "}
+            {props.required && <span className="text-red-500">*</span>}
           </FormLabel>
           <FormControl>
             <Input

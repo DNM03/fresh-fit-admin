@@ -12,6 +12,8 @@ import AddMealPlan from "@/pages/meals/add-meal-plan";
 import AddMeal from "@/pages/meals/add-meal";
 import AddIngredient from "@/pages/meals/add-ingredient";
 import AddDish from "@/pages/meals/add-dish";
+import AddExerciseChallenge from "@/pages/challenges/add-exercise-challenge";
+import AddMealChallenge from "@/pages/challenges/add-meal-challenge";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -90,7 +92,20 @@ const router = createBrowserRouter([
       },
       {
         path: "/manage-challenges",
-        element: withSuspense(ManageChallenges),
+        children: [
+          {
+            index: true,
+            element: withSuspense(ManageChallenges),
+          },
+          {
+            path: "/manage-challenges/add-exercise-challenge",
+            element: <AddExerciseChallenge />,
+          },
+          {
+            path: "/manage-challenges/add-meal-challenge",
+            element: <AddMealChallenge />,
+          },
+        ],
       },
       {
         path: "/community",

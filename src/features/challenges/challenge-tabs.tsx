@@ -51,7 +51,7 @@ function ChallengeTabs() {
                 </h2>
                 <Button
                   className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-exercise-plan")}
+                  onClick={() => navigate("add-exercise-challenge")}
                 >
                   <PlusCircle className="h-4 w-4" />
                   <span>Add Exercise Challenge</span>
@@ -74,7 +74,7 @@ function ChallengeTabs() {
                 </h2>
                 <Button
                   className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-exercise-plan")}
+                  onClick={() => navigate("add-meal-challenge")}
                 >
                   <PlusCircle className="h-4 w-4" />
                   <span>Add Meal Challenge</span>

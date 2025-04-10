@@ -25,6 +25,7 @@ type Props<S> = {
   nameInSchema: keyof S & string;
   data: DataObj[];
   className?: string;
+  required?: boolean;
 };
 
 function SelectWithLabel<S>({
@@ -32,6 +33,7 @@ function SelectWithLabel<S>({
   nameInSchema,
   data,
   className,
+  required,
 }: Props<S>) {
   const form = useFormContext();
   return (
@@ -41,7 +43,7 @@ function SelectWithLabel<S>({
       render={({ field }) => (
         <FormItem>
           <FormLabel className="text-base" htmlFor={nameInSchema}>
-            {fieldTitle}
+            {fieldTitle} {required && <span className="text-red-500">*</span>}
           </FormLabel>
           <Select {...field} onValueChange={field.onChange}>
             <FormControl>
