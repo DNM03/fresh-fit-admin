@@ -25,6 +25,7 @@ interface OverviewTabProps {
 }
 
 export function OverviewTab({ timeRange }: OverviewTabProps) {
+  console.log("OverviewTab rendered with timeRange:", timeRange);
   return (
     <div className="space-y-4">
       {/* Key Metrics */}

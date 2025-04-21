@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Check, PlusCircle, Trash2, ArrowRight } from "lucide-react";
-import type { MealType, MealDishType, DishType } from "@/constants/types";
+import { Check, ArrowRight } from "lucide-react";
+import type { MealType, DishType } from "@/constants/types";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
@@ -18,8 +18,8 @@ export default function MealForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
-  const [availableDishes, setAvailableDishes] = useState<DishType[]>([
+  const [, setImageFiles] = useState<ImageFile[]>([]);
+  const [availableDishes] = useState<DishType[]>([
     {
       id: "dish-1",
       name: "Grilled Chicken Salad",

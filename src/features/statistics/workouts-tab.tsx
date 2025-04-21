@@ -23,6 +23,7 @@ interface WorkoutsTabProps {
 }
 
 export function WorkoutsTab({ timeRange }: WorkoutsTabProps) {
+  console.log("WorkoutsTab rendered with timeRange:", timeRange);
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">

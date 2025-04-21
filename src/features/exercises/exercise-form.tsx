@@ -17,8 +17,8 @@ import { motion } from "framer-motion";
 
 function ExerciseForm() {
   const [activeTab, setActiveTab] = React.useState("details");
-  const [imageFiles, setImageFiles] = React.useState<ImageFile[]>([]);
-  const [videoFile, setVideoFile] = React.useState<VideoFile | null>(null);
+  const [, setImageFiles] = React.useState<ImageFile[]>([]);
+  const [, setVideoFile] = React.useState<VideoFile | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const defaultValues: ExerciseType = {

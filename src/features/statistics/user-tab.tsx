@@ -20,6 +20,7 @@ interface UsersTabProps {
 }
 
 export function UsersTab({ timeRange }: UsersTabProps) {
+  console.log("UsersTab rendered with timeRange:", timeRange);
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -69,11 +70,7 @@ export function UsersTab({ timeRange }: UsersTabProps) {
           <CardDescription>User goal achievement by category</CardDescription>
         </CardHeader>
         <CardContent>
-          <RadialBarChart
-            data={goalAchievementData}
-            dataKey="value"
-            nameKey="name"
-          />
+          <RadialBarChart data={goalAchievementData} dataKey="value" />
         </CardContent>
       </Card>
 

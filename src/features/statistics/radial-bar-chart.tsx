@@ -10,14 +10,12 @@ interface RadialBarChartProps {
   data: any[];
   height?: number;
   dataKey: string;
-  nameKey: string;
 }
 
 export function RadialBarChart({
   data,
   height = 300,
   dataKey,
-  nameKey,
 }: RadialBarChartProps) {
   return (
     <div style={{ height: height }}>

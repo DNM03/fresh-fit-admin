@@ -25,7 +25,7 @@ import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 export default function DishForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
+  const [, setImageFiles] = useState<ImageFile[]>([]);
 
   const defaultValues: Partial<DishType> = {
     name: "",
@@ -44,9 +44,7 @@ export default function DishForm() {
   const [ingredients, setIngredients] = useState<
     Array<DishIngredientType & { name: string }>
   >([]);
-  const [availableIngredients, setAvailableIngredients] = useState<
-    IngredientType[]
-  >([
+  const [availableIngredients] = useState<IngredientType[]>([
     {
       id: "1",
       name: "Chicken Breast",

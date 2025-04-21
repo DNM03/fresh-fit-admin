@@ -68,7 +68,7 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export function ProfileSettings() {
-  const [avatar, setAvatar] = useState("/placeholder.svg?height=100&width=100");
+  const [avatar] = useState("/placeholder.svg?height=100&width=100");
 
   // Default values for the form
   const defaultValues: Partial<ProfileFormValues> = {
