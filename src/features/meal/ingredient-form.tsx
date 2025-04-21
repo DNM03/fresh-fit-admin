@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 function IngredientForm() {
   const [activeTab, setActiveTab] = React.useState("details");
 
-  const [imageFiles, setImageFiles] = React.useState<ImageFile[]>([]);
+  const [, setImageFiles] = React.useState<ImageFile[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const defaultValues: IngredientType = {

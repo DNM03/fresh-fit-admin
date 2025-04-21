@@ -28,11 +28,11 @@ export default function ExerciseChallengeForm() {
   const [endDate, setEndDate] = useState<Date | undefined>(
     new Date(new Date().setMonth(new Date().getMonth() + 1))
   );
-  const [challengeImage, setChallengeImage] = useState<ImageFile[]>([]);
-  const [prizeImage, setPrizeImage] = useState<ImageFile[]>([]);
-  const [targetImage, setTargetImage] = useState<ImageFile[]>([]);
+  const [, setChallengeImage] = useState<ImageFile[]>([]);
+  const [, setPrizeImage] = useState<ImageFile[]>([]);
+  const [, setTargetImage] = useState<ImageFile[]>([]);
   const [selectedPlans, setSelectedPlans] = useState<PlanType[]>([]);
-  const [availablePlans, setAvailablePlans] = useState<PlanType[]>([
+  const [availablePlans] = useState<PlanType[]>([
     {
       id: "plan-1",
       name: "30-Day Weight Loss",
@@ -59,7 +59,7 @@ export default function ExerciseChallengeForm() {
     },
   ]);
 
-  const [planSets, setPlanSets] = useState<{ [key: string]: SetInPlanType[] }>({
+  const [planSets] = useState<{ [key: string]: SetInPlanType[] }>({
     "plan-1": [
       {
         id: "set-1-1",

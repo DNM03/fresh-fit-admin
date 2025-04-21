@@ -23,6 +23,7 @@ interface NutritionTabProps {
 }
 
 export function NutritionTab({ timeRange }: NutritionTabProps) {
+  console.log("NutritionTab rendered with timeRange:", timeRange);
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">

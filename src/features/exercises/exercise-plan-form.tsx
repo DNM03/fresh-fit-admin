@@ -93,7 +93,7 @@ function ExercisePlanForm() {
     setAddingExerciseSet(true);
   };
 
-  const removeSet = (id: string) => {};
+  const removeSet = (_id: string) => {};
 
   const defaultValues: ExercisePlanType = {
     name: "",

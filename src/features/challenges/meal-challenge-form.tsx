@@ -1,5 +1,3 @@
-import type React from "react";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Card } from "@/components/ui/card";
@@ -51,15 +49,15 @@ export default function MealChallengeForm() {
   const [endDate, setEndDate] = useState<Date | undefined>(
     new Date(new Date().setMonth(new Date().getMonth() + 1))
   );
-  const [challengeImage, setChallengeImage] = useState<ImageFile[]>([]);
-  const [prizeImage, setPrizeImage] = useState<ImageFile[]>([]);
-  const [targetImage, setTargetImage] = useState<ImageFile[]>([]);
+  const [, setChallengeImage] = useState<ImageFile[]>([]);
+  const [, setPrizeImage] = useState<ImageFile[]>([]);
+  const [, setTargetImage] = useState<ImageFile[]>([]);
   const [selectedMeals, setSelectedMeals] = useState<MealType[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMealType, setSelectedMealType] = useState<string>("all");
 
-  const [availableMeals, setAvailableMeals] = useState<MealType[]>([
+  const [availableMeals] = useState<MealType[]>([
     {
       id: "meal-1",
       name: "Monday Breakfast",
@@ -142,7 +140,7 @@ export default function MealChallengeForm() {
     },
   ]);
 
-  const [mealDishes, setMealDishes] = useState<{ [key: string]: DishType[] }>({
+  const [mealDishes] = useState<{ [key: string]: DishType[] }>({
     "meal-1": [
       {
         id: "dish-1",
