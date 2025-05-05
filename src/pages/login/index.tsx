@@ -7,9 +7,13 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { authService } from "@/services";
+import { useState } from "react";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [_loading, setLoading] = useState<boolean>(false);
+  const [_error, setError] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -30,7 +34,24 @@ function LoginPage() {
     data
   ) => {
     console.log(data);
-    navigate("/");
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await authService.login(data.email, data.password);
+      console.log("Login successful", response);
+      navigate("/");
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        setError("Invalid email or password");
+      } else if (error.response?.status === 429) {
+        setError("Too many attempts. Please try again later.");
+      } else {
+        setError("An error occurred. Please try again.");
+      }
+      console.error("Login error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div
