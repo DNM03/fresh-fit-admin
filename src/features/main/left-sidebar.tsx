@@ -7,6 +7,7 @@ import {
   Salad,
   Settings,
   Swords,
+  Users,
 } from "lucide-react";
 import app_logo from "@/assets/images/freshfit_logo.png";
 
@@ -35,6 +36,11 @@ function LeftSidebar() {
       label: "Manage Challenges",
       icon: <Swords size={20} />,
       path: "/manage-challenges",
+    },
+    {
+      label: "Manage Specialists",
+      icon: <Users size={20} />,
+      path: "/manage-specialists",
     },
     {
       label: "Community",
