@@ -1,5 +1,3 @@
-import { AxiosRequestConfig } from "axios";
-
 export interface AddUpdateIngredientData {
   name: string;
   description?: string;
@@ -13,6 +11,16 @@ export interface AddUpdateIngredientData {
   protein?: number;
 }
 
-export interface CustomRequestConfig extends AxiosRequestConfig {
-  _retry?: boolean;
+export interface Ingredient {
+  _id: string;
+  name: string;
+  description?: string;
+  calories?: number;
+  image?: string;
+  cab?: number;
+  sodium?: number;
+  sugar?: number;
+  cholesterol?: number;
+  fat?: number;
+  protein?: number;
 }

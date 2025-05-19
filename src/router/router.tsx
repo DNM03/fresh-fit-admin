@@ -15,6 +15,7 @@ import AddDish from "@/pages/meals/add-dish";
 import AddExerciseChallenge from "@/pages/challenges/add-exercise-challenge";
 import AddMealChallenge from "@/pages/challenges/add-meal-challenge";
 import AddSpecialist from "@/pages/specialist/add-specialist";
+import ProtectedRoute from "./protected-route";
 const Specialist = React.lazy(() => import("@/pages/specialist"));
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
@@ -40,7 +41,11 @@ const withSuspense = (
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <MainLayout />,
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
