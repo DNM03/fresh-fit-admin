@@ -33,8 +33,27 @@ import {
 } from "recharts";
 
 import { ExerciseTooltip, MealTooltip } from "@/components/ui/custom-tooltip";
+import { useEffect, useState } from "react";
+import statisticService from "@/services/statistic.service";
+import { useNavigate } from "react-router-dom";
 
 function DashboardPage() {
+  const [, setTopStat] = useState();
+  const navigate = useNavigate();
+  useEffect(() => {
+    // Fetch top stat data from API
+    const fetchTopStat = async () => {
+      try {
+        const response = await statisticService.getTop();
+        const data = response.data.result.rersult;
+        setTopStat(data);
+      } catch (error) {
+        console.error("Error fetching top stat:", error);
+      }
+    };
+
+    fetchTopStat();
+  }, []);
   // Data for exercise plans
   const exercises = [
     {
@@ -188,18 +207,18 @@ function DashboardPage() {
   ];
 
   // Get level badge color
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case "Gold":
-        return "bg-amber-500 hover:bg-amber-600";
-      case "Platinum":
-        return "bg-slate-400 hover:bg-slate-500";
-      case "Silver":
-        return "bg-gray-300 hover:bg-gray-400 text-gray-800";
-      default:
-        return "bg-primary hover:bg-primary/90";
-    }
-  };
+  // const getLevelColor = (level: string) => {
+  //   switch (level) {
+  //     case "Gold":
+  //       return "bg-amber-500 hover:bg-amber-600";
+  //     case "Platinum":
+  //       return "bg-slate-400 hover:bg-slate-500";
+  //     case "Silver":
+  //       return "bg-gray-300 hover:bg-gray-400 text-gray-800";
+  //     default:
+  //       return "bg-primary hover:bg-primary/90";
+  //   }
+  // };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -374,6 +393,7 @@ function DashboardPage() {
                 variant="ghost"
                 size="sm"
                 className="w-full justify-between"
+                onClick={() => navigate("/manage-challenges")}
               >
                 View all challenges
                 <ChevronRight className="h-4 w-4" />
@@ -388,14 +408,12 @@ function DashboardPage() {
             <CardTitle>Top Contributors</CardTitle>
             <CardDescription>Most active community members</CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 px-8">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Level</TableHead>
                   <TableHead className="text-right">Posts</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -410,15 +428,8 @@ function DashboardPage() {
                         <span className="font-medium">{user.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge className={getLevelColor(user.level)}>
-                        {user.level}
-                      </Badge>
-                    </TableCell>
+
                     <TableCell className="text-right">{user.posts}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {user.point.toLocaleString()}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -428,8 +439,9 @@ function DashboardPage() {
                 variant="ghost"
                 size="sm"
                 className="w-full justify-between"
+                onClick={() => navigate("/community")}
               >
-                View all contributors
+                View the community
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

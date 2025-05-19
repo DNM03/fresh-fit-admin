@@ -14,34 +14,102 @@ import VideoDropzone, { VideoFile } from "@/components/ui/video-dropzone";
 import { ExerciseType } from "@/constants/types";
 import { AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import mediaService from "@/services/media.service";
+import exerciseService from "@/services/exercise.service";
+import { useNavigate } from "react-router-dom";
 
 function ExerciseForm() {
   const [activeTab, setActiveTab] = React.useState("details");
-  const [, setImageFiles] = React.useState<ImageFile[]>([]);
-  const [, setVideoFile] = React.useState<VideoFile | null>(null);
+  const [imageFiles, setImageFiles] = React.useState<ImageFile[]>([]);
+  const [videoFile, setVideoFile] = React.useState<VideoFile | null>(null);
+  const [targetMuscleImage, setTargetMuscleImage] = React.useState<ImageFile[]>(
+    []
+  );
+  const [secondaryMuscleImage, setSecondaryMuscleImage] = React.useState<
+    ImageFile[]
+  >([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const navigate = useNavigate();
 
   const defaultValues: ExerciseType = {
     name: "",
     description: "",
-    category: "cardio",
-    calories_burned_per_minute: 0,
-    image: "",
-    video: "",
+    category: "Cardio",
+    calories_burn_per_minutes: 0,
+    type: "Activation",
+    equipment: "",
+    mechanics: "Compound",
+    forceType: "Compression",
+    experience_level: "Beginner",
+    target_muscle: {
+      name: "",
+      image: "",
+    },
+    secondary_muscle: {
+      name: "",
+      image: "",
+    },
+    // image: "",
+    // video: "",
   };
 
   const formSchema = z.object({
     name: z.string().nonempty("Exercise name is required"),
     description: z.string().nonempty("Description is required"),
-    category: z.enum(["cardio", "strength"], {
+    category: z.enum(["Cardio", "Strength"], {
       errorMap: () => ({ message: "Please select a category" }),
     }),
-    calories_burned_per_minute: z.coerce
+    calories_burn_per_minutes: z.coerce
       .number()
       .int("Must be a whole number")
       .positive("Must be greater than 0"),
-    image: z.string().url("Please upload an image"),
-    video: z.string().url("Please upload a video"),
+    type: z.enum(
+      [
+        "Activation",
+        "Conditioning",
+        "Olympic_Lifting",
+        "Plyometrics",
+        "Powerlifting",
+        "SMR",
+        "Strength",
+        "Stretching",
+        "Strongman",
+        "Warmup",
+      ],
+      {
+        errorMap: () => ({ message: "Please select a type" }),
+      }
+    ),
+    equipment: z.string().optional(),
+    mechanics: z.enum(["Compound", "Isolation"], {
+      errorMap: () => ({ message: "Please select a mechanics type" }),
+    }),
+    forceType: z.enum(
+      [
+        "Compression",
+        "Dynamic_Stretching",
+        "Hinge_Bilateral",
+        "Hinge_Unilateral",
+        "Isometric",
+        "Press_Bilateral",
+        "Pull",
+        "Pull_Bilateral",
+        "Pull_Unilateral",
+        "Push",
+        "Push_Bilateral",
+        "Push_Unilateral",
+        "Static",
+        "Static_Stretching",
+      ],
+      {
+        errorMap: () => ({ message: "Please select a force type" }),
+      }
+    ),
+    experience_level: z.enum(["Beginner", "Intermediate", "Advanced"], {
+      errorMap: () => ({ message: "Please select an experience level" }),
+    }),
+    // image: z.string().url("Please upload an image"),
+    // video: z.string().url("Please upload a video"),
   });
 
   const form = useForm<ExerciseType>({
@@ -57,7 +125,7 @@ function ExerciseForm() {
     errors.name ||
     errors.description ||
     errors.category ||
-    errors.calories_burned_per_minute
+    errors.calories_burn_per_minutes
   );
 
   const hasMediaErrors = !!(errors.image || errors.video);
@@ -65,11 +133,57 @@ function ExerciseForm() {
   async function submitForm(data: ExerciseType) {
     setIsSubmitting(true);
     try {
-      console.log(data);
+      let imageRes;
+      let videoRes;
+      let targetMuscleImageRes;
+      let secondaryMuscleImageRes;
+      if (imageFiles[0].file) {
+        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+      }
+      if (videoFile) {
+        videoRes = await mediaService.uploadVideo(videoFile.file);
+      }
+      if (targetMuscleImage[0]?.file) {
+        targetMuscleImageRes = await mediaService.uploadImage(
+          targetMuscleImage[0].file
+        );
+      }
+      if (secondaryMuscleImage[0]?.file) {
+        secondaryMuscleImageRes = await mediaService.uploadImage(
+          secondaryMuscleImage[0].file
+        );
+      }
+      const response = await exerciseService.addExercise({
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        calories_burn_per_minutes: data.calories_burn_per_minutes,
+        image: imageRes?.result?.url || "",
+        video: videoRes?.result.url || "",
+        target_muscle: {
+          name: data.target_muscle?.name || "",
+          image: targetMuscleImageRes?.result?.url || "",
+        },
+        type: data.type,
+        equipment: data.equipment,
+        mechanics: data.mechanics,
+        forceType: data.forceType,
+        experience_level: data.experience_level,
+        secondary_muscle: {
+          name: data.secondary_muscle?.name || "",
+          image: secondaryMuscleImageRes?.result?.url || "",
+        },
+        instructions: data.instructions,
+        tips: data.tips,
+      });
+
+      console.log("Exercise created successfully:", response);
+      // console.log(data);
       alert("Exercise created successfully!");
       form.reset(defaultValues);
       setImageFiles([]);
       setVideoFile(null);
+      navigate(-1);
     } catch (error) {
       console.error(error);
       // Error feedback
@@ -154,21 +268,105 @@ function ExerciseForm() {
                     fieldTitle="Category"
                     nameInSchema="category"
                     className="w-full"
+                    required
                     data={[
-                      { description: "Cardio", id: "cardio" },
-                      { description: "Strength", id: "strength" },
+                      { description: "Cardio", id: "Cardio" },
+                      { description: "Strength", id: "Strength" },
                     ]}
                   />
                 </div>
 
-                <InputWithLabel<ExerciseType>
-                  fieldTitle="Calories Burned Per Minute"
-                  nameInSchema="calories_burned_per_minute"
-                  placeholder="E.g., 10"
-                  className="w-full"
-                  type="number"
-                  required
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputWithLabel<ExerciseType>
+                    fieldTitle="Calories Burned Per Minute"
+                    nameInSchema="calories_burn_per_minutes"
+                    placeholder="E.g., 10"
+                    className="w-full"
+                    type="number"
+                    required
+                  />
+                  <SelectWithLabel<ExerciseType>
+                    fieldTitle="Type"
+                    nameInSchema="type"
+                    className="w-full"
+                    required
+                    data={[
+                      { description: "Activation", id: "Activation" },
+                      { description: "Conditioning", id: "Conditioning" },
+                      { description: "Olympic_Lifting", id: "Olympic_Lifting" },
+                      { description: "Plyometrics", id: "Plyometrics" },
+                      { description: "Powerlifting", id: "Powerlifting" },
+                      { description: "SMR", id: "SMR" },
+                      { description: "Strength", id: "Strength" },
+                      { description: "Stretching", id: "Stretching" },
+                      { description: "Strongman", id: "Strongman" },
+                      { description: "Warmup", id: "Warmup" },
+                    ]}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SelectWithLabel<ExerciseType>
+                    fieldTitle="Force Type"
+                    nameInSchema="forceType"
+                    className="w-full"
+                    required
+                    data={[
+                      { description: "Compression", id: "Compression" },
+                      {
+                        description: "Dynamic Stretching",
+                        id: "Dynamic_Stretching",
+                      },
+                      { description: "Hinge Bilateral", id: "Hinge_Bilateral" },
+                      {
+                        description: "Hinge Unilateral",
+                        id: "Hinge_Unilateral",
+                      },
+                      { description: "Isometric", id: "Isometric" },
+                      { description: "Press Bilateral", id: "Press_Bilateral" },
+                      { description: "Pull", id: "Pull" },
+                      { description: "Pull Bilateral", id: "Pull_Bilateral" },
+                      { description: "Pull Unilateral", id: "Pull_Unilateral" },
+                      { description: "Push", id: "Push" },
+                      { description: "Push Bilateral", id: "Push_Bilateral" },
+                      { description: "Push Unilateral", id: "Push_Unilateral" },
+                      { description: "Static", id: "Static" },
+                      {
+                        description: "Static Stretching",
+                        id: "Static_Stretching",
+                      },
+                    ]}
+                  />
+                  <SelectWithLabel<ExerciseType>
+                    fieldTitle="Experience Level"
+                    nameInSchema="experience_level"
+                    className="w-full"
+                    required
+                    data={[
+                      { description: "Beginner", id: "Beginner" },
+                      { description: "Intermediate", id: "Intermediate" },
+                      { description: "Advanced", id: "Advanced" },
+                    ]}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputWithLabel<ExerciseType>
+                    fieldTitle="Equipment"
+                    nameInSchema="equipment"
+                    placeholder="E.g., Dumbbells, Barbell, Resistance Bands"
+                    className="w-full"
+                  />
+                  <SelectWithLabel<ExerciseType>
+                    fieldTitle="Mechanics"
+                    nameInSchema="mechanics"
+                    className="w-full"
+                    required
+                    data={[
+                      { description: "Compound", id: "Compound" },
+                      { description: "Isolation", id: "Isolation" },
+                    ]}
+                  />
+                </div>
 
                 <TextAreaWithLabel<ExerciseType>
                   fieldTitle="Description"
@@ -177,6 +375,20 @@ function ExerciseForm() {
                   className="w-full min-h-32"
                   required
                 />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TextAreaWithLabel<ExerciseType>
+                    fieldTitle="Instructions"
+                    nameInSchema="instructions"
+                    placeholder="E.g., Keep your back straight and core engaged"
+                    className="w-full min-h-32"
+                  />
+                  <TextAreaWithLabel<ExerciseType>
+                    fieldTitle="Tips"
+                    nameInSchema="tips"
+                    placeholder="E.g., Avoid locking your elbows at the top of the movement"
+                    className="w-full min-h-32"
+                  />
+                </div>
 
                 <div className="flex justify-end pt-2">
                   <Button
@@ -190,7 +402,82 @@ function ExerciseForm() {
               </TabsContent>
 
               <TabsContent value="media" className="mt-0 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2 grid grid-cols-2 gap-4">
+                  <div>
+                    <InputWithLabel<ExerciseType>
+                      fieldTitle="Target Muscle Name"
+                      nameInSchema="target_muscle.name"
+                      placeholder="E.g., Pectoralis Major (Chest)"
+                      className="w-full"
+                    />
+                    <div className="mt-2">
+                      <p className="text-base font-semibold">
+                        Target Muscle Image
+                      </p>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Upload a clear image showing the muscle (max 20MB)
+                      </p>
+                      <ImageDropzone
+                        maxImages={1}
+                        maxSizeInMB={20}
+                        onImagesChange={(value) => {
+                          setTargetMuscleImage(value);
+                          if (value.length > 0) {
+                            form.setValue(
+                              "image",
+                              "https://example.com/image-url"
+                            );
+                          } else {
+                            form.setValue("image", "");
+                          }
+                        }}
+                      />
+                      {errors.image && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {errors.image.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <InputWithLabel<ExerciseType>
+                      fieldTitle="Secondary Muscle Name"
+                      nameInSchema="secondary_muscle.name"
+                      placeholder="E.g., Triceps Brachii"
+                      className="w-full"
+                    />
+                    <div className="mt-2">
+                      <p className="text-base font-semibold">
+                        Secondary Muscle Image
+                      </p>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Upload a clear image showing the muscle (max 20MB)
+                      </p>
+                      <ImageDropzone
+                        maxImages={1}
+                        maxSizeInMB={20}
+                        onImagesChange={(value) => {
+                          setSecondaryMuscleImage(value);
+                          if (value.length > 0) {
+                            form.setValue(
+                              "image",
+                              "https://example.com/image-url"
+                            );
+                          } else {
+                            form.setValue("image", "");
+                          }
+                        }}
+                      />
+                      {errors.image && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {errors.image.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <hr />
+                <div className="space-y-2 grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <p className="text-base font-semibold">Exercise Image</p>
                     <p className="text-sm text-gray-500 mb-2">

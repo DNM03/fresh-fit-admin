@@ -1,4 +1,4 @@
-import { useFormContext } from "react-hook-form";
+import { useFormContext, Path } from "react-hook-form";
 import {
   FormControl,
   FormLabel,
@@ -11,7 +11,7 @@ import { InputHTMLAttributes } from "react";
 
 type Props<S> = {
   fieldTitle: string;
-  nameInSchema: keyof S & string;
+  nameInSchema: Path<S>;
   className?: string;
 } & InputHTMLAttributes<HTMLInputElement>;
 
@@ -40,7 +40,6 @@ function InputWithLabel<S>({
               {...props}
             />
           </FormControl>
-
           <FormMessage />
         </FormItem>
       )}

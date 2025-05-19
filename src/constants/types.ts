@@ -9,13 +9,51 @@ export type ExercisePlanType = {
 
 export type ExerciseType = {
   name: string;
-  category: "cardio" | "strength";
+  category: "Cardio" | "Strength";
   description: string;
-  calories_burned_per_minute: number;
-  image: string;
-  video: string;
+  calories_burn_per_minutes: number;
+  image?: string;
+  video?: string;
+  type:
+    | "Activation"
+    | "Conditioning"
+    | "Olympic_Lifting"
+    | "Plyometrics"
+    | "Powerlifting"
+    | "SMR"
+    | "Strength"
+    | "Stretching"
+    | "Strongman"
+    | "Warmup";
+  equipment?: string;
+  mechanics: "Compound" | "Isolation";
+  forceType:
+    | "Compression"
+    | "Dynamic_Stretching"
+    | "Hinge_Bilateral"
+    | "Hinge_Unilateral"
+    | "Isometric"
+    | "Press_Bilateral"
+    | "Pull"
+    | "Pull_Bilateral"
+    | "Pull_Unilateral"
+    | "Push"
+    | "Push_Bilateral"
+    | "Push_Unilateral"
+    | "Static"
+    | "Static_Stretching";
+  experience_level: "Beginner" | "Intermediate" | "Advanced";
+  instructions?: string;
+  tips?: string;
+  target_muscle?: {
+    name: string;
+    image?: string;
+  };
+  secondary_muscle?: {
+    name: string;
+    image?: string;
+  };
 };
-
 export type CreateExerciseSetType = {
   name: string;
   type: "beginner" | "intermediate" | "advanced";

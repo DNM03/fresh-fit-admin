@@ -117,6 +117,24 @@ export enum HealthActivityType {
   Burned = "Burned",
 }
 
+export interface CreateDailyHealthSummaryData {
+  height: number;
+  weight: number;
+  heartRate?: number;
+  bloodPressure?: {
+    systolic: number;
+    diastolic: number;
+  };
+  sleep?: {
+    duration: number;
+    quality: number;
+  };
+  caloriesBurned?: number;
+  caloriesConsumed?: number;
+  waterIntake?: number;
+  date: string;
+}
+
 export interface CustomRequestConfig extends AxiosRequestConfig {
   _retry?: boolean;
 }

@@ -1,70 +1,72 @@
-import { useState, useEffect } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { User, Shield, Bell, Palette, HelpCircle } from "lucide-react";
+// import { useState, useEffect } from "react";
+// import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Button } from "@/components/ui/button";
+// import { User, Shield, Bell, Palette, HelpCircle } from "lucide-react";
 
-type SettingsTab =
-  | "profile"
-  | "security"
-  | "notifications"
-  | "devices"
-  | "appearance"
-  | "billing"
-  | "help";
+// type SettingsTab =
+//   | "profile"
+//   | "security"
+//   | "notifications"
+//   | "devices"
+//   | "appearance"
+//   | "billing"
+//   | "help";
 
 import { ProfileSettings } from "@/features/settings/profile-setting";
-import { SecuritySettings } from "@/features/settings/security-setting";
-import { NotificationSettings } from "@/features/settings/notification-setting";
-import { AppearanceSettings } from "@/features/settings/appearance-setting";
-import { HelpSupport } from "@/features/settings/help-support";
+// import { SecuritySettings } from "@/features/settings/security-setting";
+// import { NotificationSettings } from "@/features/settings/notification-setting";
+// import { AppearanceSettings } from "@/features/settings/appearance-setting";
+// import { HelpSupport } from "@/features/settings/help-support";
 
 function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-  const [isMobile, setIsMobile] = useState(false);
+  // const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
+  // const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+  // useEffect(() => {
+  //   const checkIfMobile = () => {
+  //     setIsMobile(window.innerWidth < 768);
+  //   };
 
-    // Initial check
-    checkIfMobile();
+  //   // Initial check
+  //   checkIfMobile();
 
-    // Add event listener
-    window.addEventListener("resize", checkIfMobile);
+  //   // Add event listener
+  //   window.addEventListener("resize", checkIfMobile);
 
-    // Clean up
-    return () => window.removeEventListener("resize", checkIfMobile);
-  }, []);
+  //   // Clean up
+  //   return () => window.removeEventListener("resize", checkIfMobile);
+  // }, []);
 
-  const tabs = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "appearance", label: "Appearance", icon: Palette },
-    { id: "help", label: "Help & Support", icon: HelpCircle },
-  ] as const;
+  // const tabs = [
+  //   { id: "profile", label: "Profile", icon: User },
+  //   // { id: "security", label: "Security", icon: Shield },
+  //   // { id: "notifications", label: "Notifications", icon: Bell },
+  //   // { id: "appearance", label: "Appearance", icon: Palette },
+  //   // { id: "help", label: "Help & Support", icon: HelpCircle },
+  // ] as const;
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "profile":
-        return <ProfileSettings />;
-      case "security":
-        return <SecuritySettings />;
-      case "notifications":
-        return <NotificationSettings />;
-      case "appearance":
-        return <AppearanceSettings />;
-      case "help":
-        return <HelpSupport />;
-    }
-  };
+  // const renderTabContent = () => {
+  //   switch (activeTab) {
+  //     case "profile":
+  //       return <ProfileSettings />;
+  //     case "security":
+  //       return <SecuritySettings />;
+  //     case "notifications":
+  //       return <NotificationSettings />;
+  //     case "appearance":
+  //       return <AppearanceSettings />;
+  //     case "help":
+  //       return <HelpSupport />;
+  //   }
+  // };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Settings</h1>
 
-      <div className="flex flex-col md:flex-row gap-6">
+      <ProfileSettings />
+
+      {/* <div className="flex flex-col md:flex-row gap-6">
         {isMobile ? (
           // Mobile: Horizontal tabs
           <div className="w-full space-y-6">
@@ -134,7 +136,7 @@ function SettingsPage() {
             <div className="flex-1">{renderTabContent()}</div>
           </>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }
