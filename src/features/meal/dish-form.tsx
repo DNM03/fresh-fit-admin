@@ -1,39 +1,43 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, PlusCircle, Trash2, ChevronRight } from "lucide-react";
-import type {
-  DishType,
-  IngredientType,
-  DishIngredientType,
-} from "@/constants/types";
+import type { DishType, DishIngredientType } from "@/constants/types";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
 import { Form } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
+import ingredientService from "@/services/ingredient.service";
+import OptimizedSelect from "@/components/ui/optimized-select";
+import { useNavigate } from "react-router-dom";
+import dishService from "@/services/dish.service";
+import mediaService from "@/services/media.service";
 
 export default function DishForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [, setImageFiles] = useState<ImageFile[]>([]);
+  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const defaultValues: Partial<DishType> = {
     name: "",
     description: "",
     image: "",
     calories: 0,
-    instructions: "",
-    prepTime: 0,
+    instruction: "",
+    prep_time: 0,
+    fat: 0,
+    saturatedFat: 0,
+    cholesterol: 0,
+    sodium: 0,
+    carbohydrate: 0,
+    fiber: 0,
+    sugar: 0,
+    protein: 0,
   };
 
   const form = useForm<DishType>({
@@ -44,44 +48,61 @@ export default function DishForm() {
   const [ingredients, setIngredients] = useState<
     Array<DishIngredientType & { name: string }>
   >([]);
-  const [availableIngredients] = useState<IngredientType[]>([
-    {
-      id: "1",
-      name: "Chicken Breast",
-      calories: 165,
-      carbs: 0,
-      fat: 3.6,
-      image: "/placeholder.svg?height=100&width=100",
-      sugar: 0,
-      cholesterol: 85,
-      sodium: 74,
-      description: "Lean protein source, boneless and skinless.",
-    },
-    {
-      id: "2",
-      name: "Brown Rice",
-      calories: 112,
-      carbs: 24,
-      fat: 0.9,
-      image: "/placeholder.svg?height=100&width=100",
-      sugar: 0.4,
-      cholesterol: 0,
-      sodium: 5,
-      description: "Whole grain rice with a nutty flavor.",
-    },
-    {
-      id: "3",
-      name: "Olive Oil",
-      calories: 119,
-      carbs: 0,
-      fat: 14,
-      image: "/placeholder.svg?height=100&width=100",
-      sugar: 0,
-      cholesterol: 0,
-      sodium: 0,
-      description: "Heart-healthy cooking oil.",
-    },
-  ]);
+  const [ingredientOptions, setIngredientOptions] = useState<
+    { id: string; description: string }[]
+  >([]);
+  const [ingredientPagination, setIngredientPagination] = useState({
+    currentPage: 1,
+    totalItems: 0,
+    totalPages: 1,
+  });
+  const [isLoadingIngredients, setIsLoadingIngredients] =
+    useState<boolean>(false);
+  const [searchIngredientQuery, setSearchIngredientQuery] =
+    useState<string>("");
+  const nagivate = useNavigate();
+
+  const fetchIngredients = async (page: number, search: string = "") => {
+    setIsLoadingIngredients(true);
+    try {
+      const response = await ingredientService.getIngredients({
+        page,
+        limit: 20,
+        search,
+      });
+
+      if (response.data?.result) {
+        const {
+          ingredients,
+          page: currentPage,
+          total_items,
+          total_pages,
+        } = response.data.result;
+
+        const formattedOptions = ingredients.map((ing: any) => ({
+          id: ing.id || ing._id,
+          description: ing.name,
+          // Store the original ingredient data as a property if needed
+          _originalData: ing,
+        }));
+
+        setIngredientOptions(formattedOptions);
+        setIngredientPagination({
+          currentPage,
+          totalItems: total_items,
+          totalPages: total_pages,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+    } finally {
+      setIsLoadingIngredients(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIngredients(1);
+  }, []);
 
   const [newIngredient, setNewIngredient] = useState<
     DishIngredientType & { name: string }
@@ -94,16 +115,26 @@ export default function DishForm() {
   });
 
   const handleIngredientSelect = (ingredientId: string) => {
-    const selected = availableIngredients.find(
-      (ing) => ing.id === ingredientId
+    const selected = ingredientOptions.find(
+      (option) => option.id === ingredientId
     );
+
     if (selected) {
       setNewIngredient((prev) => ({
         ...prev,
         ingredientId,
-        name: selected.name,
+        name: selected.description,
       }));
     }
+  };
+
+  const handleIngredientPageChange = (page: number) => {
+    fetchIngredients(page, searchIngredientQuery);
+  };
+
+  const handleIngredientSearch = (term: string) => {
+    setSearchIngredientQuery(term);
+    fetchIngredients(1, term);
   };
 
   const handleAddIngredient = () => {
@@ -134,23 +165,51 @@ export default function DishForm() {
   };
 
   async function submitForm(data: DishType) {
-    if (ingredients.length === 0) {
-      alert("Please add at least one ingredient");
+    try {
+      setLoading(true);
+      if (ingredients.length === 0) {
+        alert("Please add at least one ingredient");
+        return;
+      }
+      let imageRes = null;
+      if (imageFiles[0]?.file) {
+        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+      }
+
+      const finalData = {
+        ...data,
+        ingredients: ingredients.map((ing) => ({
+          ingredientId: ing.ingredientId,
+          quantity: ing.quantity,
+          unit: ing.unit,
+        })),
+        image: imageRes ? imageRes?.result?.url : "",
+        rating: 0,
+      };
+      const response = await dishService.addDish(finalData);
+      if (response) {
+        alert("Dish created successfully!");
+        setFormSubmitted(true);
+        setIngredients([]);
+        setImageFiles([]);
+        nagivate(-1);
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to create dish. Please try again.");
       return;
+    } finally {
+      setLoading(false);
     }
-
-    console.log("Saving dish:", { ...data, ingredients });
-
-    setFormSubmitted(true);
   }
 
   const nextStep = () => {
     const fieldsToValidate: (keyof DishType)[] = [];
 
     if (currentStep === 1) {
-      fieldsToValidate.push("name", "description", "calories", "prepTime");
+      fieldsToValidate.push("name", "description", "calories", "prep_time");
     } else if (currentStep === 2) {
-      fieldsToValidate.push("instructions");
+      fieldsToValidate.push("instruction");
     }
 
     const isValid = fieldsToValidate.every((field) => {
@@ -229,7 +288,7 @@ export default function DishForm() {
 
                 <InputWithLabel<DishType>
                   fieldTitle="Preparation Time (minutes)"
-                  nameInSchema="prepTime"
+                  nameInSchema="prep_time"
                   placeholder="E.g., 30"
                   className="w-full"
                   type="number"
@@ -253,6 +312,64 @@ export default function DishForm() {
                 type="number"
                 required
               />
+              <div className="grid grid-cols-3 gap-4">
+                <InputWithLabel<DishType>
+                  fieldTitle="Fat (g)"
+                  nameInSchema="fat"
+                  placeholder="E.g., 10"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Saturated Fat (g)"
+                  nameInSchema="saturatedFat"
+                  placeholder="E.g., 2"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Cholesterol (mg)"
+                  nameInSchema="cholesterol"
+                  placeholder="E.g., 50"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Sodium (mg)"
+                  nameInSchema="sodium"
+                  placeholder="E.g., 200"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Carbohydrates (g)"
+                  nameInSchema="carbohydrate"
+                  placeholder="E.g., 30"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Fiber (g)"
+                  nameInSchema="fiber"
+                  placeholder="E.g., 5"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Sugar (g)"
+                  nameInSchema="sugar"
+                  placeholder="E.g., 5"
+                  className="w-full"
+                  type="number"
+                />
+                <InputWithLabel<DishType>
+                  fieldTitle="Protein (g)"
+                  nameInSchema="protein"
+                  placeholder="E.g., 25"
+                  className="w-full"
+                  type="number"
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label>Image</Label>
@@ -288,7 +405,7 @@ export default function DishForm() {
             <div className="space-y-6">
               <TextAreaWithLabel<DishType>
                 fieldTitle="Instructions"
-                nameInSchema="instructions"
+                nameInSchema="instruction"
                 placeholder="1. Preheat oven to 350°F.
 2. Season chicken with salt and pepper.
 3. Heat oil in a pan over medium heat.
@@ -318,21 +435,19 @@ export default function DishForm() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="ingredientId">Ingredient</Label>
-                    <Select
-                      onValueChange={(value) => handleIngredientSelect(value)}
+                    <OptimizedSelect
+                      options={ingredientOptions}
                       value={newIngredient.ingredientId}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a set" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableIngredients.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>
-                            {option.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onValueChange={handleIngredientSelect}
+                      placeholder="Search and select an ingredient"
+                      useServerPagination={true}
+                      currentPage={ingredientPagination.currentPage}
+                      totalItems={ingredientPagination.totalItems}
+                      totalPages={ingredientPagination.totalPages}
+                      isLoading={isLoadingIngredients}
+                      onPageChange={handleIngredientPageChange}
+                      onSearch={handleIngredientSearch}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -521,7 +636,7 @@ export default function DishForm() {
                   <div></div>
                 )}
 
-                {currentStep < 3 ? (
+                {currentStep < 3 && (
                   <Button
                     type="button"
                     onClick={nextStep}
@@ -530,9 +645,14 @@ export default function DishForm() {
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
-                ) : (
-                  <Button type="submit" className="bg-primary hover:opacity-80">
-                    Save Dish
+                )}
+                {currentStep === 3 && (
+                  <Button
+                    type="submit"
+                    className="bg-primary hover:opacity-80"
+                    disabled={loading}
+                  >
+                    {loading ? "Saving..." : "Save Dish"}
                   </Button>
                 )}
               </div>

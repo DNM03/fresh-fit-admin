@@ -5,22 +5,24 @@ import { PlusCircle } from "lucide-react";
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import ExerciseTable from "./exercise-table";
+import ExerciseSetTable from "./exercise-set-table";
 
 function ExerciseTabs() {
-  const [activeTab, setActiveTab] = React.useState("plans");
+  const [activeTab, setActiveTab] = React.useState("sets");
   const navigate = useNavigate();
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 max-w-6xl mx-auto">
       <Tabs className="w-full" value={activeTab} onValueChange={setActiveTab}>
         <div className="border-b">
           <div className="px-6 relative">
-            <TabsList className="grid grid-cols-3 mb-6 bg-muted shadow-md overflow-hidden w-full relative !px-0">
-              <TabsTrigger
+            <TabsList className="grid grid-cols-2 mb-6 bg-muted shadow-md overflow-hidden w-full relative !px-0">
+              {/* <TabsTrigger
                 value="plans"
                 className="flex items-center justify-center transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-50"
               >
                 Exercise Plans
-              </TabsTrigger>
+              </TabsTrigger> */}
 
               <TabsTrigger
                 value="sets"
@@ -41,15 +43,10 @@ function ExerciseTabs() {
                 layout
                 initial={false}
                 animate={{
-                  left:
-                    activeTab === "plans"
-                      ? "0%"
-                      : activeTab === "sets"
-                      ? "33.333%"
-                      : "66.666%",
+                  left: activeTab === "sets" ? "0%" : "50%",
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                style={{ width: "33.333%" }}
+                style={{ width: "50%" }}
               />
             </TabsList>
           </div>
@@ -72,9 +69,9 @@ function ExerciseTabs() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <div className="p-10 text-center text-muted-foreground">
+                  {/* <div className="p-10 text-center text-muted-foreground">
                     Your Exercise Plans table will appear here
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>
@@ -96,9 +93,10 @@ function ExerciseTabs() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <div className="p-10 text-center text-muted-foreground">
+                  {/* <div className="p-10 text-center text-muted-foreground">
                     Your Exercise Sets table will appear here
-                  </div>
+                  </div> */}
+                  <ExerciseSetTable />
                 </div>
               </CardContent>
             </Card>
@@ -117,10 +115,8 @@ function ExerciseTabs() {
                 </Button>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="rounded-md border bg-card shadow-sm">
-                  <div className="p-10 text-center text-muted-foreground">
-                    Your Exercises table will appear here
-                  </div>
+                <div className="rounded-md border bg-card shadow-sm overflow-auto">
+                  <ExerciseTable />
                 </div>
               </CardContent>
             </Card>

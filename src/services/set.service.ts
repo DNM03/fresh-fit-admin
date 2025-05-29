@@ -23,6 +23,7 @@ class SetService {
     type,
     min_calories,
     max_calories,
+    search,
   }: {
     page?: number;
     limit?: number;
@@ -31,9 +32,16 @@ class SetService {
     type?: string;
     min_calories?: number;
     max_calories?: number;
+    search?: string;
   }): Promise<AxiosResponse> {
     return apiService.get(
-      `/sets?page=${page}&limit=${limit}&sort_by=${sort_by}&order_by=${order_by}&type=${type}&min_calories=${min_calories}&max_calories=${max_calories}`
+      `/sets?page=${page}&limit=${limit}${
+        sort_by ? "&sort_by=" + sort_by : ""
+      }${order_by ? "&order_by=" + order_by : ""}${
+        type ? "&type=" + type : ""
+      }${min_calories ? "&min_calories=" + min_calories : ""}${
+        max_calories ? "&max_calories=" + max_calories : ""
+      }${search ? "&search=" + search : ""}`
     );
   }
   cloneSet(set_ids: string[]): Promise<AxiosResponse> {

@@ -2,66 +2,22 @@ import { useState, useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Post } from "@/constants/types";
 import PostCard from "./post-card";
-
-// Mock data generator
-const generateMockPosts = (type: string, page: number): Post[] => {
-  const startId = (page - 1) * 5 + 1;
-  return Array.from({ length: 5 }, (_, i) => ({
-    id: `${startId + i}`,
-    doctorId: `doctor-${((startId + i) % 10) + 1}`,
-    doctorName: `Dr. ${
-      [
-        "Smith",
-        "Johnson",
-        "Williams",
-        "Brown",
-        "Jones",
-        "Garcia",
-        "Miller",
-        "Davis",
-        "Rodriguez",
-        "Martinez",
-      ][(startId + i) % 10]
-    }`,
-    doctorSpecialty: [
-      "Cardiologist",
-      "Dermatologist",
-      "Neurologist",
-      "Pediatrician",
-      "Psychiatrist",
-    ][(startId + i) % 5],
-    doctorAvatar: `/placeholder.svg?height=80&width=80`,
-    content: `${type === "published" ? "Health tip" : "Pending review"} #${
-      startId + i
-    }: ${
-      [
-        "Regular exercise can help reduce the risk of chronic diseases.",
-        "Drinking enough water is essential for maintaining good health.",
-        "A balanced diet rich in fruits and vegetables supports your immune system.",
-        "Getting 7-8 hours of sleep each night is crucial for your overall health.",
-        "Managing stress through meditation or yoga can improve your mental health.",
-        "Regular check-ups with your doctor can help detect health issues early.",
-        "Limiting processed foods can reduce your risk of various health problems.",
-        "Protecting your skin from the sun can prevent skin damage and cancer.",
-        "Good posture can prevent back pain and improve your breathing.",
-        "Washing your hands regularly can prevent the spread of infections.",
-      ][(startId + i) % 10]
-    }`,
-    image: startId % 3 === 0 ? `/placeholder.svg?height=400&width=600` : null,
-    likes: type === "published" ? Math.floor(Math.random() * 1000) : 0,
-    isLiked: type === "published" ? Math.random() > 0.5 : false,
-    isFollowing: Math.random() > 0.7,
-    isSaved: Math.random() > 0.8,
-    createdAt: new Date(
-      Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000
-    ).toISOString(),
-    status: type === "published" ? "published" : "pending",
-  }));
-};
+import postService from "@/services/post.service";
 
 interface PostFeedProps {
   type: "published" | "pending";
 }
+
+// Define interface for API response structure
+// interface PostApiResponse {
+//   result: {
+//     data: Post[];
+//     page: number;
+//     limit: number;
+//     total_items: number;
+//     total_pages: number;
+//   };
+// }
 
 export default function PostFeed({ type }: PostFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -75,18 +31,44 @@ export default function PostFeed({ type }: PostFeedProps) {
 
     setLoading(true);
 
-    // Simulate API call with timeout
-    setTimeout(() => {
-      const newPosts = generateMockPosts(type, page);
-      setPosts((prev) => [...prev, ...newPosts]);
-      setPage((prev) => prev + 1);
-      setLoading(false);
+    try {
+      // Use the real API to fetch posts
+      const response = await postService.searchPost({
+        page,
+        limit: 10,
+        status: type === "published" ? "Published" : "Pending",
+        sort_by: "created_at",
+        order_by: "desc",
+      });
 
-      // Stop after 5 pages for demo purposes
-      if (page >= 5) {
+      const result = response.data as any;
+      if (result?.result?.posts?.length > 0) {
+        // Filter out any posts that already exist in our current state
+        setPosts((prev) => {
+          const existingIds = new Set(prev.map((post) => post.id));
+          const newPosts = result.result.posts.filter(
+            (post: any) => !existingIds.has(post.id)
+          );
+          return [...prev, ...newPosts];
+        });
+        setPage((prev) => prev + 1);
+
+        // Check if we've reached the last page
+        if (page >= result.result.total_pages) {
+          setHasMore(false);
+        }
+      } else {
+        // No more data to load
         setHasMore(false);
       }
-    }, 1000);
+
+      console.log("Fetched posts:", result.result);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      setHasMore(false); // Prevent further attempts if there's an error
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -145,16 +127,6 @@ export default function PostFeed({ type }: PostFeedProps) {
     );
   };
 
-  const handleToggleFollow = (doctorId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.doctorId === doctorId
-          ? { ...post, isFollowing: !post.isFollowing }
-          : post
-      )
-    );
-  };
-
   const handleToggleSave = (postId: string) => {
     setPosts((prev) =>
       prev.map((post) =>
@@ -178,7 +150,6 @@ export default function PostFeed({ type }: PostFeedProps) {
             onVerify={handleVerify}
             onReject={handleReject}
             onToggleLike={handleToggleLike}
-            onToggleFollow={handleToggleFollow}
             onToggleSave={handleToggleSave}
           />
         ))

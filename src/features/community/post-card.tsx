@@ -5,33 +5,16 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Heart,
-  Bookmark,
-  UserPlus,
-  MoreHorizontal,
-  Check,
-  X,
-  UserCheck,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Post } from "@/constants/types";
+import { Heart, Bookmark, Check, X } from "lucide-react";
 
 interface PostCardProps {
-  post: Post;
+  post: any;
   isAdmin: boolean;
   onVerify: (postId: string) => void;
   onReject: (postId: string) => void;
   onToggleLike: (postId: string) => void;
-  onToggleFollow: (doctorId: string) => void;
   onToggleSave: (postId: string) => void;
 }
 
@@ -41,21 +24,16 @@ export default function PostCard({
   onVerify,
   onReject,
   onToggleLike,
-  onToggleFollow,
   onToggleSave,
 }: PostCardProps) {
+  const isLiked = post?.reactions?.current_user_react !== null;
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
-        <Avatar className="h-10 w-10 border">
-          <AvatarImage src={post.doctorAvatar} alt={post.doctorName} />
-          <AvatarFallback>{post.doctorName.substring(0, 2)}</AvatarFallback>
-        </Avatar>
-
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{post.doctorName}</span>
-            {post.status === "pending" && (
+            <span className="font-semibold text-2xl">{post?.title}</span>
+            {post.status === "Pending" && (
               <Badge
                 variant="outline"
                 className="text-amber-500 border-amber-500"
@@ -64,28 +42,12 @@ export default function PostCard({
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
+          {/* <p className="text-sm text-muted-foreground">
             {post.doctorSpecialty}
-          </p>
+          </p> */}
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={post.isFollowing ? "text-primary" : ""}
-            onClick={() => onToggleFollow(post.doctorId)}
-          >
-            {post.isFollowing ? (
-              <UserCheck className="h-5 w-5" />
-            ) : (
-              <UserPlus className="h-5 w-5" />
-            )}
-            <span className="sr-only">
-              {post.isFollowing ? "Unfollow" : "Follow"}
-            </span>
-          </Button>
-
+        {/* <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -97,16 +59,15 @@ export default function PostCard({
               <DropdownMenuItem onClick={() => onToggleSave(post.id)}>
                 {post.isSaved ? "Unsave post" : "Save post"}
               </DropdownMenuItem>
-              <DropdownMenuItem>Report post</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </div> */}
       </CardHeader>
 
       <CardContent className="p-4 pt-0">
-        <p className="whitespace-pre-line mb-4">{post.content}</p>
+        <p className="whitespace-pre-line mb-4">{post?.content}</p>
 
-        {post.image && (
+        {/* {post.image && (
           <div className="relative rounded-md overflow-hidden mb-4">
             <img
               src={post.image || "/placeholder.svg"}
@@ -116,10 +77,10 @@ export default function PostCard({
               className="w-full object-cover"
             />
           </div>
-        )}
+        )} */}
 
         <div className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+          {formatDistanceToNow(new Date(post?.created_at), { addSuffix: true })}
         </div>
       </CardContent>
 
@@ -129,14 +90,14 @@ export default function PostCard({
             variant="ghost"
             size="sm"
             className={`flex items-center gap-1 ${
-              post.isLiked ? "text-red-500" : ""
+              isLiked ? "text-red-500" : ""
             }`}
             onClick={() => onToggleLike(post.id)}
           >
-            <Heart
-              className={`h-5 w-5 ${post.isLiked ? "fill-red-500" : ""}`}
-            />
-            <span>{post.likes > 0 ? post.likes : ""}</span>
+            <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500" : ""}`} />
+            <span>
+              {post?.reactions?.Like > 0 ? post?.reactions?.Like : "0"}
+            </span>
           </Button>
 
           <Button

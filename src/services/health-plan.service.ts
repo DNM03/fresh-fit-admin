@@ -16,18 +16,33 @@ class HealthPlanService {
   ): Promise<AxiosResponse> {
     return apiService.put("/health-plans", healthPlanData);
   }
-  searchHealthPlan(
-    search?: string,
-    page?: number,
-    limit?: number,
-    level?: string,
-    sort_by?: string,
-    order_by?: string,
-    status?: string,
-    source?: string
-  ): Promise<AxiosResponse> {
+  searchHealthPlan({
+    search,
+    page = 1,
+    limit = 25,
+    level,
+    sort_by,
+    order_by,
+    status,
+    source,
+  }: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    level?: string;
+    sort_by?: string;
+    order_by?: string;
+    status?: string;
+    source?: string;
+  }): Promise<AxiosResponse> {
     return apiService.get(
-      `/health-plans?search=${search}&page=${page}&limit=${limit}&level=${level}&sort_by=${sort_by}&order_by=${order_by}&status=${status}&source=${source}`
+      `/health-plans?page=${page}${
+        search ? `&search=${search}` : ""
+      }&limit=${limit}${level ? `&level=${level}` : ""}${
+        sort_by ? `&sort_by=${sort_by}` : ""
+      }${order_by ? `&order_by=${order_by}` : ""}${
+        status ? `&status=${status}` : ""
+      }${source ? `&source=${source}` : ""}`
     );
   }
   getHealthPlanById(id: string): Promise<AxiosResponse> {
@@ -44,6 +59,15 @@ class HealthPlanService {
   }
   getHealthPlanDetailsById(id: string): Promise<AxiosResponse> {
     return apiService.get(`/health-plan-details/${id}`);
+  }
+  addNewHealthPlanDetails(
+    healthPlanId: string,
+    healthPlanDetailsData: any
+  ): Promise<AxiosResponse> {
+    return apiService.post(
+      `/health-plan-details/${healthPlanId}`,
+      healthPlanDetailsData
+    );
   }
 }
 

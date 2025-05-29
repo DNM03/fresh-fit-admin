@@ -1,7 +1,6 @@
 import { AxiosResponse } from "axios";
 import apiService from "./api.service";
-import { Ingredient } from "@/types/ingredient.type";
-import { AddUpdateHealthPlanData } from "@/types/health-plan.type";
+import { AddUpdateIngredientData, Ingredient } from "@/types/ingredient.type";
 
 class IngredientService {
   getIngredients({
@@ -9,27 +8,33 @@ class IngredientService {
     limit,
     sort_by,
     order_by,
+    search,
   }: {
     page?: number;
     limit?: number;
     sort_by?: string;
     order_by?: string;
-  }): Promise<AxiosResponse<Ingredient[]>> {
-    return apiService.get<Ingredient[]>(
-      `/ingredients?page=${page}&limit=${limit}&sort_by=${sort_by}&order_by=${order_by}`
+    search?: string;
+  }): Promise<AxiosResponse<any>> {
+    return apiService.get<any>(
+      `/ingredients?page=${page}&limit=${limit}${
+        sort_by ? "&sort_by=" + sort_by : ""
+      }${order_by ? "&order_by=" + order_by : ""}${
+        search ? "&search=" + search : ""
+      }`
     );
   }
   getIngredientById(id: string): Promise<AxiosResponse<Ingredient>> {
     return apiService.get<Ingredient>(`/ingredients/${id}`);
   }
   addIngredient(
-    ingredientData: AddUpdateHealthPlanData
+    ingredientData: AddUpdateIngredientData
   ): Promise<AxiosResponse<Ingredient>> {
     return apiService.post<Ingredient>("/ingredients", ingredientData);
   }
   updateIngredient(
     id: string,
-    ingredientData: AddUpdateHealthPlanData
+    ingredientData: AddUpdateIngredientData
   ): Promise<AxiosResponse<Ingredient>> {
     return apiService.patch<Ingredient>(`/ingredients/${id}`, ingredientData);
   }

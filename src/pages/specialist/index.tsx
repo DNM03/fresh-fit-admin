@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import SpecialistTable from "@/features/specialist/specialist-table";
 import { PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -20,9 +21,7 @@ function Specialist() {
         </CardHeader>
         <CardContent className="p-6">
           <div className="rounded-md border bg-card shadow-sm">
-            <div className="p-10 text-center text-muted-foreground">
-              Your Specialists table will appear here
-            </div>
+            <SpecialistTable />
           </div>
         </CardContent>
       </Card>

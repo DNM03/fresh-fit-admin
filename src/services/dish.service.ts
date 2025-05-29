@@ -20,7 +20,9 @@ class DishService {
     order_by?: string;
   }): Promise<any> {
     return apiService.get(
-      `/dishes/search?search=${search}&page=${page}&limit=${limit}&sort_by=${sort_by}&order_by=${order_by}`
+      `/dishes?page=${page}${search ? `&search=${search}` : ""}&limit=${limit}${
+        sort_by ? `&sort_by=${sort_by}` : ""
+      }${order_by ? `&order_by=${order_by}` : ""}`
     );
   }
   searchDishByIngredient({

@@ -1,4 +1,4 @@
-import { AddMealData, Meal, UpdateMealData } from "@/types/meal.type";
+import { Meal, UpdateMealData } from "@/types/meal.type";
 import apiService from "./api.service";
 import { AxiosResponse } from "axios";
 
@@ -9,15 +9,23 @@ class MealService {
     type,
     sort_by,
     order_by,
+    meal_type,
+    search,
   }: {
     page?: number;
     limit?: number;
     type?: string;
     sort_by?: string;
     order_by?: string;
-  }): Promise<AxiosResponse<Meal[]>> {
-    return apiService.get<Meal[]>(
-      `/meals?page=${page}&limit=${limit}&type=${type}&sort_by=${sort_by}&order_by=${order_by}`
+    search?: string;
+    meal_type?: string;
+  }): Promise<AxiosResponse<any>> {
+    return apiService.get<any>(
+      `/meals?page=${page}&limit=${limit}${type ? `&type=${type}` : ""}${
+        sort_by ? `&sort_by=${sort_by}` : ""
+      }${order_by ? `&order_by=${order_by}` : ""}${
+        meal_type ? `&meal_type=${meal_type}` : ""
+      }${search ? `&search=${search}` : ""}`
     );
   }
   getMealById(id: string): Promise<AxiosResponse<Meal>> {
@@ -26,8 +34,8 @@ class MealService {
   getMealByDate(date: string): Promise<AxiosResponse<Meal[]>> {
     return apiService.get<Meal[]>(`/meals/users?date=${date}`);
   }
-  addNewMealPlan(mealData: AddMealData): Promise<AxiosResponse<Meal>> {
-    return apiService.post<Meal>("/meals", mealData);
+  addNewMealPlan(mealData: any): Promise<AxiosResponse<any>> {
+    return apiService.post<any>("/meals", mealData);
   }
   updateMealPlan(
     id: string,

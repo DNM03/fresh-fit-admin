@@ -12,11 +12,11 @@ import AddMealPlan from "@/pages/meals/add-meal-plan";
 import AddMeal from "@/pages/meals/add-meal";
 import AddIngredient from "@/pages/meals/add-ingredient";
 import AddDish from "@/pages/meals/add-dish";
-import AddExerciseChallenge from "@/pages/challenges/add-exercise-challenge";
-import AddMealChallenge from "@/pages/challenges/add-meal-challenge";
 import AddSpecialist from "@/pages/specialist/add-specialist";
 import ProtectedRoute from "./protected-route";
-const Specialist = React.lazy(() => import("@/pages/specialist"));
+import AddChallengePage from "@/pages/challenges/add-challenge";
+import Specialist from "@/pages/specialist";
+import AddHealthPlan from "@/pages/challenges/add-health-plan";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -105,12 +105,12 @@ const router = createBrowserRouter([
             element: withSuspense(ManageChallenges),
           },
           {
-            path: "/manage-challenges/add-exercise-challenge",
-            element: <AddExerciseChallenge />,
+            path: "/manage-challenges/add-challenge",
+            element: <AddChallengePage />,
           },
           {
-            path: "/manage-challenges/add-meal-challenge",
-            element: <AddMealChallenge />,
+            path: "/manage-challenges/add-health-plan",
+            element: <AddHealthPlan />,
           },
         ],
       },
@@ -119,7 +119,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: withSuspense(Specialist),
+            element: <Specialist />,
           },
           {
             path: "/manage-specialists/add-specialist",

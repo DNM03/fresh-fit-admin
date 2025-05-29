@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import SelectWithLabel from "@/components/inputs/select-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
@@ -25,46 +25,21 @@ import {
   Dumbbell,
 } from "lucide-react";
 import ExerciseInSetForm from "./exercise-in-set-form";
+import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
+import mediaService from "@/services/media.service";
+import exerciseService from "@/services/exercise.service";
+import setService from "@/services/set.service";
 
 function ExerciseSetForm() {
-  // Demo data for the exercise set form
-  const fakeExercisesList = [
-    {
-      id: "ex-001",
-      exerciseId: "1",
-      duration: 60,
-      reps: 15,
-      rounds: 3,
-      restPerRound: 30,
-      estimatedCaloriesBurned: 45,
-      name: "Pushup",
-    },
-    {
-      id: "ex-002",
-      exerciseId: "2",
-      duration: 180,
-      reps: 0,
-      rounds: 2,
-      restPerRound: 60,
-      estimatedCaloriesBurned: 120,
-      name: "Jogging",
-    },
-    {
-      id: "ex-003",
-      exerciseId: "3",
-      duration: 90,
-      reps: 30,
-      rounds: 4,
-      restPerRound: 45,
-      estimatedCaloriesBurned: 200,
-      name: "Boxing",
-    },
-  ];
+  const [isLoading, setIsLoading] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState<ImageFile[]>([]);
 
-  const [exercisesList, setExercisesList] =
-    useState<(CreateExerciseInSetType & { id: string; name: string })[]>(
-      fakeExercisesList
-    );
+  const [exercisesList, setExercisesList] = useState<
+    (CreateExerciseInSetType & { _id: string; name: string })[]
+  >([]);
+  const [exerciseOptions, setExerciseOptions] = useState<
+    { id: string; description: string }[]
+  >([]);
   const [addingExercise, setAddingExercise] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
     null
@@ -72,11 +47,33 @@ function ExerciseSetForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        const response = await exerciseService.getAllForSelect();
+        if (response.status === 200) {
+          // setExercisesList(response.data?.exercises);
+          setExerciseOptions(
+            response.data?.exercises.map((exercise: any) => ({
+              id: exercise._id,
+              description: exercise.name,
+            })) || []
+          );
+        } else {
+          console.error("Failed to fetch exercises");
+        }
+      } catch (error) {
+        console.error("Error fetching exercises:", error);
+      }
+    };
+    fetchExercises();
+  }, []);
+
   const defaultValues: CreateExerciseSetType = {
-    description: "A comprehensive workout targeting all major muscle groups.",
-    name: "Full Body Workout",
-    numberOfExercises: 3,
-    type: "intermediate",
+    description: "",
+    name: "",
+    numberOfExercises: 1,
+    type: "Intermediate",
   };
 
   const form = useForm<CreateExerciseSetType>({
@@ -85,45 +82,102 @@ function ExerciseSetForm() {
     resolver: zodResolver(
       z.object({
         name: z.string().nonempty(),
-        type: z.enum(["beginner", "intermediate", "advanced"]),
+        type: z.enum(["Beginner", "Intermediate", "Advanced"]),
         description: z.string().nonempty(),
         numberOfExercises: z.number().int().positive(),
       })
     ),
   });
 
-  const exerciseOptions = [
-    { description: "Pushup", id: "1" },
-    { description: "Jogging", id: "2" },
-    { description: "Boxing", id: "3" },
-    { description: "Squats", id: "4" },
-    { description: "Planks", id: "5" },
-    { description: "Lunges", id: "6" },
-    { description: "Burpees", id: "7" },
-  ];
+  function secondsToTimeWords(seconds: number): string {
+    if (seconds < 0) {
+      throw new Error("Input must be a non-negative number");
+    }
 
-  async function submitForm(data: CreateExerciseSetType) {
-    const finalData = {
-      ...data,
-      numberOfExercises: exercisesList.length,
-      exercises: exercisesList,
-    };
-    console.log("Final exercise set:", finalData);
-    setFormSubmitted(true);
+    if (seconds === 0) {
+      return "0 seconds";
+    }
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    const parts: string[] = [];
+
+    if (hours > 0) {
+      parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+    }
+
+    if (minutes > 0) {
+      parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
+    }
+
+    if (remainingSeconds > 0) {
+      parts.push(
+        `${remainingSeconds} ${remainingSeconds === 1 ? "second" : "seconds"}`
+      );
+    }
+
+    return parts.join(" ");
   }
 
-  function editExercise(exercise: CreateExerciseInSetType & { id: string }) {
-    setEditingExerciseId(exercise.id);
+  async function submitForm(data: CreateExerciseSetType) {
+    try {
+      setIsLoading(true);
+      let imageRes;
+      if (backgroundImage[0]?.file) {
+        imageRes = await mediaService.uploadImage(backgroundImage[0].file);
+      }
+      const finalData = {
+        name: data.name,
+        description: data.description,
+        type: data.type,
+        number_of_exercises: exercisesList.length,
+        set_exercises: exercisesList.map((exercise, index) => ({
+          exercise_id: exercise.exercise_id,
+          duration: exercise.duration,
+          reps: exercise.reps,
+          round: exercise.rounds,
+          timePerRound: exercise.timePerRound,
+          rest_per_round: exercise.rest_per_round,
+          estimated_calories_burned: exercise.estimated_calories_burned,
+          orderNumber: index,
+        })),
+        time: secondsToTimeWords(calculateTotalDuration()),
+        image: imageRes?.result?.url || "",
+        total_calories: calculateTotalCalories(),
+        is_youtube_workout: false,
+        youtube_id: null,
+      };
+
+      const response = await setService.addSet(finalData);
+
+      console.log("Set created successfully:", response.data);
+
+      setFormSubmitted(true);
+      form.reset(defaultValues);
+      setExercisesList([]);
+      setBackgroundImage([]);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Failed to create set. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function editExercise(exercise: CreateExerciseInSetType & { _id: string }) {
+    setEditingExerciseId(exercise._id);
     setAddingExercise(true);
   }
 
   function removeExercise(id: string) {
-    setExercisesList((prev) => prev.filter((exercise) => exercise.id !== id));
+    setExercisesList((prev) => prev.filter((exercise) => exercise._id !== id));
   }
 
   function calculateTotalCalories() {
     return exercisesList.reduce(
-      (total, exercise) => total + (exercise.estimatedCaloriesBurned || 0),
+      (total, exercise) => total + (exercise.estimated_calories_burned || 0),
       0
     );
   }
@@ -132,7 +186,7 @@ function ExerciseSetForm() {
     return exercisesList.reduce((total, exercise) => {
       const exerciseDuration =
         (exercise.duration || 0) * (exercise.rounds || 1) +
-        (exercise.restPerRound || 0) * ((exercise.rounds || 1) - 1);
+        (exercise.rest_per_round || 0) * ((exercise.rounds || 1) - 1);
       return total + exerciseDuration;
     }, 0);
   }
@@ -206,9 +260,9 @@ function ExerciseSetForm() {
                   nameInSchema="type"
                   className="w-full"
                   data={[
-                    { description: "Beginner", id: "beginner" },
-                    { description: "Intermediate", id: "intermediate" },
-                    { description: "Advanced", id: "advanced" },
+                    { description: "Beginner", id: "Beginner" },
+                    { description: "Intermediate", id: "Intermediate" },
+                    { description: "Advanced", id: "Advanced" },
                   ]}
                 />
 
@@ -235,6 +289,19 @@ function ExerciseSetForm() {
                 placeholder="Eg, Help to build chest muscles"
                 className="w-full h-24"
               />
+              <div>
+                <p className="text-base font-semibold">Background Image</p>
+                <p className="text-sm text-gray-500 mb-2">
+                  Upload a clear background image (max 20MB)
+                </p>
+                <ImageDropzone
+                  maxImages={1}
+                  maxSizeInMB={20}
+                  onImagesChange={(value) => {
+                    setBackgroundImage(value);
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end mt-8">
@@ -286,7 +353,7 @@ function ExerciseSetForm() {
               <div className="max-h-96 overflow-y-auto border rounded-lg mb-6 shadow-sm">
                 <div className="p-2 space-y-2">
                   {exercisesList.map((exercise) => (
-                    <Card key={exercise.id} className="p-4 hover:bg-gray-50">
+                    <Card key={exercise._id} className="p-4 hover:bg-gray-50">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="font-medium text-lg">
@@ -315,8 +382,8 @@ function ExerciseSetForm() {
                           </div>
 
                           <div className="mt-1 text-sm text-gray-600">
-                            Rest: {exercise.restPerRound}s per round •{" "}
-                            {exercise.estimatedCaloriesBurned} calories
+                            Rest: {exercise.rest_per_round}s per round •{" "}
+                            {exercise.estimated_calories_burned} calories
                           </div>
                         </div>
 
@@ -335,7 +402,7 @@ function ExerciseSetForm() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeExercise(exercise.id)}
+                            onClick={() => removeExercise(exercise._id)}
                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 size={16} />
@@ -386,8 +453,8 @@ function ExerciseSetForm() {
                 disabled={exercisesList.length === 0}
                 className="bg-primary hover:opacity-80"
               >
-                Create Exercise Set
-                <ArrowRight className="ml-1 h-4 w-4" />
+                {isLoading ? "Saving..." : "Create Exercise Set"}
+                {!isLoading && <ArrowRight className="ml-1 h-4 w-4" />}
               </Button>
             </div>
           </>
