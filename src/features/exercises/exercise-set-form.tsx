@@ -187,10 +187,7 @@ function ExerciseSetForm() {
 
   function calculateTotalDuration() {
     return exercisesList.reduce((total, exercise) => {
-      const exerciseDuration =
-        (exercise.duration || 0) * (exercise.rounds || 1) +
-        (exercise.rest_per_round || 0) * ((exercise.rounds || 1) - 1);
-      return total + exerciseDuration;
+      return total + (exercise.duration || 0);
     }, 0);
   }
 
