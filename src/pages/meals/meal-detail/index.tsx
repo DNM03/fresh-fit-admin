@@ -34,6 +34,7 @@ import UpdateMealForm from "@/features/meal/update-meal-form";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { DishType } from "@/constants/types";
+import { toast } from "sonner";
 
 interface MealType {
   _id: string;
@@ -88,11 +89,12 @@ function MealDetail() {
     try {
       setIsDeleting(true);
       await mealService.deleteMealPlan(id);
+      toast.success("Meal deleted successfully");
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting meal:", err);
-      alert("Failed to delete meal. Please try again.");
+      toast.error("Failed to delete meal. Please try again.");
     } finally {
       setIsDeleting(false);
     }

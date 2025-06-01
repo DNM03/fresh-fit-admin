@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import OptimizedSelect from "@/components/ui/optimized-select";
 import ingredientService from "@/services/ingredient.service";
 import dishService from "@/services/dish.service";
+import { toast } from "sonner";
 
 interface AddIngredientToDishFormProps {
   dishId: string;
@@ -86,12 +87,12 @@ function AddIngredientToDishForm({
     e.preventDefault();
 
     if (!selectedIngredientId) {
-      alert("Please select an ingredient");
+      toast.error("Please select an ingredient");
       return;
     }
 
     if (!quantity || parseFloat(quantity) <= 0) {
-      alert("Please enter a valid quantity");
+      toast.error("Please enter a valid quantity");
       return;
     }
 
@@ -109,11 +110,11 @@ function AddIngredientToDishForm({
         unit: unit,
       });
 
-      alert("Ingredient added successfully!");
+      toast.success("Ingredient added successfully!");
       onSuccess();
     } catch (error) {
       console.error("Error adding ingredient to dish:", error);
-      alert("Failed to add ingredient. Please try again.");
+      toast.error("Failed to add ingredient. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

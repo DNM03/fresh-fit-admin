@@ -5,10 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services";
 import { useState } from "react";
+import { toast } from "sonner";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -41,6 +41,7 @@ function LoginPage() {
     try {
       const response = await authService.login(data.email, data.password);
       console.log("Login successful", response);
+      toast.success("Login successful!");
       navigate("/");
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -51,6 +52,7 @@ function LoginPage() {
         setError("An error occurred. Please try again.");
       }
       console.error("Login error:", error);
+      toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -104,13 +106,13 @@ function LoginPage() {
           />
           <div className="flex flex-row items-center justify-between w-full">
             <div className="flex items-center space-x-2">
-              <Checkbox id="rememberMe" />
+              {/* <Checkbox id="rememberMe" />
               <label
                 htmlFor="rememberMe"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Remember me
-              </label>
+              </label> */}
             </div>
             <div className="inline-block">
               <Link to="/forgot-password" className="text-sm relative group">

@@ -21,6 +21,7 @@ import SetSelector from "./set-selector";
 import MealSelector from "./meal-selector";
 import { useNavigate } from "react-router-dom";
 import healthPlanService from "@/services/health-plan.service";
+import { toast } from "sonner";
 
 interface HealthPlanFormData {
   name: string;
@@ -337,6 +338,7 @@ function HealthPlanForm() {
           });
         }
       }
+      toast.success("Health plan created successfully!");
 
       setFormSubmitted(true);
       // Reset form and state
@@ -348,7 +350,7 @@ function HealthPlanForm() {
       navigate(-1);
     } catch (error) {
       console.error("Error submitting health plan:", error);
-      alert("Failed to create health plan. Please try again.");
+      toast.error("Failed to create health plan. Please try again.");
     } finally {
       setIsLoading(false);
     }

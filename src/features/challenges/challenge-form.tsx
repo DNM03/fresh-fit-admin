@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import challengeService from "@/services/challenge.service";
 import HealthPlanSelector from "./health-plan-selector";
+import { toast } from "sonner";
 
 export default function ChallengeForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -96,7 +97,7 @@ export default function ChallengeForm() {
     try {
       setIsSubmitting(true);
       if (!startDate || !endDate) {
-        alert("Please select start and end dates");
+        toast.error("Please select start and end dates");
         return;
       }
 
@@ -120,7 +121,7 @@ export default function ChallengeForm() {
           }
         } catch (error) {
           console.error("Error uploading challenge image:", error);
-          alert("Failed to upload challenge image. Please try again.");
+          toast.error("Failed to upload challenge image. Please try again.");
           return;
         }
       }
@@ -134,7 +135,7 @@ export default function ChallengeForm() {
           }
         } catch (error) {
           console.error("Error uploading prize image:", error);
-          alert("Failed to upload prize image. Please try again.");
+          toast.error("Failed to upload prize image. Please try again.");
           return;
         }
       }
@@ -148,7 +149,7 @@ export default function ChallengeForm() {
           }
         } catch (error) {
           console.error("Error uploading target image:", error);
-          alert("Failed to upload target image. Please try again.");
+          toast.error("Failed to upload target image. Please try again.");
           return;
         }
       }
@@ -169,14 +170,17 @@ export default function ChallengeForm() {
         health_plan_id: healthPlanId, // Changed to singular
       });
       if (!response || !response.data) {
+        toast.error("Failed to create challenge. Please try again.");
         throw new Error("Failed to create challenge. No response data.");
       }
       console.log("Challenge created successfully:", response.data);
-
+      toast.success("Challenge created successfully!");
       setFormSubmitted(true);
     } catch (error) {
       console.error("Error saving challenge:", error);
-      alert("Failed to create challenge. Please try again.");
+      toast.error(
+        "Failed to create challenge. Make sure all images are uploaded."
+      );
     } finally {
       setIsSubmitting(false);
     }

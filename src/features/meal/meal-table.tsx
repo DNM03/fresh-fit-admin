@@ -22,6 +22,8 @@ function MealTable() {
           limit: pagination.pageSize,
           type: "System",
           meal_type: "All",
+          sort_by: "created_at",
+          order_by: "desc",
         });
         if (response.data) {
           setMeals(response.data.result.meals);

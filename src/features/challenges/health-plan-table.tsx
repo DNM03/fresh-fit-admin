@@ -21,6 +21,8 @@ function HealthPlanTable() {
           level: "All",
           status: "All",
           source: "System",
+          sort_by: "created_at",
+          order_by: "desc",
         });
         if (response.data) {
           setHealthPlans(response.data.result.healthPlans);

@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import OptimizedSelect from "@/components/ui/optimized-select";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
 
 // type SetType = {
 //   id: string;
@@ -137,12 +138,12 @@ function SetInPlanForm({
   function submitSetForm() {
     console.log(formState);
     if (!formState.planId) {
-      alert("Please select a set");
+      toast.error("Please select a set");
       return;
     }
 
     if (!formState.day) {
-      alert("Please select a day");
+      toast.error("Please select a day");
       return;
     }
 

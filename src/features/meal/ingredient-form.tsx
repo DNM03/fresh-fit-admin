@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import mediaService from "@/services/media.service";
 import ingredientService from "@/services/ingredient.service";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 function IngredientForm() {
   const [activeTab, setActiveTab] = React.useState("details");
@@ -85,14 +86,14 @@ function IngredientForm() {
       });
 
       console.log("Ingredient created successfully:", response);
-      alert("Exercise created successfully!");
+      toast.success("Ingredient created successfully!");
       form.reset(defaultValues);
       setImageFiles([]);
       navigate(-1);
     } catch (error) {
       console.error(error);
       // Error feedback
-      alert("Failed to create exercise. Please try again.");
+      toast.error("Failed to create ingredient. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

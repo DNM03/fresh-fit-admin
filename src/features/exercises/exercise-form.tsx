@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import mediaService from "@/services/media.service";
 import exerciseService from "@/services/exercise.service";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 function ExerciseForm() {
   const [activeTab, setActiveTab] = React.useState("details");
@@ -179,7 +180,7 @@ function ExerciseForm() {
 
       console.log("Exercise created successfully:", response);
       // console.log(data);
-      alert("Exercise created successfully!");
+      toast.success("Exercise created successfully!");
       form.reset(defaultValues);
       setImageFiles([]);
       setVideoFile(null);
@@ -187,7 +188,7 @@ function ExerciseForm() {
     } catch (error) {
       console.error(error);
       // Error feedback
-      alert("Failed to create exercise. Please try again.");
+      toast.error("Failed to create exercise. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

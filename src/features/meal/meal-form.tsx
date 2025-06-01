@@ -16,6 +16,7 @@ import DishSelector from "./dish-selector";
 import mediaService from "@/services/media.service";
 import mealService from "@/services/meal.service";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function MealForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -85,7 +86,7 @@ export default function MealForm() {
     try {
       setIsLoading(true);
       if (selectedDishes.length === 0) {
-        alert("Please add at least one dish to the meal");
+        toast.error("Please add at least one dish to the meal");
         return;
       }
       let imageRes;
@@ -109,13 +110,13 @@ export default function MealForm() {
         setFormSubmitted(true);
         setImageFiles([]);
         setSelectedDishes([]);
-        alert("Meal created successfully!");
+        toast.success("Meal created successfully!");
         form.reset(defaultValues);
         navigate(-1);
       }
     } catch (error) {
       console.error("Error submitting meal form:", error);
-      alert("Failed to create meal. Please try again.");
+      toast.error("Failed to create meal. Please try again.");
     } finally {
       setIsLoading(false);
       setFormSubmitted(true);

@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import DishSelector from "@/features/meal/dish-selector";
 import { DishType } from "@/constants/types";
+import { toast } from "sonner";
 
 interface MealType {
   _id: string;
@@ -122,11 +123,11 @@ function UpdateMealForm({ meal, onSuccess }: UpdateMealFormProps) {
       });
 
       console.log("Meal updated successfully:", response);
-      alert("Meal updated successfully!");
+      toast.success("Meal updated successfully!");
       onSuccess();
     } catch (error) {
       console.error(error);
-      alert("Failed to update meal. Please try again.");
+      toast.error("Failed to update meal. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

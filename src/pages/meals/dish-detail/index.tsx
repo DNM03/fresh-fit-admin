@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AddIngredientToDishForm from "@/features/meal/add-ingredient-to-dish-form";
 import UpdateDishIngredientForm from "@/features/meal/update-dish-ingredient-form";
+import { toast } from "sonner";
 
 interface Ingredient {
   _id: string;
@@ -134,10 +135,10 @@ function DishDetail() {
         setDish(response.data.dish);
       }
 
-      alert("Ingredient removed successfully!");
+      toast.success("Ingredient removed successfully!");
     } catch (err) {
       console.error("Error removing ingredient:", err);
-      alert("Failed to remove ingredient. Please try again.");
+      toast.error("Failed to remove ingredient. Please try again.");
     } finally {
       setIsRemovingIngredient(false);
     }

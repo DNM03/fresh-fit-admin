@@ -86,11 +86,12 @@ function ChallengeDetail() {
     try {
       setIsDeleting(true);
       await challengeService.deleteChallenge(id);
+      toast.success("Challenge deleted successfully");
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting challenge:", err);
-      alert("Failed to delete challenge. Please try again.");
+      toast.error("Failed to delete challenge. Please try again.");
     } finally {
       setIsDeleting(false);
     }
