@@ -11,7 +11,8 @@ import {
   CustomRequestConfig,
   VerifyOtpCodeData,
 } from "@/types/user.type";
-const API_URL = import.meta.env.VITE_API_URL || "https://your-api-url.com/api";
+const API_URL =
+  import.meta.env.VITE_API_PRODUCTION_URL || "https://your-api-url.com/api";
 const MEDIA_API_URL =
   import.meta.env.VITE_MEDIA_API_URL || "https://your-media-api-url.com";
 
