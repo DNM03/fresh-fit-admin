@@ -24,8 +24,8 @@ class IngredientService {
       }`
     );
   }
-  getIngredientById(id: string): Promise<AxiosResponse<Ingredient>> {
-    return apiService.get<Ingredient>(`/ingredients/${id}`);
+  getIngredientById(id: string): Promise<AxiosResponse<any>> {
+    return apiService.get<any>(`/ingredients/${id}`);
   }
   addIngredient(
     ingredientData: AddUpdateIngredientData

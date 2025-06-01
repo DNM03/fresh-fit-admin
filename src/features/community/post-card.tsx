@@ -7,7 +7,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Bookmark, Check, X } from "lucide-react";
+import { Heart, Check, X, AlertCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface PostCardProps {
   post: any;
@@ -23,10 +29,7 @@ export default function PostCard({
   isAdmin,
   onVerify,
   onReject,
-  onToggleLike,
-  onToggleSave,
 }: PostCardProps) {
-  const isLiked = post?.reactions?.current_user_react !== null;
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
@@ -41,43 +44,37 @@ export default function PostCard({
                 Pending
               </Badge>
             )}
+            {post.status === "Rejected" && (
+              <Badge
+                variant="outline"
+                className="text-destructive border-destructive"
+              >
+                Rejected
+              </Badge>
+            )}
           </div>
-          {/* <p className="text-sm text-muted-foreground">
-            {post.doctorSpecialty}
-          </p> */}
         </div>
-
-        {/* <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-5 w-5" />
-                <span className="sr-only">More options</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onToggleSave(post.id)}>
-                {post.isSaved ? "Unsave post" : "Save post"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div> */}
       </CardHeader>
 
       <CardContent className="p-4 pt-0">
         <p className="whitespace-pre-line mb-4">{post?.content}</p>
 
-        {/* {post.image && (
-          <div className="relative rounded-md overflow-hidden mb-4">
-            <img
-              src={post.image || "/placeholder.svg"}
-              alt="Post image"
-              width={600}
-              height={400}
-              className="w-full object-cover"
-            />
+        {/* Rejection Reason Section */}
+        {post.status === "Rejected" && post.rejection_reason && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-md">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+              <div>
+                <p className="font-medium text-destructive">
+                  Rejection Reason:
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {post.rejection_reason}
+                </p>
+              </div>
+            </div>
           </div>
-        )} */}
+        )}
 
         <div className="text-sm text-muted-foreground">
           {formatDistanceToNow(new Date(post?.created_at), { addSuffix: true })}
@@ -86,56 +83,69 @@ export default function PostCard({
 
       <CardFooter className="p-4 pt-0 flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`flex items-center gap-1 ${
-              isLiked ? "text-red-500" : ""
-            }`}
-            onClick={() => onToggleLike(post.id)}
-          >
-            <Heart className={`h-5 w-5 ${isLiked ? "fill-red-500" : ""}`} />
+          <div className={`flex items-center gap-1 text-red-500`}>
+            <Heart className={`h-5 w-5 fill-red-500`} />
             <span>
               {post?.reactions?.Like > 0 ? post?.reactions?.Like : "0"}
             </span>
-          </Button>
+          </div>
 
-          <Button
+          {/* <Button
             variant="ghost"
             size="sm"
             className={`flex items-center gap-1 ${
               post.isSaved ? "text-primary" : ""
             }`}
-            onClick={() => onToggleSave(post.id)}
+            onClick={() => onToggleSave(post._id)}
           >
             <Bookmark
               className={`h-5 w-5 ${post.isSaved ? "fill-primary" : ""}`}
             />
             <span className="sr-only">{post.isSaved ? "Unsave" : "Save"}</span>
-          </Button>
+          </Button> */}
         </div>
 
-        {isAdmin && post.status === "pending" && (
+        {isAdmin && post.status === "Pending" && (
           <div className="flex items-center gap-2 ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive border-destructive hover:bg-destructive/10"
-              onClick={() => onReject(post.id)}
-            >
-              <X className="h-4 w-4 mr-1" />
-              Reject
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive border-destructive hover:bg-destructive/10"
+                    onClick={() => {
+                      onReject(post._id);
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Reject
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Reject this post with a reason</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-green-600 border-green-600 hover:bg-green-600/10"
-              onClick={() => onVerify(post.id)}
-            >
-              <Check className="h-4 w-4 mr-1" />
-              Approve
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-green-600 border-green-600 hover:bg-green-600/10"
+                    onClick={() => onVerify(post._id)}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Approve
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Approve this post</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )}
       </CardFooter>

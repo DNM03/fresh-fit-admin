@@ -22,7 +22,7 @@ function ChallengeTabs() {
                 value="challenges"
                 className="flex items-center justify-center transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-50"
               >
-                Exercise Challenges
+                Challenges
               </TabsTrigger>
 
               <TabsTrigger
@@ -50,9 +50,7 @@ function ChallengeTabs() {
           <TabsContent value="challenges" className="mt-0 p-0">
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
-                <h2 className="text-xl font-medium text-primary">
-                  Exercise Challenges
-                </h2>
+                <h2 className="text-xl font-medium text-primary">Challenges</h2>
                 <Button
                   className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
                   onClick={() => navigate("add-challenge")}

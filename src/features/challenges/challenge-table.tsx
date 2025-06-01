@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import challengeService from "@/services/challenge.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function ChallengeTable() {
+  const navigate = useNavigate();
   const [challenges, setChallenges] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -74,6 +76,9 @@ function ChallengeTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-challenges/${row.original._id}`);
+      }}
     />
   );
 }

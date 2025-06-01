@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import mealService from "@/services/meal.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function MealTable() {
+  const navigate = useNavigate();
   const [meals, setMeals] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -74,6 +76,9 @@ function MealTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-meals/meals/${row.original._id}`);
+      }}
     />
   );
 }

@@ -1,4 +1,4 @@
-import { Meal, UpdateMealData } from "@/types/meal.type";
+import { Meal } from "@/types/meal.type";
 import apiService from "./api.service";
 import { AxiosResponse } from "axios";
 
@@ -28,8 +28,8 @@ class MealService {
       }${search ? `&search=${search}` : ""}`
     );
   }
-  getMealById(id: string): Promise<AxiosResponse<Meal>> {
-    return apiService.get<Meal>(`/meals/${id}`);
+  getMealById(id: string): Promise<AxiosResponse<any>> {
+    return apiService.get<any>(`/meals/${id}`);
   }
   getMealByDate(date: string): Promise<AxiosResponse<Meal[]>> {
     return apiService.get<Meal[]>(`/meals/users?date=${date}`);
@@ -37,11 +37,8 @@ class MealService {
   addNewMealPlan(mealData: any): Promise<AxiosResponse<any>> {
     return apiService.post<any>("/meals", mealData);
   }
-  updateMealPlan(
-    id: string,
-    mealData: UpdateMealData
-  ): Promise<AxiosResponse<Meal>> {
-    return apiService.patch<Meal>(`/meals/${id}`, mealData);
+  updateMealPlan(id: string, mealData: any): Promise<AxiosResponse<Meal>> {
+    return apiService.put<Meal>(`/meals/${id}`, mealData);
   }
   deleteMealPlan(id: string): Promise<AxiosResponse> {
     return apiService.delete(`/meals/${id}`);

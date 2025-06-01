@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import specialistService from "@/services/specialist.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function SpecialistTable() {
+  const navigate = useNavigate();
   const [specialists, setSpecialists] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -35,7 +37,7 @@ function SpecialistTable() {
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
       {
-        accessorKey: "fullName",
+        accessorKey: "user.fullName",
         header: "Full Name",
       },
       {
@@ -49,6 +51,24 @@ function SpecialistTable() {
       {
         accessorKey: "experience_years",
         header: "Experience Years",
+      },
+      {
+        accessorKey: "user.status",
+        header: "Status",
+        Cell: ({ cell }) => {
+          const status = cell.getValue<string>();
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-xs ${
+                status === "Normal"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+          );
+        },
       },
     ],
     []
@@ -64,6 +84,9 @@ function SpecialistTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-specialists/${row.original.userId}`);
+      }}
     />
   );
 }

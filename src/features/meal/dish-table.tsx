@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import dishService from "@/services/dish.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function DishTable() {
+  const navigate = useNavigate();
   const [dishes, setDishes] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -73,6 +75,9 @@ function DishTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-meals/dishes/${row.original._id}`);
+      }}
     />
   );
 }

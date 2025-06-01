@@ -39,6 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import specialistService from "@/services/specialist.service";
+import mediaService from "@/services/media.service";
 
 const certificationSchema = z.object({
   name: z.string().min(1, "Certification name is required"),
@@ -134,6 +135,7 @@ type FormValues = z.infer<typeof formSchema>;
 function AddSpecialistForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skills, setSkills] = useState<any>([]);
@@ -216,11 +218,8 @@ function AddSpecialistForm() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      setProfileImage(URL.createObjectURL(file));
+      setProfileImageFile(file);
     }
   };
 
@@ -254,21 +253,51 @@ function AddSpecialistForm() {
     form.setValue("mainSkills", updated);
   };
 
+  // Helper function to convert all Date objects to ISO strings
+  const convertDatesToISOStrings = (obj: any): any => {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (obj instanceof Date) {
+      return obj.toISOString();
+    }
+
+    if (typeof obj === "object") {
+      if (Array.isArray(obj)) {
+        return obj.map((item) => convertDatesToISOStrings(item));
+      }
+
+      const result: any = {};
+      for (const key in obj) {
+        result[key] = convertDatesToISOStrings(obj[key]);
+      }
+      return result;
+    }
+
+    return obj;
+  };
+
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Add avatar URL from the uploaded image
+      const valuesWithDatesConverted = convertDatesToISOStrings(values);
+      let imageRes;
+      if (profileImageFile) {
+        imageRes = await mediaService.backupUploadImage(profileImageFile!);
+      }
+
       const dataToSubmit = {
-        ...values,
+        ...valuesWithDatesConverted,
         avatar:
-          profileImage ||
+          imageRes.result.url ||
           "https://i.pinimg.com/736x/77/19/21/771921cf4e62ae9fa505645ccd2cbe76.jpg",
       };
 
       console.log("Form values:", dataToSubmit);
+      const response = await specialistService.addSpecialist(dataToSubmit);
+      console.log("Specialist created:", response.data);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       alert("Specialist account created successfully");
     } catch (error) {
@@ -378,6 +407,7 @@ function AddSpecialistForm() {
                               date > new Date() || date < new Date("1940-01-01")
                             }
                             initialFocus
+                            defaultMonth={new Date(2000, 0)}
                           />
                         </PopoverContent>
                       </Popover>

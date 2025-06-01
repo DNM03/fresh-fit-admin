@@ -4,7 +4,6 @@ import {
   User,
   UserSettings,
   ProfileUpdateData,
-  PasswordChangeData,
   HealthActivityType,
   AddWaterData,
   AddHealthTrackingData,
@@ -16,20 +15,11 @@ class UserService {
   }
 
   updateProfile(userData: ProfileUpdateData): Promise<AxiosResponse<User>> {
-    return apiService.put<User>("/users/me", userData);
+    return apiService.patch<User>("/users/me", userData);
   }
 
-  changePassword(
-    old_password: string,
-    new_password: string,
-    confirm_password: string
-  ): Promise<AxiosResponse> {
-    const data: PasswordChangeData = {
-      old_password,
-      new_password,
-      confirm_password,
-    };
-    return apiService.post("/users/change-password", data);
+  changePassword(data: any): Promise<AxiosResponse> {
+    return apiService.put("/users/change-password", data);
   }
 
   getUserSettings(): Promise<AxiosResponse<UserSettings>> {

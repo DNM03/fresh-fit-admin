@@ -1,17 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -39,6 +38,8 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { userService } from "@/services";
+import mediaService from "@/services/media.service";
 
 const profileFormSchema = z.object({
   username: z
@@ -46,54 +47,210 @@ const profileFormSchema = z.object({
     .min(2, { message: "Username must be at least 2 characters." })
     .max(30, { message: "Username must not be longer than 30 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  bio: z
+  fullName: z
     .string()
-    .max(160, { message: "Bio must not be longer than 160 characters." })
-    .optional(),
-  firstName: z
-    .string()
-    .min(2, { message: "First name must be at least 2 characters." })
-    .max(50, { message: "First name must not be longer than 50 characters." }),
-  lastName: z
-    .string()
-    .min(2, { message: "Last name must be at least 2 characters." })
-    .max(50, { message: "Last name must not be longer than 50 characters." }),
+    .min(2, { message: "Full name must be at least 2 characters." })
+    .max(50, { message: "Full name must not be longer than 50 characters." }),
   dob: z.date({ required_error: "Please select a date of birth." }),
   gender: z.string({ required_error: "Please select a gender." }),
-  height: z.string().optional(),
-  weight: z.string().optional(),
+  height: z.coerce.string().optional(),
+  weight: z.coerce.string().optional(),
   fitnessLevel: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-export function ProfileSettings() {
-  const [avatar] = useState("/placeholder.svg?height=100&width=100");
+const passwordFormSchema = z
+  .object({
+    old_password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters." }),
+    new_password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters." }),
+    confirm_password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters." }),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  })
+  .refine((data) => data.old_password !== data.new_password, {
+    message: "New password cannot be the same as old password",
+    path: ["new_password"],
+  });
 
-  // Default values for the form
-  const defaultValues: Partial<ProfileFormValues> = {
+type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+
+export function ProfileSettings() {
+  const [avatar, setAvatar] = useState("/placeholder.svg?height=100&width=100");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const defaultValues: ProfileFormValues = {
     username: "fitnessuser",
     email: "user@example.com",
-    bio: "Fitness enthusiast and health advocate. Love running and strength training.",
-    firstName: "John",
-    lastName: "Doe",
+    fullName: "",
     dob: new Date("1990-01-01"),
-    gender: "male",
+    gender: "Male",
     height: "175",
     weight: "70",
-    fitnessLevel: "intermediate",
+    fitnessLevel: "Intermediate",
   };
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
+    mode: "onChange",
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    // In a real app, you would send this data to your backend
-    console.log(data);
-    // Show success message
-    alert("Profile updated successfully!");
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      old_password: "",
+      new_password: "",
+      confirm_password: "",
+    },
+  });
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+
+      const fileUrl = URL.createObjectURL(file);
+      setAvatar(fileUrl);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatar("/placeholder.svg?height=100&width=100");
+    setAvatarFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setIsLoading(true);
+      try {
+        const response = await userService.getCurrentUser();
+        if (response.data) {
+          const userData = response.data.result;
+
+          form.reset({
+            username: userData.username || defaultValues.username,
+            email: userData.email || defaultValues.email,
+            fullName: userData.fullName || defaultValues.fullName,
+            dob: userData.date_of_birth
+              ? new Date(userData.date_of_birth)
+              : defaultValues.dob,
+            gender: userData.gender === 1 ? "Female" : "Male",
+            height: userData.height?.toString() || defaultValues.height,
+            weight: userData.weight?.toString() || defaultValues.weight,
+            fitnessLevel: userData.level || defaultValues.fitnessLevel,
+          });
+          setAvatar(userData.avatar || "/placeholder.svg?height=100&width=100");
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        toast.error("Failed to load profile data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // Add cleanup for object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (avatar && avatar.startsWith("blob:")) {
+        URL.revokeObjectURL(avatar);
+      }
+    };
+  }, [avatar]);
+
+  async function onSubmit(data: ProfileFormValues) {
+    try {
+      setIsSubmitting(true);
+      const updateData = {
+        fullName: data.fullName,
+        date_of_birth: data.dob.toISOString(),
+        gender: data.gender === "Female" ? 1 : 0,
+        height: parseFloat(data.height || "0"),
+        weight: parseFloat(data.weight || "0"),
+        level: data.fitnessLevel,
+      };
+
+      let imageRes;
+      if (avatarFile) {
+        imageRes = await mediaService.backupUploadImage(avatarFile);
+      }
+
+      const finalData = {
+        ...updateData,
+        avatar: imageRes?.result?.url || avatar,
+      };
+
+      const response = await userService.updateProfile(finalData);
+      if (response.status !== 200) {
+        throw new Error("Failed to update profile");
+      }
+
+      form.reset({
+        ...form.getValues(),
+        fullName: finalData.fullName,
+        dob: new Date(finalData.date_of_birth),
+        gender: finalData.gender === 1 ? "Female" : "Male",
+        height: finalData.height.toString(),
+        weight: finalData.weight.toString(),
+        fitnessLevel: finalData.level,
+      });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function onPasswordSubmit(data: PasswordFormValues) {
+    try {
+      setIsChangingPassword(true);
+
+      const response = await userService.changePassword({
+        old_password: data.old_password,
+        new_password: data.new_password,
+        confirm_password: data.confirm_password,
+      });
+
+      if (response.status === 200) {
+        toast.success("Password changed successfully");
+        passwordForm.reset();
+      } else {
+        throw new Error("Failed to change password");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast.error(
+        "Failed to change password. Please check your current password."
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
   }
 
   return (
@@ -110,10 +267,20 @@ export function ProfileSettings() {
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
                 <AvatarImage src={avatar} alt="Profile picture" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>
+                  {form.watch("fullName")?.charAt(0) || "U"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <Button variant="outline" size="sm" onClick={handleUploadClick}>
                   <Upload className="mr-2 h-4 w-4" />
                   Change
                 </Button>
@@ -121,6 +288,7 @@ export function ProfileSettings() {
                   variant="outline"
                   size="sm"
                   className="text-destructive"
+                  onClick={handleRemoveAvatar}
                 >
                   Remove
                 </Button>
@@ -130,224 +298,286 @@ export function ProfileSettings() {
               <p className="text-sm text-muted-foreground mb-2">
                 Upload a photo for your profile. Recommended size is 400x400px.
               </p>
-              <p className="text-sm font-medium">Profile Visibility</p>
+              {avatarFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected file: {avatarFile.name} (
+                  {Math.round(avatarFile.size / 1024)} KB)
+                </p>
+              )}
+              <p className="text-sm font-medium mt-2">Profile Visibility</p>
               <p className="text-sm text-muted-foreground">
                 Your profile is visible to all users in the fitness community.
               </p>
             </div>
           </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="fitnessuser" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        This is your public display name.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="user@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="dob"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date of Birth</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <div className="animate-pulse">Loading profile data...</div>
+            </div>
+          ) : (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of Birth</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() ||
+                                date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
                           </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gender</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="height"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Height (cm)</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
+                          <Input type="number" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="non-binary">Non-binary</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="prefer-not-to-say">
-                            Prefer not to say
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="weight"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Weight (kg)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fitnessLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fitness Level</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Beginner">Beginner</SelectItem>
+                            <SelectItem value="Intermediate">
+                              Intermediate
+                            </SelectItem>
+                            <SelectItem value="Advanced">Advanced</SelectItem>
+                            <SelectItem value="Professional">
+                              Professional
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-4">
+                  <Button type="button" variant="outline">
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Change Password</CardTitle>
+          <CardDescription>
+            Update your password to keep your account secure.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...passwordForm}>
+            <form
+              onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+              className="space-y-6"
+            >
+              <div className="grid gap-4">
                 <FormField
-                  control={form.control}
-                  name="height"
+                  control={passwordForm.control}
+                  name="old_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Height (cm)</FormLabel>
+                      <FormLabel>Current Password</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="175" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Enter your current password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
-                  control={form.control}
-                  name="weight"
+                  control={passwordForm.control}
+                  name="new_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Weight (kg)</FormLabel>
+                      <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="70" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="Enter your new password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
-                  control={form.control}
-                  name="fitnessLevel"
+                  control={passwordForm.control}
+                  name="confirm_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fitness Level</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select fitness level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">
-                            Intermediate
-                          </SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                          <SelectItem value="professional">
-                            Professional
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Confirm your new password"
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Tell us about yourself"
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Brief description for your profile. Maximum 160
-                      characters.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline">
-                  Cancel
+
+              <div className="flex justify-end">
+                <Button type="submit" disabled={isChangingPassword}>
+                  {isChangingPassword ? (
+                    <>
+                      <span className="mr-2">Changing...</span>
+                    </>
+                  ) : (
+                    "Change Password"
+                  )}
                 </Button>
-                <Button type="submit">Save Changes</Button>
               </div>
             </form>
           </Form>

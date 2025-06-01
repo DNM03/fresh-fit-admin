@@ -31,6 +31,15 @@ class SpecialistService {
   getSkills(): Promise<AxiosResponse<any>> {
     return apiService.get<any>(`/skills`);
   }
+  addSpecialist(data: any): Promise<AxiosResponse<any>> {
+    return apiService.post<any>(`/users/expert/create`, data);
+  }
+  banSpecialist(id: string): Promise<AxiosResponse<any>> {
+    return apiService.post<any>(`/users/ban/${id}`);
+  }
+  unbanSpecialist(id: string): Promise<AxiosResponse<any>> {
+    return apiService.post<any>(`/users/unban/${id}`);
+  }
 }
 const specialistService = new SpecialistService();
 export default specialistService;

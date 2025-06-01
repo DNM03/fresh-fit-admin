@@ -71,6 +71,12 @@ class PostService {
       `/posts/${id}/reactions/${reactionId}`
     );
   }
+  approvePost(id: string): Promise<AxiosResponse> {
+    return apiService.patch<AxiosResponse>(`/posts/approve/${id}`);
+  }
+  rejectPost(id: string, data: any): Promise<AxiosResponse> {
+    return apiService.post<AxiosResponse>(`/posts/reject/${id}`, data);
+  }
 }
 
 const postService = new PostService();

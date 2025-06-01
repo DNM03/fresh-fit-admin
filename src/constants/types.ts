@@ -86,7 +86,7 @@ export type IngredientType = {
 };
 
 export interface Post {
-  id: string;
+  _id: string;
   doctorId: string;
   doctorName: string;
   doctorSpecialty: string;

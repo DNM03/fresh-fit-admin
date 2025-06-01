@@ -13,6 +13,7 @@ interface BarChartProps {
   data: any[];
   height?: number;
   layout?: "horizontal" | "vertical";
+  yAxisDomain?: [number, number]; // Added y-axis domain prop
   bars: {
     dataKey: string;
     name: string;
@@ -25,6 +26,7 @@ export function BarChart({
   data,
   height = 300,
   layout = "horizontal",
+  yAxisDomain, // Accept the domain prop
   bars,
 }: BarChartProps) {
   return (
@@ -48,11 +50,12 @@ export function BarChart({
           {layout === "horizontal" ? (
             <>
               <XAxis dataKey="name" />
-              <YAxis />
+              <YAxis domain={yAxisDomain} /> {/* Apply domain if provided */}
             </>
           ) : (
             <>
-              <XAxis type="number" />
+              <XAxis type="number" domain={yAxisDomain} />{" "}
+              {/* Apply domain for vertical layout */}
               <YAxis dataKey="name" type="category" width={100} />
             </>
           )}

@@ -1,8 +1,4 @@
-import {
-  AddDishData,
-  AddUpdateDishIngredientData,
-  UpdateDishData,
-} from "@/types/dish.type";
+import { AddDishData, AddUpdateDishIngredientData } from "@/types/dish.type";
 import apiService from "./api.service";
 
 class DishService {
@@ -53,7 +49,7 @@ class DishService {
   addDish(dishData: AddDishData): Promise<any> {
     return apiService.post("/dishes", dishData);
   }
-  updateDishInfo(id: string, dishData: UpdateDishData): Promise<any> {
+  updateDishInfo(id: string, dishData: any): Promise<any> {
     return apiService.patch(`/dishes/${id}`, dishData);
   }
   updateDishIngredient(

@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import setService from "@/services/set.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function ExerciseSetTable() {
+  const navigate = useNavigate();
   const [exerciseSets, setExerciseSets] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -73,6 +75,9 @@ function ExerciseSetTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-exercises/exercise-sets/${row.original._id}`);
+      }}
     />
   );
 }

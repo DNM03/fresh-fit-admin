@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import ingredientService from "@/services/ingredient.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function IngredientTable() {
+  const navigate = useNavigate();
   const [ingredients, setIngredients] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -71,6 +73,9 @@ function IngredientTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-meals/ingredients/${row.original._id}`);
+      }}
     />
   );
 }
