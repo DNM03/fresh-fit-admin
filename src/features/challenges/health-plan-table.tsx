@@ -2,8 +2,10 @@ import { Table } from "@/components/ui/mantine-table";
 import healthPlanService from "@/services/health-plan.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function HealthPlanTable() {
+  const navigate = useNavigate();
   const [healthPlans, setHealthPlans] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
@@ -77,6 +79,9 @@ function HealthPlanTable() {
       manualPagination
       state={{ pagination, isLoading }}
       enableRowActions={true}
+      onActionClick={(row) => {
+        navigate(`/manage-challenges/health-plans/${row.original._id}`);
+      }}
     />
   );
 }

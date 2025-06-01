@@ -24,6 +24,10 @@ import DishDetail from "@/pages/meals/dish-detail";
 import MealDetail from "@/pages/meals/meal-detail";
 import SpecialistDetailPage from "@/pages/specialist/detail";
 import ChallengeDetail from "@/pages/challenges/detail";
+import HealthPlanDetail from "@/pages/challenges/health-plan-detail";
+import ForgotPasswordPage from "@/pages/forgot-password.tsx";
+import ResetPasswordPage from "@/pages/forgot-password.tsx/reset-password";
+import VerifyOtpPage from "@/pages/forgot-password.tsx/verify-otp";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -143,6 +147,10 @@ const router = createBrowserRouter([
             path: "/manage-challenges/:id",
             element: <ChallengeDetail />,
           },
+          {
+            path: "/manage-challenges/health-plans/:id",
+            element: <HealthPlanDetail />,
+          },
         ],
       },
       {
@@ -179,6 +187,23 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/forgot-password",
+    children: [
+      {
+        index: true,
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: "/forgot-password/reset-password",
+        element: <ResetPasswordPage />,
+      },
+      {
+        path: "/forgot-password/verify-otp",
+        element: <VerifyOtpPage />,
+      },
+    ],
   },
 ]);
 

@@ -12,9 +12,10 @@ class HealthPlanService {
     return apiService.post("/health-plans", healthPlanData);
   }
   updateHealthPlan(
+    id: string,
     healthPlanData: AddUpdateHealthPlanData
   ): Promise<AxiosResponse> {
-    return apiService.put("/health-plans", healthPlanData);
+    return apiService.patch(`/health-plans/${id}`, healthPlanData);
   }
   searchHealthPlan({
     search,
@@ -67,6 +68,14 @@ class HealthPlanService {
     return apiService.post(
       `/health-plan-details/${healthPlanId}`,
       healthPlanDetailsData
+    );
+  }
+  deleteHealthPlanDetails(
+    healthPlanId: string,
+    healthPlanDetailsId: string
+  ): Promise<AxiosResponse> {
+    return apiService.delete(
+      `/health-plan-details/${healthPlanId}/${healthPlanDetailsId}`
     );
   }
 }
