@@ -13,6 +13,7 @@ import { AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import mediaService from "@/services/media.service";
 import ingredientService from "@/services/ingredient.service";
+import { toast } from "sonner";
 
 interface IngredientType {
   _id?: string;
@@ -120,11 +121,11 @@ function UpdateIngredientForm({
       );
 
       console.log("Ingredient updated successfully:", response);
-      alert("Ingredient updated successfully!");
+      toast.success("Ingredient updated successfully!");
       onSuccess();
     } catch (error) {
       console.error(error);
-      alert("Failed to update ingredient. Please try again.");
+      toast.error("Failed to update ingredient. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

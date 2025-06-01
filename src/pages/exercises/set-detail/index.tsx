@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import UpdateExerciseSetForm from "@/features/exercises/update-exercise-set-form";
+import { toast } from "sonner";
 
 interface Exercise {
   _id: string;
@@ -147,11 +148,12 @@ function ExerciseSetDetail() {
     try {
       setIsDeleting(true);
       await setService.deleteSet(id);
+      toast.success("Exercise set deleted successfully");
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting exercise set:", err);
-      alert("Failed to delete exercise set. Please try again.");
+      toast.error("Failed to delete exercise set. Please try again.");
     } finally {
       setIsDeleting(false);
     }

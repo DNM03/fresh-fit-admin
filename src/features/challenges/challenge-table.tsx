@@ -22,6 +22,8 @@ function ChallengeTable() {
           limit: pagination.pageSize,
           type: "All",
           status: "All",
+          sort_by: "created_at",
+          order_by: "desc",
         });
         if (response.data) {
           setChallenges(response.data.result.challenges);

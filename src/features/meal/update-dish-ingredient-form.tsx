@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import dishService from "@/services/dish.service";
+import { toast } from "sonner";
 
 interface Ingredient {
   _id: string;
@@ -37,7 +38,7 @@ function UpdateDishIngredientForm({
     e.preventDefault();
 
     if (!quantity || parseFloat(quantity) <= 0) {
-      alert("Please enter a valid quantity");
+      toast.error("Please enter a valid quantity");
       return;
     }
 
@@ -49,11 +50,11 @@ function UpdateDishIngredientForm({
         unit: unit,
       });
 
-      alert("Ingredient updated successfully!");
+      toast.success("Ingredient updated successfully!");
       onSuccess();
     } catch (error) {
       console.error("Error updating ingredient in dish:", error);
-      alert("Failed to update ingredient. Please try again.");
+      toast.error("Failed to update ingredient. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

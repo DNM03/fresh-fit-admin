@@ -20,6 +20,8 @@ function ExerciseTable() {
         const response = await exerciseService.searchExercise({
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize,
+          sort_by: "created_at",
+          order_by: "desc",
         });
         if (response.data) {
           setExercises(response.data.result.exercises);

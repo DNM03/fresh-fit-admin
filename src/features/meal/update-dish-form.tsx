@@ -13,6 +13,7 @@ import { AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import mediaService from "@/services/media.service";
 import dishService from "@/services/dish.service";
+import { toast } from "sonner";
 
 interface DishType {
   _id: string;
@@ -139,11 +140,11 @@ function UpdateDishForm({ dish, onSuccess }: UpdateDishFormProps) {
       });
 
       console.log("Dish updated successfully:", response);
-      alert("Dish updated successfully!");
+      toast.success("Dish updated successfully!");
       onSuccess();
     } catch (error) {
       console.error(error);
-      alert("Failed to update dish. Please try again.");
+      toast.error("Failed to update dish. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import specialistService from "@/services/specialist.service";
 import mediaService from "@/services/media.service";
+import { toast } from "sonner";
 
 const certificationSchema = z.object({
   name: z.string().min(1, "Certification name is required"),
@@ -298,11 +299,10 @@ function AddSpecialistForm() {
       const response = await specialistService.addSpecialist(dataToSubmit);
       console.log("Specialist created:", response.data);
 
-
-      alert("Specialist account created successfully");
+      toast.success("Specialist account created successfully");
     } catch (error) {
       console.error("Error creating specialist account:", error);
-      alert("Failed to create specialist account. Please try again.");
+      toast.error("Failed to create specialist account. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

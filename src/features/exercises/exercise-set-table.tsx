@@ -21,6 +21,8 @@ function ExerciseSetTable() {
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize,
           type: "System",
+          sort_by: "created_at",
+          order_by: "desc",
         });
         if (response.data) {
           setExerciseSets(response.data.result.sets);

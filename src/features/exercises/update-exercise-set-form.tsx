@@ -25,6 +25,7 @@ import exerciseService from "@/services/exercise.service";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import OptimizedSelect from "@/components/ui/optimized-select";
+import { toast } from "sonner";
 
 interface Exercise {
   _id: string;
@@ -245,7 +246,7 @@ function UpdateExerciseSetForm({
 
   const handleSaveExercise = () => {
     if (!selectedExercise) {
-      alert("Please select an exercise");
+      toast.error("Please select an exercise");
       return;
     }
 
@@ -332,7 +333,7 @@ function UpdateExerciseSetForm({
 
   const submitForm = async (data: any) => {
     if (exercisesList.length === 0) {
-      alert("Please add at least one exercise to the set");
+      toast.error("Please add at least one exercise to the set");
       return;
     }
 
@@ -377,11 +378,11 @@ function UpdateExerciseSetForm({
       });
 
       console.log("Exercise set updated successfully:", response);
-      alert("Exercise set updated successfully!");
+      toast.success("Exercise set updated successfully!");
       onSuccess();
     } catch (error) {
       console.error("Error updating exercise set:", error);
-      alert("Failed to update exercise set. Please try again.");
+      toast.error("Failed to update exercise set. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

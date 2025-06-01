@@ -16,6 +16,7 @@ import { AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import mediaService from "@/services/media.service";
 import exerciseService from "@/services/exercise.service";
+import { toast } from "sonner";
 
 interface UpdateExerciseFormProps {
   exercise: any;
@@ -204,11 +205,11 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
       });
 
       console.log("Exercise updated successfully:", response);
-      alert("Exercise updated successfully!");
+      toast.success("Exercise updated successfully!");
       onSuccess();
     } catch (error) {
       console.error(error);
-      alert("Failed to update exercise. Please try again.");
+      toast.error("Failed to update exercise. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

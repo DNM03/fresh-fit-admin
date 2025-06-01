@@ -20,6 +20,8 @@ function IngredientTable() {
         const response = await ingredientService.getIngredients({
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize,
+          sort_by: "created_at",
+          order_by: "desc",
         });
         if (response.data) {
           setIngredients(response.data.result.ingredients);

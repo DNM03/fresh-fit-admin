@@ -18,6 +18,7 @@ import HealthPlanSelector from "./health-plan-selector";
 
 import challengeService from "@/services/challenge.service";
 import mediaService from "@/services/media.service";
+import { toast } from "sonner";
 
 interface UpdateChallengeFormProps {
   challenge: any;
@@ -183,11 +184,11 @@ export default function UpdateChallengeForm({
         updateData
       );
       console.log("Challenge updated successfully:", response);
-
+      toast.success("Challenge updated successfully!");
       onSuccess();
     } catch (error) {
       console.error("Error updating challenge:", error);
-      alert("Failed to update challenge. Please try again.");
+      toast.error("Failed to update challenge. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

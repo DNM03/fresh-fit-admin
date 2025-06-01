@@ -29,6 +29,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import UpdateIngredientForm from "@/features/meal/update-ingredient-form";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface IngredientType {
   _id: string;
@@ -86,11 +87,12 @@ function IngredientDetail() {
     try {
       setIsDeleting(true);
       await ingredientService.deleteIngredient(id);
+      toast.success("Ingredient deleted successfully");
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting ingredient:", err);
-      alert("Failed to delete ingredient. Please try again.");
+      toast.error("Failed to delete ingredient. Please try again.");
     } finally {
       setIsDeleting(false);
     }

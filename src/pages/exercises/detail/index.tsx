@@ -23,6 +23,7 @@ import {
 import { ExerciseType } from "@/constants/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpdateExerciseForm from "@/features/exercises/update-exercise-form";
+import { toast } from "sonner";
 
 function ExerciseDetail() {
   const { id } = useParams<{ id: string }>();
@@ -64,11 +65,12 @@ function ExerciseDetail() {
     try {
       setIsDeleting(true);
       await exerciseService.deleteExercise(id);
+      toast.success("Exercise deleted successfully");
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting exercise:", err);
-      alert("Failed to delete exercise. Please try again.");
+      toast.error("Failed to delete exercise. Please try again.");
     } finally {
       setIsDeleting(false);
     }

@@ -12,6 +12,8 @@ import {
 import app_logo from "@/assets/images/freshfit_logo.png";
 
 import { useLocation, useNavigate } from "react-router-dom";
+import { authService } from "@/services";
+import { toast } from "sonner";
 
 function LeftSidebar() {
   const location = useLocation();
@@ -58,6 +60,17 @@ function LeftSidebar() {
       path: "/settings",
     },
   ];
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      authService.clearAuth();
+    } finally {
+      toast.success("Logged out successfully");
+      navigate("/login");
+    }
+  };
   return (
     <div className="w-64 min-w-64 border-r h-screen flex flex-col items-center py-4 gap-y-4 sticky top-0">
       <img src={app_logo} alt="App logo" className="w-24" />
@@ -92,7 +105,7 @@ function LeftSidebar() {
       ))}
       <button
         className="mt-auto mb-4 flex flex-row items-center gap-x-2 bg-red-600 w-48 justify-center mx-4 text-white p-[6px] rounded-md hover:bg-red-500"
-        onClick={() => navigate("/login")}
+        onClick={handleLogout}
       >
         <LogOut size={18} />
         Log out

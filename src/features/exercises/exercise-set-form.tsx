@@ -29,6 +29,7 @@ import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 import mediaService from "@/services/media.service";
 import exerciseService from "@/services/exercise.service";
 import setService from "@/services/set.service";
+import { toast } from "sonner";
 
 function ExerciseSetForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +127,9 @@ function ExerciseSetForm() {
       setIsLoading(true);
       let imageRes;
       if (backgroundImage[0]?.file) {
-        imageRes = await mediaService.uploadImage(backgroundImage[0].file);
+        imageRes = await mediaService.backupUploadImage(
+          backgroundImage[0].file
+        );
       }
       const finalData = {
         name: data.name,
@@ -153,14 +156,14 @@ function ExerciseSetForm() {
       const response = await setService.addSet(finalData);
 
       console.log("Set created successfully:", response.data);
-
+      toast.success("Exercise set created successfully!");
       setFormSubmitted(true);
       form.reset(defaultValues);
       setExercisesList([]);
       setBackgroundImage([]);
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Failed to create set. Please try again.");
+      toast.error("Failed to create set. Please try again.");
     } finally {
       setIsLoading(false);
     }

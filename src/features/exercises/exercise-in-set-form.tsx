@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 // } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import OptimizedSelect from "@/components/ui/optimized-select";
+import { toast } from "sonner";
 
 type Props = {
   exerciseOptions: { id: string; description: string }[];
@@ -86,7 +87,7 @@ function ExerciseInSetForm({
     console.log("Exercise data:", formState);
 
     if (!formState.exercise_id) {
-      alert("Please select an exercise");
+      toast.error("Please select an exercise");
       return;
     }
 

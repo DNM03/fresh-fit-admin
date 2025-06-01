@@ -15,6 +15,7 @@ import OptimizedSelect from "@/components/ui/optimized-select";
 import { useNavigate } from "react-router-dom";
 import dishService from "@/services/dish.service";
 import mediaService from "@/services/media.service";
+import { toast } from "sonner";
 
 export default function DishForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -143,7 +144,7 @@ export default function DishForm() {
       !newIngredient.quantity ||
       !newIngredient.unit
     ) {
-      alert("Please fill in all ingredient fields");
+      toast.error("Please fill in all ingredient fields");
       return;
     }
 
@@ -168,7 +169,7 @@ export default function DishForm() {
     try {
       setLoading(true);
       if (ingredients.length === 0) {
-        alert("Please add at least one ingredient");
+        toast.error("Please add at least one ingredient");
         return;
       }
       let imageRes = null;
@@ -188,7 +189,7 @@ export default function DishForm() {
       };
       const response = await dishService.addDish(finalData);
       if (response) {
-        alert("Dish created successfully!");
+        toast.success("Dish created successfully!");
         setFormSubmitted(true);
         setIngredients([]);
         setImageFiles([]);
@@ -196,7 +197,7 @@ export default function DishForm() {
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Failed to create dish. Please try again.");
+      toast.error("Failed to create dish. Please try again.");
       return;
     } finally {
       setLoading(false);
