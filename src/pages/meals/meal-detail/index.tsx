@@ -354,7 +354,7 @@ function MealDetail() {
                               size="sm"
                               variant="ghost"
                               onClick={() =>
-                                navigate(`/meals/dish-detail/${dish._id}`)
+                                navigate(`/manage-meals/dishes/${dish._id}`)
                               }
                             >
                               View Details

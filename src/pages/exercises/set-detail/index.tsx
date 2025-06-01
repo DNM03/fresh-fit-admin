@@ -419,111 +419,117 @@ function ExerciseSetDetail() {
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
                   {exerciseSet.set_exercises.length > 0 ? (
-                    exerciseSet.set_exercises.map((exerciseItem, index) => {
-                      const exercise =
-                        exerciseDetails[exerciseItem.exercise_id];
+                    exerciseSet.set_exercises.map(
+                      (exerciseItem: any, index: number) => {
+                        const exercise =
+                          exerciseDetails[exerciseItem.exercise_id];
 
-                      return (
-                        <Card
-                          key={exerciseItem._id}
-                          className="overflow-hidden"
-                        >
-                          <div className="flex flex-col md:flex-row">
-                            {exercise?.image && (
-                              <div className="w-full md:w-1/4">
-                                <img
-                                  src={exercise.image}
-                                  alt={exercise.name || "Exercise image"}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            )}
-                            <div className="p-4 flex-1">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h3 className="font-medium text-lg">
-                                    {index + 1}.{" "}
-                                    {exercise?.name || "Unknown Exercise"}
-                                  </h3>
-                                  {exercise?.category && (
-                                    <Badge variant="outline" className="mt-1">
-                                      {exercise.category}
-                                    </Badge>
+                        return (
+                          <Card
+                            key={exerciseItem._id}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex flex-col md:flex-row">
+                              {exercise?.image && (
+                                <div className="w-full md:w-1/4">
+                                  <img
+                                    src={exercise.image}
+                                    alt={exercise.name || "Exercise image"}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              <div className="p-4 flex-1">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h3 className="font-medium text-lg">
+                                      {index + 1}.{" "}
+                                      {exercise?.name || "Unknown Exercise"}
+                                    </h3>
+                                    {exercise?.category && (
+                                      <Badge variant="outline" className="mt-1">
+                                        {exercise.category}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {exercise?._id && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        navigate(
+                                          `/manage-exercises/exercises/${exercise._id}`
+                                        )
+                                      }
+                                    >
+                                      View Details
+                                    </Button>
                                   )}
                                 </div>
-                                {exercise?._id && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      navigate(`/exercises/${exercise._id}`)
-                                    }
-                                  >
-                                    View Details
-                                  </Button>
+
+                                {exercise?.description && (
+                                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                    {exercise.description}
+                                  </p>
                                 )}
-                              </div>
 
-                              {exercise?.description && (
-                                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                  {exercise.description}
-                                </p>
-                              )}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                                  <div className="bg-gray-50 p-2 rounded-md">
+                                    <p className="text-xs text-gray-500">
+                                      Duration
+                                    </p>
+                                    <p className="font-medium">
+                                      {exerciseItem.duration}s
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-50 p-2 rounded-md">
+                                    <p className="text-xs text-gray-500">
+                                      Reps
+                                    </p>
+                                    <p className="font-medium">
+                                      {exerciseItem.reps || "N/A"}
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-50 p-2 rounded-md">
+                                    <p className="text-xs text-gray-500">
+                                      Rounds
+                                    </p>
+                                    <p className="font-medium">
+                                      {exerciseItem.rounds}
+                                    </p>
+                                  </div>
+                                  <div className="bg-gray-50 p-2 rounded-md">
+                                    <p className="text-xs text-gray-500">
+                                      Calories
+                                    </p>
+                                    <p className="font-medium">
+                                      {exerciseItem.estimated_calories_burned}
+                                    </p>
+                                  </div>
+                                </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-                                <div className="bg-gray-50 p-2 rounded-md">
-                                  <p className="text-xs text-gray-500">
-                                    Duration
-                                  </p>
-                                  <p className="font-medium">
-                                    {exerciseItem.duration}s
-                                  </p>
-                                </div>
-                                <div className="bg-gray-50 p-2 rounded-md">
-                                  <p className="text-xs text-gray-500">Reps</p>
-                                  <p className="font-medium">
-                                    {exerciseItem.reps || "N/A"}
-                                  </p>
-                                </div>
-                                <div className="bg-gray-50 p-2 rounded-md">
-                                  <p className="text-xs text-gray-500">
-                                    Rounds
-                                  </p>
-                                  <p className="font-medium">
-                                    {exerciseItem.rounds}
-                                  </p>
-                                </div>
-                                <div className="bg-gray-50 p-2 rounded-md">
-                                  <p className="text-xs text-gray-500">
-                                    Calories
-                                  </p>
-                                  <p className="font-medium">
-                                    {exerciseItem.estimated_calories_burned}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="mt-3 text-sm flex justify-between">
-                                <div>
-                                  <span className="text-gray-500">
-                                    Rest per round:
-                                  </span>{" "}
-                                  {exerciseItem.rest_per_round}s
-                                </div>
-                                {exerciseItem.timePerRound > 0 && (
+                                <div className="mt-3 text-sm flex justify-between">
                                   <div>
                                     <span className="text-gray-500">
-                                      Time per round:
+                                      Rest per round:
                                     </span>{" "}
-                                    {exerciseItem.timePerRound}s
+                                    {exerciseItem.rest_per_round}s
                                   </div>
-                                )}
+                                  {exerciseItem.timePerRound > 0 && (
+                                    <div>
+                                      <span className="text-gray-500">
+                                        Time per round:
+                                      </span>{" "}
+                                      {exerciseItem.timePerRound}s
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </Card>
-                      );
-                    })
+                          </Card>
+                        );
+                      }
+                    )
                   ) : (
                     <div className="text-center py-10">
                       <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
