@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import SetInPlanForm from "./set-in-plan-form";
 import { Card } from "@/components/ui/card";
+import setService from "@/services/set.service";
 
 function ExercisePlanForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -33,45 +34,29 @@ function ExercisePlanForm() {
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [numOfWeeks, setNumOfWeeks] = useState(0);
   const [setsList, setSetsList] = useState<any[]>([]);
-  const setOptions = [
-    {
-      id: "set-001",
-      name: "Upper Body Strength",
-      estimatedCaloriesBurned: 350,
-      description:
-        "Focus on chest, shoulders, and arms with compound movements",
-    },
-    {
-      id: "set-002",
-      name: "Lower Body Power",
-      estimatedCaloriesBurned: 420,
-      description: "Squats, lunges, and deadlifts for leg strength and power",
-    },
-    {
-      id: "set-003",
-      name: "Core Stability",
-      estimatedCaloriesBurned: 280,
-      description: "Planks, Russian twists, and leg raises for a strong core",
-    },
-    {
-      id: "set-004",
-      name: "HIIT Cardio",
-      estimatedCaloriesBurned: 500,
-      description: "High-intensity interval training for maximum calorie burn",
-    },
-    {
-      id: "set-005",
-      name: "Full Body Circuit",
-      estimatedCaloriesBurned: 450,
-      description: "Complete body workout with minimal rest between exercises",
-    },
-    {
-      id: "set-006",
-      name: "Mobility & Flexibility",
-      estimatedCaloriesBurned: 200,
-      description: "Dynamic stretching and mobility exercises for recovery",
-    },
-  ];
+  const [setOptions, setSetOptions] = useState([]);
+
+  useEffect(() => {
+    async function fetchSets() {
+      const response = await setService.searchSet({
+        page: 1,
+        limit: 100,
+        type: "All",
+      });
+      console.log("Fetched sets:", response.data.result.sets);
+      setSetOptions(
+        response.data.result.sets.map((set: any) => ({
+          id: set._id,
+          description: set.name,
+          total_calories: set.total_calories,
+          numberOfExercises: set.number_of_exercises,
+          type: set.type,
+        }))
+      );
+      // setSetOptions(data);
+    }
+    fetchSets();
+  }, []);
 
   const [date, setDate] = useState({
     startDate: new Date(),
@@ -128,7 +113,6 @@ function ExercisePlanForm() {
   });
 
   useEffect(() => {
-    console.log("Form values:", form.getValues());
     if (form.getValues().startDate && form.getValues().endDate) {
       setNumOfWeeks(
         calculateWeeks(form.getValues().startDate, form.getValues().endDate)
@@ -297,27 +281,27 @@ function ExercisePlanForm() {
             {setsList.length > 0 ? (
               <div className="max-h-96 overflow-y-auto border rounded-lg mb-6 shadow-sm">
                 <div className="p-2 space-y-2">
-                  {setsList.map((set) => (
-                    <Card key={set.id} className="p-4 hover:bg-gray-50">
+                  {setsList.map((plan) => (
+                    <Card key={plan.id} className="p-4 hover:bg-gray-50">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <div className="font-medium text-lg">{set.name}</div>
+                          <div className="font-medium text-lg">{plan.name}</div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mt-2">
                             <div className="flex items-center">
                               <Calendar className="h-3 w-3 mr-1 text-gray-400" />
-                              Week {set.week}
+                              Week {plan.week}
                             </div>
 
                             <div className="flex items-center">
                               <Flame className="h-3 w-3 mr-1 text-gray-400" />
-                              {set.caloriesBurned} calories
+                              {plan.caloriesBurned} calories
                             </div>
                           </div>
 
                           <div className="mt-1 text-sm text-gray-600 flex items-center">
                             <CalendarDays className="h-3 w-3 mr-1 text-gray-400" />
-                            Day {set.day}
+                            Day {plan.day}
                           </div>
                         </div>
 
@@ -326,7 +310,7 @@ function ExercisePlanForm() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => editSet(set)}
+                            onClick={() => editSet(plan)}
                             className="text-blue-500 hover:text-primary hover:bg-blue-50"
                           >
                             <Edit size={16} />
@@ -336,7 +320,7 @@ function ExercisePlanForm() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => removeSet(set.id)}
+                            onClick={() => removeSet(plan.id)}
                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 size={16} />

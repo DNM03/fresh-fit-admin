@@ -12,11 +12,14 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
 import { Button } from "@/components/ui/button";
+import mediaService from "@/services/media.service";
+import ingredientService from "@/services/ingredient.service";
+import { useNavigate } from "react-router-dom";
 
 function IngredientForm() {
   const [activeTab, setActiveTab] = React.useState("details");
-
-  const [, setImageFiles] = React.useState<ImageFile[]>([]);
+  const navigate = useNavigate();
+  const [imageFiles, setImageFiles] = React.useState<ImageFile[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const defaultValues: IngredientType = {
@@ -68,10 +71,24 @@ function IngredientForm() {
   async function submitForm(data: IngredientType) {
     setIsSubmitting(true);
     try {
-      console.log(data);
+      let imageRes;
+      if (imageFiles[0]?.file) {
+        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+      }
+
+      const { id, ...ingredientData } = data;
+      const response = await ingredientService.addIngredient({
+        ...ingredientData,
+        image:
+          imageRes?.result?.url ||
+          "https://sahabatlautlestari.com/wp-content/uploads/2023/05/Tuna-Species-Overview-2048x1311.png",
+      });
+
+      console.log("Ingredient created successfully:", response);
       alert("Exercise created successfully!");
       form.reset(defaultValues);
       setImageFiles([]);
+      navigate(-1);
     } catch (error) {
       console.error(error);
       // Error feedback
@@ -232,10 +249,9 @@ function IngredientForm() {
               <TabsContent value="media" className="mt-0 space-y-6">
                 <div className="grid grid-cols-1 6">
                   <div className="space-y-2">
-                    <p className="text-base font-semibold">Exercise Image</p>
+                    <p className="text-base font-semibold">Ingredient Image</p>
                     <p className="text-sm text-gray-500 mb-2">
-                      Upload a clear image showing the exercise position (max
-                      20MB)
+                      Upload a clear image showing the ingredient (max 20MB)
                     </p>
                     <ImageDropzone
                       maxImages={1}

@@ -13,53 +13,18 @@ import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 import { Form } from "@/components/ui/form";
 import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
 import DishSelector from "./dish-selector";
+import mediaService from "@/services/media.service";
+import mealService from "@/services/meal.service";
+import { useNavigate } from "react-router-dom";
 
 export default function MealForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [, setImageFiles] = useState<ImageFile[]>([]);
-  const [availableDishes] = useState<DishType[]>([
-    {
-      id: "dish-1",
-      name: "Grilled Chicken Salad",
-      description:
-        "Fresh greens with grilled chicken breast, cherry tomatoes, and balsamic vinaigrette.",
-      image: "/placeholder.svg?height=100&width=100",
-      calories: 350,
-      instructions: "Mix all ingredients together.",
-      prepTime: 20,
-    },
-    {
-      id: "dish-2",
-      name: "Salmon with Roasted Vegetables",
-      description:
-        "Oven-baked salmon fillet with seasonal roasted vegetables and herbs.",
-      image: "/placeholder.svg?height=100&width=100",
-      calories: 420,
-      instructions: "Bake salmon and roast vegetables.",
-      prepTime: 35,
-    },
-    {
-      id: "dish-3",
-      name: "Vegetable Stir Fry",
-      description: "Mixed vegetables stir-fried with tofu in a savory sauce.",
-      image: "/placeholder.svg?height=100&width=100",
-      calories: 280,
-      instructions: "Stir fry all ingredients.",
-      prepTime: 25,
-    },
-    {
-      id: "dish-4",
-      name: "Quinoa Bowl",
-      description:
-        "Protein-rich quinoa with roasted vegetables and tahini dressing.",
-      image: "/placeholder.svg?height=100&width=100",
-      calories: 310,
-      instructions: "Cook quinoa and mix with vegetables.",
-      prepTime: 30,
-    },
-  ]);
+  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
+  const [availableDishes] = useState<DishType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const [selectedDishes, setSelectedDishes] = useState<
     (DishType & { quantity?: number })[]
@@ -70,8 +35,8 @@ export default function MealForm() {
     description: "",
     image: "",
     calories: 0,
-    prepTime: 0,
-    mealType: "breakfast",
+    pre_time: 0,
+    mealType: "Breakfast",
     date: new Date(),
   };
 
@@ -90,62 +55,71 @@ export default function MealForm() {
       dish.calories * (dish.quantity || 1);
     form.setValue("calories", totalCalories);
 
-    const maxPrepTime = Math.max(
-      ...selectedDishes.map((d) => d.prepTime),
-      dish.prepTime
-    );
-    form.setValue("prepTime", maxPrepTime);
+    const totalPrepTime =
+      selectedDishes.reduce((sum, d) => sum + d.prep_time, 0) + dish.prep_time;
+    form.setValue("pre_time", totalPrepTime / 60);
   };
 
   const handleRemoveDish = (dishId: string) => {
-    const dishToRemove = selectedDishes.find((d) => d.id === dishId);
+    const dishToRemove = selectedDishes.find((d) => d._id === dishId);
     if (!dishToRemove) return;
 
-    setSelectedDishes((prev) => prev.filter((d) => d.id !== dishId));
+    setSelectedDishes((prev) => prev.filter((d) => d._id !== dishId));
 
     const totalCalories = selectedDishes
-      .filter((d) => d.id !== dishId)
+      .filter((d) => d._id !== dishId)
       .reduce((sum, d) => sum + d.calories * (d.quantity || 1), 0);
     form.setValue("calories", totalCalories > 0 ? totalCalories : 0);
 
     if (selectedDishes.length > 1) {
-      const maxPrepTime = Math.max(
-        ...selectedDishes.filter((d) => d.id !== dishId).map((d) => d.prepTime)
-      );
-      form.setValue("prepTime", maxPrepTime);
+      const totalPrepTime = selectedDishes
+        .filter((d) => d._id !== dishId)
+        .reduce((sum, d) => sum + d.prep_time, 0);
+      form.setValue("pre_time", totalPrepTime / 60);
     } else {
-      form.setValue("prepTime", 0);
+      form.setValue("pre_time", 0);
     }
-  };
-
-  const handleUpdateQuantity = (dishId: string, quantity: number) => {
-    setSelectedDishes((prev) =>
-      prev.map((d) => (d.id === dishId ? { ...d, quantity } : d))
-    );
-
-    const totalCalories = selectedDishes.reduce((sum, d) => {
-      if (d.id === dishId) {
-        return sum + d.calories * quantity;
-      }
-      return sum + d.calories * (d.quantity || 1);
-    }, 0);
-
-    form.setValue("calories", totalCalories);
   };
 
   async function submitForm(data: MealType) {
-    if (selectedDishes.length === 0) {
-      alert("Please add at least one dish to the meal");
-      return;
+    try {
+      setIsLoading(true);
+      if (selectedDishes.length === 0) {
+        alert("Please add at least one dish to the meal");
+        return;
+      }
+      let imageRes;
+      if (imageFiles[0]?.file) {
+        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+      }
+
+      if (date) {
+        form.setValue("date", date);
+      }
+      const finalData = {
+        ...data,
+        pre_time: data.pre_time * 60,
+        dishes: selectedDishes.map((dish) => dish._id),
+        image: imageRes?.result?.url || "",
+        date: data.date ? new Date(data.date) : new Date(),
+        meal_type: data.mealType || "Breakfast",
+      };
+      const response = await mealService.addNewMealPlan(finalData);
+      if (response) {
+        setFormSubmitted(true);
+        setImageFiles([]);
+        setSelectedDishes([]);
+        alert("Meal created successfully!");
+        form.reset(defaultValues);
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error submitting meal form:", error);
+      alert("Failed to create meal. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setFormSubmitted(true);
     }
-
-    if (date) {
-      form.setValue("date", date);
-    }
-
-    console.log("Saving meal:", { ...data, dishes: selectedDishes });
-
-    setFormSubmitted(true);
   }
 
   const nextStep = () => {
@@ -250,26 +224,26 @@ export default function MealForm() {
                   Meal Type<span className="text-red-500">*</span>
                 </Label>
                 <RadioGroup
-                  defaultValue="breakfast"
+                  defaultValue="Breakfast"
                   onValueChange={(value) =>
                     form.setValue(
                       "mealType",
-                      value as "breakfast" | "lunch" | "dinner"
+                      value as "Breakfast" | "Lunch" | "Dinner"
                     )
                   }
                   className="flex flex-row space-x-8"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="breakfast" id="breakfast" />
-                    <Label htmlFor="breakfast">Breakfast</Label>
+                    <RadioGroupItem value="Breakfast" id="Breakfast" />
+                    <Label htmlFor="Breakfast">Breakfast</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="lunch" id="lunch" />
-                    <Label htmlFor="lunch">Lunch</Label>
+                    <RadioGroupItem value="Lunch" id="Lunch" />
+                    <Label htmlFor="Lunch">Lunch</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dinner" id="dinner" />
-                    <Label htmlFor="dinner">Dinner</Label>
+                    <RadioGroupItem value="Dinner" id="Dinner" />
+                    <Label htmlFor="Dinner">Dinner</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -318,7 +292,7 @@ export default function MealForm() {
                 <div className="space-y-2">
                   <Label>Preparation Time (minutes, auto-calculated)</Label>
                   <Input
-                    value={form.getValues().prepTime}
+                    value={form.getValues().pre_time}
                     readOnly
                     className="bg-gray-50"
                   />
@@ -330,7 +304,6 @@ export default function MealForm() {
                 selectedDishes={selectedDishes}
                 onAddDish={handleAddDish}
                 onRemoveDish={handleRemoveDish}
-                onUpdateQuantity={handleUpdateQuantity}
               />
             </div>
           </>
@@ -421,7 +394,7 @@ export default function MealForm() {
                   <div></div>
                 )}
 
-                {currentStep < 2 ? (
+                {currentStep < 2 && (
                   <Button
                     type="button"
                     onClick={nextStep}
@@ -430,9 +403,14 @@ export default function MealForm() {
                     Next
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                ) : (
-                  <Button type="submit" className="bg-primary hover:opacity-80">
-                    Save Meal
+                )}
+                {currentStep === 2 && (
+                  <Button
+                    type="submit"
+                    className="bg-primary hover:opacity-80"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Saving..." : "Save Meal"}
                   </Button>
                 )}
               </div>

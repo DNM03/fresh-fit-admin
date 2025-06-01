@@ -23,6 +23,7 @@ function Table<T extends Record<string, any>>({
     columns,
     data,
     enableRowSelection: true,
+    enableDensityToggle: false,
     positionToolbarAlertBanner: "bottom",
     enableRowActions: true,
     renderRowActions: ({ row }) => {
@@ -37,8 +38,9 @@ function Table<T extends Record<string, any>>({
     positionActionsColumn: "last",
     initialState: {
       density: "xs", //set default density to compact
-      pagination: { pageIndex: 0, pageSize: 15 }, //set different default page size
+      pagination: { pageIndex: 0, pageSize: 25 }, //set different default page size
     },
+
     ...props,
   });
 

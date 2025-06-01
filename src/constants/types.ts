@@ -56,18 +56,20 @@ export type ExerciseType = {
 };
 export type CreateExerciseSetType = {
   name: string;
-  type: "beginner" | "intermediate" | "advanced";
+  type: "Beginner" | "Intermediate" | "Advanced";
   description: string;
   numberOfExercises: number;
 };
 
 export type CreateExerciseInSetType = {
-  exerciseId: string;
+  exercise_id: string;
   duration?: number;
   reps?: number;
   rounds?: number;
-  restPerRound?: number;
-  estimatedCaloriesBurned?: number;
+  rest_per_round?: number;
+  estimated_calories_burned?: number;
+  timePerRound?: number;
+  orderNumber?: number;
 };
 
 export type IngredientType = {
@@ -84,7 +86,7 @@ export type IngredientType = {
 };
 
 export interface Post {
-  id: string;
+  _id: string;
   doctorId: string;
   doctorName: string;
   doctorSpecialty: string;
@@ -100,13 +102,26 @@ export interface Post {
 }
 
 export type DishType = {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   image: string;
   calories: number;
-  instructions: string;
-  prepTime: number;
+  instruction: string;
+  prep_time: number;
+  fat?: number;
+  saturatedFat?: number;
+  cholesterol?: number;
+  sodium?: number;
+  carbohydrate?: number;
+  fiber?: number;
+  sugar?: number;
+  protein?: number;
+  ingredients?: {
+    ingredientId: string;
+    quantity: number;
+    unit: string;
+  }[];
 };
 
 export type DishIngredientType = {
@@ -122,8 +137,8 @@ export type MealType = {
   description: string;
   image: string;
   calories: number;
-  prepTime: number;
-  mealType: "breakfast" | "lunch" | "dinner";
+  pre_time: number;
+  mealType: "Breakfast" | "Lunch" | "Dinner";
   date: Date;
 };
 

@@ -3,8 +3,8 @@ import apiService from "./api.service";
 import { AddUpdateExerciseData } from "@/types/exercise.type";
 
 class ExerciseService {
-  getAllForSelect(): Promise<AxiosResponse<any[]>> {
-    return apiService.get<any[]>("/exercises/all");
+  getAllForSelect(): Promise<AxiosResponse<any>> {
+    return apiService.get<any>("/exercises/all");
   }
   searchExercise({
     search,
@@ -20,9 +20,13 @@ class ExerciseService {
     type?: string;
     sort_by?: string;
     order_by?: string;
-  }): Promise<AxiosResponse<any[]>> {
-    return apiService.get<any[]>(
-      `/exercises?search=${search}&page=${page}&limit=${limit}&type=${type}&sort_by=${sort_by}&order_by=${order_by}`
+  }): Promise<AxiosResponse<any>> {
+    return apiService.get<any>(
+      `/exercises?&page=${page}${
+        search ? "&search=" + search : ""
+      }&limit=${limit}${type ? "&type=" + type : ""}${
+        sort_by ? "&sort_by=" + sort_by : ""
+      }${order_by ? "&order_by=" + order_by : ""}`
     );
   }
   getExerciseById(id: string): Promise<AxiosResponse<any>> {

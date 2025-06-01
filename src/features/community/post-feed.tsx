@@ -2,65 +2,23 @@ import { useState, useRef, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Post } from "@/constants/types";
 import PostCard from "./post-card";
-
-// Mock data generator
-const generateMockPosts = (type: string, page: number): Post[] => {
-  const startId = (page - 1) * 5 + 1;
-  return Array.from({ length: 5 }, (_, i) => ({
-    id: `${startId + i}`,
-    doctorId: `doctor-${((startId + i) % 10) + 1}`,
-    doctorName: `Dr. ${
-      [
-        "Smith",
-        "Johnson",
-        "Williams",
-        "Brown",
-        "Jones",
-        "Garcia",
-        "Miller",
-        "Davis",
-        "Rodriguez",
-        "Martinez",
-      ][(startId + i) % 10]
-    }`,
-    doctorSpecialty: [
-      "Cardiologist",
-      "Dermatologist",
-      "Neurologist",
-      "Pediatrician",
-      "Psychiatrist",
-    ][(startId + i) % 5],
-    doctorAvatar: `/placeholder.svg?height=80&width=80`,
-    content: `${type === "published" ? "Health tip" : "Pending review"} #${
-      startId + i
-    }: ${
-      [
-        "Regular exercise can help reduce the risk of chronic diseases.",
-        "Drinking enough water is essential for maintaining good health.",
-        "A balanced diet rich in fruits and vegetables supports your immune system.",
-        "Getting 7-8 hours of sleep each night is crucial for your overall health.",
-        "Managing stress through meditation or yoga can improve your mental health.",
-        "Regular check-ups with your doctor can help detect health issues early.",
-        "Limiting processed foods can reduce your risk of various health problems.",
-        "Protecting your skin from the sun can prevent skin damage and cancer.",
-        "Good posture can prevent back pain and improve your breathing.",
-        "Washing your hands regularly can prevent the spread of infections.",
-      ][(startId + i) % 10]
-    }`,
-    image: startId % 3 === 0 ? `/placeholder.svg?height=400&width=600` : null,
-    likes: type === "published" ? Math.floor(Math.random() * 1000) : 0,
-    isLiked: type === "published" ? Math.random() > 0.5 : false,
-    isFollowing: Math.random() > 0.7,
-    isSaved: Math.random() > 0.8,
-    createdAt: new Date(
-      Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000
-    ).toISOString(),
-    status: type === "published" ? "published" : "pending",
-  }));
-};
+import postService from "@/services/post.service";
+import RejectPostDialog from "./reject-post-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface PostFeedProps {
-  type: "published" | "pending";
+  type: "published" | "pending" | "rejected";
 }
 
 export default function PostFeed({ type }: PostFeedProps) {
@@ -68,6 +26,9 @@ export default function PostFeed({ type }: PostFeedProps) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const observerTarget = useRef(null);
 
   const loadMorePosts = async () => {
@@ -75,18 +36,54 @@ export default function PostFeed({ type }: PostFeedProps) {
 
     setLoading(true);
 
-    // Simulate API call with timeout
-    setTimeout(() => {
-      const newPosts = generateMockPosts(type, page);
-      setPosts((prev) => [...prev, ...newPosts]);
-      setPage((prev) => prev + 1);
-      setLoading(false);
+    try {
+      // Map our UI types to API status values
+      const statusMap = {
+        published: "Published",
+        pending: "Pending",
+        rejected: "Rejected",
+      };
 
-      // Stop after 5 pages for demo purposes
-      if (page >= 5) {
+      // Use the real API to fetch posts
+      const response = await postService.searchPost({
+        page,
+        limit: 10,
+        status: statusMap[type],
+        sort_by: "created_at",
+        order_by: "desc",
+      });
+
+      const result = response.data as any;
+      if (result?.result?.posts?.length > 0) {
+        // Fix: Make sure we're correctly comparing _id properties
+        setPosts((prev) => {
+          const existingIds = new Set(prev.map((post) => post._id));
+
+          // Fix: Use post._id instead of post.id in the filter
+          const newPosts = result.result.posts.filter(
+            (post: any) => !existingIds.has(post._id)
+          );
+
+          return [...prev, ...newPosts];
+        });
+        setPage((prev) => prev + 1);
+
+        // Check if we've reached the last page
+        if (page >= result.result.total_pages) {
+          setHasMore(false);
+        }
+      } else {
+        // No more data to load
         setHasMore(false);
       }
-    }, 1000);
+
+      console.log("Fetched posts:", result.result);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      setHasMore(false); // Prevent further attempts if there's an error
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -119,22 +116,50 @@ export default function PostFeed({ type }: PostFeedProps) {
     };
   }, [loading, hasMore]);
 
-  const handleVerify = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId ? { ...post, status: "published" } : post
-      )
-    );
+  const handleOpenVerifyDialog = (postId: string) => {
+    setSelectedPostId(postId);
+    setIsVerifyDialogOpen(true);
   };
 
-  const handleReject = (postId: string) => {
-    setPosts((prev) => prev.filter((post) => post.id !== postId));
+  const handleVerify = async () => {
+    if (!selectedPostId) return;
+
+    try {
+      await postService.approvePost(selectedPostId);
+      setPosts((prev) => prev.filter((post) => post._id !== selectedPostId));
+      setIsVerifyDialogOpen(false);
+      toast.success("Post approved successfully!");
+    } catch (error) {
+      toast.error("Failed to approve post. Please try again.");
+      console.error("Error approving post:", error);
+    }
+  };
+
+  const handleOpenRejectDialog = (postId: string) => {
+    setSelectedPostId(postId);
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleRejectConfirm = async (postId: string, reason: string) => {
+    console.log("Rejecting post:", postId, "Reason:", reason);
+    try {
+      await postService.rejectPost(postId, {
+        comment: reason,
+        medias: [],
+      });
+      setPosts((prev) => prev.filter((post) => post._id !== postId));
+      setIsRejectDialogOpen(false);
+      toast.success("Post rejected successfully!");
+    } catch (error) {
+      toast.error("Failed to reject post. Please try again.");
+      console.error("Error rejecting post:", error);
+    }
   };
 
   const handleToggleLike = (postId: string) => {
     setPosts((prev) =>
       prev.map((post) =>
-        post.id === postId
+        post._id === postId
           ? {
               ...post,
               isLiked: !post.isLiked,
@@ -145,20 +170,10 @@ export default function PostFeed({ type }: PostFeedProps) {
     );
   };
 
-  const handleToggleFollow = (doctorId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.doctorId === doctorId
-          ? { ...post, isFollowing: !post.isFollowing }
-          : post
-      )
-    );
-  };
-
   const handleToggleSave = (postId: string) => {
     setPosts((prev) =>
       prev.map((post) =>
-        post.id === postId ? { ...post, isSaved: !post.isSaved } : post
+        post._id === postId ? { ...post, isSaved: !post.isSaved } : post
       )
     );
   };
@@ -170,15 +185,15 @@ export default function PostFeed({ type }: PostFeedProps) {
           <p className="text-muted-foreground">No posts available</p>
         </div>
       ) : (
-        posts.map((post) => (
+        // Add index to ensure unique keys even if there are duplicate IDs
+        posts.map((post, index) => (
           <PostCard
-            key={post.id}
+            key={`${post._id}-${index}`}
             post={post}
             isAdmin={true}
-            onVerify={handleVerify}
-            onReject={handleReject}
+            onVerify={handleOpenVerifyDialog}
+            onReject={handleOpenRejectDialog}
             onToggleLike={handleToggleLike}
-            onToggleFollow={handleToggleFollow}
             onToggleSave={handleToggleSave}
           />
         ))
@@ -197,6 +212,42 @@ export default function PostFeed({ type }: PostFeedProps) {
           <p className="text-muted-foreground">No more posts to load</p>
         </div>
       )}
+
+      {/* Verify Post Dialog */}
+      <AlertDialog
+        open={isVerifyDialogOpen}
+        onOpenChange={setIsVerifyDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              Verify Post
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve this post? Once approved, the
+              post will be published and visible to all users.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleVerify}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Post Dialog */}
+      <RejectPostDialog
+        isOpen={isRejectDialogOpen}
+        postId={selectedPostId}
+        onClose={() => setIsRejectDialogOpen(false)}
+        onReject={handleRejectConfirm}
+      />
     </div>
   );
 }

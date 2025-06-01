@@ -41,7 +41,7 @@ export interface UpdateDishData {
 
 export interface AddUpdateDishIngredientData {
   ingredientId: string;
-  quantity?: number;
+  quantity?: string | number;
   unit?: string;
 }
 

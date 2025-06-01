@@ -5,12 +5,15 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import IngredientTable from "./ingredient-table";
+import DishTable from "./dish-table";
+import MealTable from "./meal-table";
 
 function MealTab() {
   const [activeTab, setActiveTab] = React.useState("meals");
   const navigate = useNavigate();
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 max-w-6xl mx-auto">
       <Tabs className="w-full" value={activeTab} onValueChange={setActiveTab}>
         <div className="border-b">
           <div className="px-6 relative">
@@ -69,9 +72,10 @@ function MealTab() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <div className="p-10 text-center text-muted-foreground">
+                  {/* <div className="p-10 text-center text-muted-foreground">
                     Your meal table will appear here
-                  </div>
+                  </div> */}
+                  <MealTable />
                 </div>
               </CardContent>
             </Card>
@@ -91,9 +95,10 @@ function MealTab() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <div className="p-10 text-center text-muted-foreground">
+                  {/* <div className="p-10 text-center text-muted-foreground">
                     Your dish table will appear here
-                  </div>
+                  </div> */}
+                  <DishTable />
                 </div>
               </CardContent>
             </Card>
@@ -115,9 +120,10 @@ function MealTab() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <div className="p-10 text-center text-muted-foreground">
+                  {/* <div className="p-10 text-center text-muted-foreground">
                     Your ingredients table will appear here
-                  </div>
+                  </div> */}
+                  <IngredientTable />
                 </div>
               </CardContent>
             </Card>

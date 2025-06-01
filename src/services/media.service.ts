@@ -1,4 +1,7 @@
 import { mediaAxios } from "./auth.service";
+import axios from "axios";
+const BACKUP_MEDIA_API_URL =
+  import.meta.env.VITE_MEDIA_BACKUP_URL || "https://your-media-backup-url.com";
 
 class MediaService {
   async uploadImage(image: File): Promise<any> {
@@ -12,6 +15,7 @@ class MediaService {
     });
     return response.data;
   }
+
   async uploadVideo(video: File): Promise<any> {
     const formData = new FormData();
     formData.append("video", video);
@@ -21,6 +25,38 @@ class MediaService {
         "Content-Type": "multipart/form-data",
       },
     });
+    return response.data;
+  }
+
+  async backupUploadImage(image: File): Promise<any> {
+    const formData = new FormData();
+    formData.append("image", image);
+
+    const response = await axios.post(
+      `${BACKUP_MEDIA_API_URL}/images`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  }
+
+  async backupUploadVideo(video: File): Promise<any> {
+    const formData = new FormData();
+    formData.append("video", video);
+
+    const response = await axios.post(
+      `${BACKUP_MEDIA_API_URL}/videos`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
     return response.data;
   }
 }

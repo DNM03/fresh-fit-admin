@@ -137,19 +137,19 @@ function ExerciseForm() {
       let videoRes;
       let targetMuscleImageRes;
       let secondaryMuscleImageRes;
-      if (imageFiles[0].file) {
-        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+      if (imageFiles[0]?.file) {
+        imageRes = await mediaService.backupUploadImage(imageFiles[0].file);
       }
       if (videoFile) {
-        videoRes = await mediaService.uploadVideo(videoFile.file);
+        videoRes = await mediaService.backupUploadVideo(videoFile.file);
       }
       if (targetMuscleImage[0]?.file) {
-        targetMuscleImageRes = await mediaService.uploadImage(
+        targetMuscleImageRes = await mediaService.backupUploadImage(
           targetMuscleImage[0].file
         );
       }
       if (secondaryMuscleImage[0]?.file) {
-        secondaryMuscleImageRes = await mediaService.uploadImage(
+        secondaryMuscleImageRes = await mediaService.backupUploadImage(
           secondaryMuscleImage[0].file
         );
       }

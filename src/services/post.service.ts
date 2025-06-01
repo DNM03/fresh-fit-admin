@@ -1,4 +1,4 @@
-import { CreatePostData } from "@/types/post.type";
+import { CreatePostData, PostPaginatedResponse } from "@/types/post.type";
 import { AxiosResponse } from "axios";
 import apiService from "./api.service";
 
@@ -7,24 +7,26 @@ class PostService {
     return apiService.post<AxiosResponse>("/posts/create", post);
   }
   searchPost({
-    page,
-    limit,
-    type,
-    status,
-    tags,
-    sort_by,
-    order_by,
+    page = 1,
+    limit = 10,
+    type = "",
+    status = "",
+    sort_by = "created_at",
+    order_by = "desc",
   }: {
     page?: number;
     limit?: number;
     type?: string;
     status?: string;
-    tags?: string[];
     sort_by?: string;
     order_by?: string;
-  }): Promise<AxiosResponse> {
-    return apiService.get(
-      `/posts?page=${page}&limit=${limit}&type=${type}&status=${status}&tags=${tags}&sort_by=${sort_by}&order_by=${order_by}`
+  }): Promise<AxiosResponse<PostPaginatedResponse>> {
+    return apiService.get<PostPaginatedResponse>(
+      `/posts?page=${page}&limit=${limit}${type ? `&type=${type}` : ""}${
+        status ? `&status=${status}` : ""
+      }${sort_by ? `&sort_by=${sort_by}` : ""}${
+        order_by ? `&order_by=${order_by}` : ""
+      }`
     );
   }
   getPostById(id: string): Promise<AxiosResponse> {
@@ -68,6 +70,12 @@ class PostService {
     return apiService.delete<AxiosResponse>(
       `/posts/${id}/reactions/${reactionId}`
     );
+  }
+  approvePost(id: string): Promise<AxiosResponse> {
+    return apiService.patch<AxiosResponse>(`/posts/approve/${id}`);
+  }
+  rejectPost(id: string, data: any): Promise<AxiosResponse> {
+    return apiService.post<AxiosResponse>(`/posts/reject/${id}`, data);
   }
 }
 

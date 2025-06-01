@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronRight, Dumbbell, Trophy, Users } from "lucide-react";
+import { ChevronRight, Users } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -32,172 +32,39 @@ import {
   YAxis,
 } from "recharts";
 
-import { ExerciseTooltip, MealTooltip } from "@/components/ui/custom-tooltip";
 import { useEffect, useState } from "react";
 import statisticService from "@/services/statistic.service";
 import { useNavigate } from "react-router-dom";
 
 function DashboardPage() {
-  const [, setTopStat] = useState();
+  const [adminDashboard, setAdminDashboard] = useState<any>();
+  const [challengesDashboard, setChallengesDashboard] = useState<any>();
   const navigate = useNavigate();
   useEffect(() => {
-    // Fetch top stat data from API
-    const fetchTopStat = async () => {
+    const fetchAdminDashboard = async () => {
       try {
-        const response = await statisticService.getTop();
-        const data = response.data.result.rersult;
-        setTopStat(data);
+        const response = await statisticService.getAdminDashboard();
+        const data = response.data.result;
+        console.log("Admin Dashboard Data:", data);
+        setAdminDashboard(data);
       } catch (error) {
-        console.error("Error fetching top stat:", error);
+        console.error("Error fetching admin dashboard:", error);
+      }
+    };
+    const fetchChallengesDashboard = async () => {
+      try {
+        const response = await statisticService.getChallengesDashboard();
+        const data = response.data.result.challenges;
+        console.log("Challenges Dashboard Data:", data);
+        setChallengesDashboard(data);
+      } catch (error) {
+        console.error("Error fetching challenges dashboard:", error);
       }
     };
 
-    fetchTopStat();
+    fetchAdminDashboard();
+    fetchChallengesDashboard();
   }, []);
-  // Data for exercise plans
-  const exercises = [
-    {
-      planName: "Legs Extreme",
-      duration: "1 month",
-      type: "Advanced",
-      chosenBy: 100,
-    },
-    {
-      planName: "Cardio Blast",
-      duration: "2 weeks",
-      type: "Intermediate",
-      chosenBy: 150,
-    },
-    {
-      planName: "Full Body Workout",
-      duration: "3 months",
-      type: "Beginner",
-      chosenBy: 200,
-    },
-    {
-      planName: "Strength Training",
-      duration: "6 weeks",
-      type: "Advanced",
-      chosenBy: 120,
-    },
-    {
-      planName: "Yoga Flex",
-      duration: "1 month",
-      type: "Beginner",
-      chosenBy: 180,
-    },
-  ];
-
-  // Data for meal plans
-  const meals = [
-    {
-      planName: "Keto Diet",
-      type: "Breakfast",
-      calories: 500,
-      chosenBy: 90,
-    },
-    {
-      planName: "Vegan Cleanse",
-      type: "Lunch",
-      calories: 400,
-      chosenBy: 110,
-    },
-    {
-      planName: "Paleo Plan",
-      type: "Dinner",
-      calories: 600,
-      chosenBy: 130,
-    },
-    {
-      planName: "Mediterranean",
-      type: "Breakfast",
-      calories: 450,
-      chosenBy: 95,
-    },
-    {
-      planName: "Low Carb Diet",
-      type: "Lunch",
-      calories: 350,
-      chosenBy: 120,
-    },
-  ];
-
-  // Data for challenges
-  const challenges = [
-    {
-      title: "30 Day Plank Challenge",
-      description: "Hold a plank for 30 days",
-      duration: "30 days",
-      participants: 100,
-      progress: 65,
-      thumbnail: "/placeholder.svg?height=80&width=120",
-    },
-    {
-      title: "100 Pushups Challenge",
-      description: "Do 100 pushups in a day",
-      duration: "1 day",
-      participants: 50,
-      progress: 80,
-      thumbnail: "/placeholder.svg?height=80&width=120",
-    },
-    {
-      title: "30 Day Squat Challenge",
-      description: "Do squats for 30 days",
-      duration: "30 days",
-      participants: 80,
-      progress: 45,
-      thumbnail: "/placeholder.svg?height=80&width=120",
-    },
-  ];
-
-  // Data for top contributors
-  const users = [
-    {
-      avatar: "/placeholder.svg?height=40&width=40",
-      name: "John Doe",
-      posts: 10,
-      point: 1000,
-      level: "Gold",
-    },
-    {
-      avatar: "/placeholder.svg?height=40&width=40",
-      name: "Jane Smith",
-      posts: 15,
-      point: 1500,
-      level: "Platinum",
-    },
-    {
-      avatar: "/placeholder.svg?height=40&width=40",
-      name: "Alice Johnson",
-      posts: 8,
-      point: 800,
-      level: "Silver",
-    },
-  ];
-
-  // Summary data
-  const summaryData = [
-    {
-      title: "Active Users",
-      value: "2,845",
-      change: "+12.5%",
-      icon: Users,
-    },
-    {
-      title: "Active Challenges",
-      value: "24",
-      change: "+3.2%",
-      icon: Trophy,
-    },
-    {
-      title: "Workout Plans",
-      value: "156",
-      change: "+8.1%",
-      icon: Dumbbell,
-    },
-  ];
-
-  // Colors for charts
   const COLORS = [
     "#FF6B6B", // Coral Red
     "#4ECDC4", // Turquoise
@@ -205,20 +72,6 @@ function DashboardPage() {
     "#96CEB4", // Sage Green
     "#FFEEAD", // Cream Yellow
   ];
-
-  // Get level badge color
-  // const getLevelColor = (level: string) => {
-  //   switch (level) {
-  //     case "Gold":
-  //       return "bg-amber-500 hover:bg-amber-600";
-  //     case "Platinum":
-  //       return "bg-slate-400 hover:bg-slate-500";
-  //     case "Silver":
-  //       return "bg-gray-300 hover:bg-gray-400 text-gray-800";
-  //     default:
-  //       return "bg-primary hover:bg-primary/90";
-  //   }
-  // };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -231,32 +84,71 @@ function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {summaryData.map((item, index) => (
-          <Card key={index} className="overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {item.title}
-              </CardTitle>
-              <item.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{item.value}</div>
-              <p className="text-xs text-muted-foreground">
-                <span
-                  className={
-                    item.change.startsWith("+")
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }
-                >
-                  {item.change}
-                </span>{" "}
-                from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {adminDashboard?.total_active_users_current_month}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span
+              // className={
+              //   item.change.startsWith("+")
+              //     ? "text-green-500"
+              //     : "text-red-500"
+              // }
+              >
+                {adminDashboard &&
+                adminDashboard?.total_active_users_current_month &&
+                adminDashboard?.total_active_users_last_month
+                  ? (
+                      ((adminDashboard?.total_active_users_current_month -
+                        adminDashboard?.total_active_users_last_month) /
+                        adminDashboard?.total_active_users_last_month) *
+                      100
+                    ).toFixed(1) + "%"
+                  : "0%"}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 ">
+            <CardTitle className="text-sm font-medium">
+              Active Challenges
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {adminDashboard?.total_active_challenges_current_month}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span
+              // className={
+              //   item.change.startsWith("+")
+              //     ? "text-green-500"
+              //     : "text-red-500"
+              // }
+              >
+                {adminDashboard &&
+                adminDashboard?.total_active_challenges_current_month &&
+                adminDashboard?.total_active_challenges_last_month
+                  ? (
+                      ((adminDashboard?.total_active_challenges_current_month -
+                        adminDashboard?.total_active_challenges_last_month) /
+                        adminDashboard?.total_active_challenges_last_month) *
+                      100
+                    ).toFixed(1) + "%"
+                  : "0%"}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content */}
@@ -264,37 +156,57 @@ function DashboardPage() {
         {/* Exercise Plans Chart */}
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Top Exercise Plans</CardTitle>
-            <CardDescription>
-              Most popular workout plans by participation
-            </CardDescription>
+            <CardTitle>Top Exercises</CardTitle>
+            <CardDescription>Most popular exercises by users</CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={exercises}
+                    data={adminDashboard?.top_5_exercises
+                      ?.slice(0, 5)
+                      ?.map((exercise: any) => ({
+                        planName: exercise.name,
+                        value: exercise.chosen_count || 1,
+                        type: exercise.experience_level || "Unknown",
+                        rating: exercise.rating || 0,
+                      }))}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
                     outerRadius={100}
-                    dataKey="chosenBy"
+                    dataKey="value"
                     nameKey="planName"
                     label={({ name, percent }) => {
-                      return percent > 0.1
-                        ? `${name} (${(percent * 100).toFixed(0)}%)`
-                        : "";
+                      return percent > 0.1 ? `${name}` : "";
                     }}
                   >
-                    {exercises.map((_entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
+                    {(adminDashboard?.top_5_exercises?.slice(0, 5) || [])?.map(
+                      (_entry: any, index: number) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      )
+                    )}
                   </Pie>
-                  <Tooltip content={<ExerciseTooltip />} />
+                  <Tooltip
+                    content={(props) => {
+                      const { active, payload } = props;
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-background border rounded-md p-2 shadow-md">
+                            <p className="font-medium">{data.planName}</p>
+                            <p>{data.rating} ⭐</p>
+                            <p className="text-sm">Type: {data.type}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -304,38 +216,67 @@ function DashboardPage() {
         {/* Meal Plans Chart */}
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Top Meal Plans</CardTitle>
+            <CardTitle>Top Rated Dishes</CardTitle>
             <CardDescription>
-              Calories and popularity comparison
+              Highest rated dishes by user ratings
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={meals}
+                  data={adminDashboard?.top_5_dishes
+                    ?.slice(0, 5)
+                    ?.map((dish: any) => ({
+                      planName: dish.name,
+                      shortName:
+                        dish.name.length > 10
+                          ? dish.name.substring(0, 10) + "..."
+                          : dish.name,
+                      calories: dish.calories || 0,
+                      rating: dish.rating || 0,
+                    }))}
                   margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
-                    dataKey="planName"
-                    tick={{ fontSize: 12 }}
-                    tickMargin={10}
+                    dataKey="shortName"
+                    tick={{ fontSize: 11 }}
+                    tickMargin={5}
                   />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip content={<MealTooltip />} />
+                  <YAxis yAxisId="left" name="Rating" />
+                  <YAxis yAxisId="right" orientation="right" name="Name" />
+                  <Tooltip
+                    content={(props) => {
+                      const { active, payload } = props;
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-background border rounded-md p-2 shadow-md">
+                            <p className="font-medium">{data.planName}</p>
+                            <p className="text-sm">
+                              Rating: {data.rating.toFixed(1)} ⭐
+                            </p>
+                            <p className="text-sm">Calories: {data.calories}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Legend />
                   <Bar
                     yAxisId="left"
-                    dataKey="calories"
+                    dataKey="rating"
+                    name="Rating"
                     fill="#FF6B6B"
                     radius={4}
                   />
                   <Bar
                     yAxisId="right"
-                    dataKey="chosenBy"
-                    fill="#4ECDC4"
+                    dataKey="calories"
+                    name="Calories"
+                    fill="#006B6B"
                     radius={4}
                   />
                 </BarChart>
@@ -354,34 +295,52 @@ function DashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y">
-              {challenges.map((challenge, index) => (
+              {challengesDashboard?.map((challenge: any, index: number) => (
                 <div
                   key={index}
                   className="flex items-center gap-4 p-4 transition-colors hover:bg-muted/50"
                 >
                   <div className="hidden sm:block">
                     <img
-                      src={challenge.thumbnail || "/placeholder.svg"}
-                      alt={challenge.title}
+                      src={challenge.image || "/placeholder.svg"}
+                      alt={challenge.name}
                       className="h-16 w-24 rounded-md object-cover"
                     />
                   </div>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium">{challenge.title}</h4>
-                      <Badge variant="outline">{challenge.duration}</Badge>
+                      <h4 className="font-medium">{challenge.name}</h4>
+                      <Badge variant="outline">{challenge.type}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {challenge.description}
+                      {challenge.description?.length > 100
+                        ? challenge.description.substring(0, 100) + "..."
+                        : challenge.description}
                     </p>
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center text-sm">
                         <Users className="mr-1 h-3.5 w-3.5" />
-                        <span>{challenge.participants}</span>
+                        <span>{challenge.total_participation}</span>
                       </div>
                       <div className="flex w-1/2 items-center gap-2">
-                        <Progress value={challenge.progress} className="h-2" />
-                        <span className="text-xs">{challenge.progress}%</span>
+                        <Progress
+                          value={Math.round(
+                            (challenge.total_completed_participation /
+                              challenge.total_participation) *
+                              100
+                          )}
+                          className="h-2"
+                        />
+                        <span className="text-xs">
+                          {challenge.total_participation > 0
+                            ? Math.round(
+                                (challenge.total_completed_participation /
+                                  challenge.total_participation) *
+                                  100
+                              )
+                            : 0}
+                          %
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -413,25 +372,56 @@ function DashboardPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead className="text-right">Posts</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user, index) => (
-                  <TableRow key={index} className="hover:bg-muted/50">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
+                {(adminDashboard?.top_5_contributors || [])?.map(
+                  (user: any, index: number) => (
+                    <TableRow key={index} className="hover:bg-muted/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback>
+                              {user.user_fullname
+                                ? user.user_fullname.charAt(0)
+                                : "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">
+                              {user.user_fullname || "Unknown"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              @{user.user_username || "user"}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div>{user.user_email || "No email"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {user.user_phoneNumber || "No phone"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {user.totalPosts || 0}
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+                {(!adminDashboard?.top_5_contributors ||
+                  adminDashboard.top_5_contributors.length === 0) && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center py-4 text-muted-foreground"
+                    >
+                      No contributor data available
                     </TableCell>
-
-                    <TableCell className="text-right">{user.posts}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
             <div className="p-4">

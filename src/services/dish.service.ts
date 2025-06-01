@@ -1,8 +1,4 @@
-import {
-  AddDishData,
-  AddUpdateDishIngredientData,
-  UpdateDishData,
-} from "@/types/dish.type";
+import { AddDishData, AddUpdateDishIngredientData } from "@/types/dish.type";
 import apiService from "./api.service";
 
 class DishService {
@@ -20,7 +16,9 @@ class DishService {
     order_by?: string;
   }): Promise<any> {
     return apiService.get(
-      `/dishes/search?search=${search}&page=${page}&limit=${limit}&sort_by=${sort_by}&order_by=${order_by}`
+      `/dishes?page=${page}${search ? `&search=${search}` : ""}&limit=${limit}${
+        sort_by ? `&sort_by=${sort_by}` : ""
+      }${order_by ? `&order_by=${order_by}` : ""}`
     );
   }
   searchDishByIngredient({
@@ -51,7 +49,7 @@ class DishService {
   addDish(dishData: AddDishData): Promise<any> {
     return apiService.post("/dishes", dishData);
   }
-  updateDishInfo(id: string, dishData: UpdateDishData): Promise<any> {
+  updateDishInfo(id: string, dishData: any): Promise<any> {
     return apiService.patch(`/dishes/${id}`, dishData);
   }
   updateDishIngredient(

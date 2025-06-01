@@ -13,22 +13,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import OptimizedSelect from "@/components/ui/optimized-select";
+import { v4 as uuidv4 } from "uuid";
 
-type SetType = {
-  id: string;
-  name: string;
-  estimatedCaloriesBurned: number;
-};
+// type SetType = {
+//   id: string;
+//   name: string;
+//   estimatedCaloriesBurned: number;
+// };
 
 type SetInPlanType = {
-  setId: string;
+  planId: string;
   week: number;
   day: number;
   caloriesBurned: number;
+  sets: any[];
+  name?: string;
 };
 
 type Props = {
-  setOptions: SetType[];
+  setOptions: any[];
   editingSetId: string | null;
   setSetsList: React.Dispatch<
     React.SetStateAction<(SetInPlanType & { id: string; name: string })[]>
@@ -51,32 +55,46 @@ function SetInPlanForm({
   endDate,
 }: Props) {
   const defaultFormState: SetInPlanType = {
-    setId: "",
+    planId: uuidv4(),
     week: 1,
     day: 1,
     caloriesBurned: 0,
+    sets: [],
+    name: "",
   };
 
   const [formState, setFormState] = useState<SetInPlanType>(defaultFormState);
-  const [availableDays, setAvailableDays] = useState<number[]>([]);
+  // const [availableDays, setAvailableDays] = useState<number[]>([]);
+  const [selectedSets, setSelectedSets] = useState<
+    {
+      id: string;
+      description: string;
+      total_calories: number;
+      numberOfExercises: number;
+      type: string;
+    }[]
+  >([]);
+  const [selectedSet, setSelectedSet] = useState<string>("");
 
-  // Generate days based on week selection (assuming 7 days per week)
-  useEffect(() => {
-    const days = Array.from({ length: 7 }, (_, i) => i + 1);
-    setAvailableDays(days);
-  }, []);
+  // useEffect(() => {
+  //   const days = Array.from({ length: 7 }, (_, i) => i + 1);
+  //   setAvailableDays(days);
+  // }, []);
 
-  // Populate form when editing
   useEffect(() => {
     if (editingSetId) {
       setSetsList((prev) => {
-        const existingSet = prev.find((set) => set.id === editingSetId);
+        const existingSet = prev.find(
+          (planDetail) => planDetail.id === editingSetId
+        );
         if (existingSet) {
           setFormState({
-            setId: existingSet.setId,
+            planId: existingSet.planId,
             week: existingSet.week,
             day: existingSet.day,
             caloriesBurned: existingSet.caloriesBurned,
+            sets: existingSet.sets,
+            name: existingSet.name,
           });
         }
         return prev;
@@ -84,18 +102,20 @@ function SetInPlanForm({
     }
   }, [editingSetId, setSetsList]);
 
-  // Auto-populate calories when set is selected
   useEffect(() => {
-    if (formState.setId) {
-      const selectedSet = setOptions.find((set) => set.id === formState.setId);
-      if (selectedSet) {
+    if (selectedSets.length > 0) {
+      const totalCalories = selectedSets.reduce(
+        (acc, set) => acc + set.total_calories,
+        0
+      );
+      if (totalCalories > 0) {
         setFormState((prev) => ({
           ...prev,
-          caloriesBurned: selectedSet.estimatedCaloriesBurned,
+          caloriesBurned: totalCalories,
         }));
       }
     }
-  }, [formState.setId, setOptions]);
+  }, [formState.planId, setOptions, selectedSets]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -107,15 +127,16 @@ function SetInPlanForm({
     }));
   };
 
-  const handleDayChange = (day: number) => {
-    setFormState((prev) => ({
-      ...prev,
-      day: day,
-    }));
-  };
+  // const handleDayChange = (day: number) => {
+  //   setFormState((prev) => ({
+  //     ...prev,
+  //     day: day,
+  //   }));
+  // };
 
   function submitSetForm() {
-    if (!formState.setId) {
+    console.log(formState);
+    if (!formState.planId) {
       alert("Please select a set");
       return;
     }
@@ -125,8 +146,6 @@ function SetInPlanForm({
       return;
     }
 
-    const selectedSet = setOptions.find((set) => set.id === formState.setId);
-
     if (editingSetId) {
       setSetsList((prev) =>
         prev.map((set) =>
@@ -134,7 +153,7 @@ function SetInPlanForm({
             ? {
                 ...formState,
                 id: set.id,
-                name: selectedSet?.name || set.name,
+                name: formState.name || set.name,
               }
             : set
         )
@@ -146,7 +165,7 @@ function SetInPlanForm({
         {
           ...formState,
           id: Date.now().toString(),
-          name: selectedSet?.name || "Unknown Set",
+          name: formState.name || "Unknown Set",
         },
       ]);
     }
@@ -175,25 +194,39 @@ function SetInPlanForm({
           <X size={18} />
         </Button>
       </div>
+      <div>
+        <Label className="block text-sm font-medium mb-1">Set Name</Label>
+        <Input
+          placeholder="Eg, Top body workout"
+          className="w-full"
+          onChange={(e) => {
+            setFormState((prev) => ({
+              ...prev,
+              name: e.target.value,
+            }));
+          }}
+          value={formState.name}
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="w-full">
-          <Label className="block text-sm font-medium mb-1">Select Set</Label>
+          <Label className="block text-sm font-medium mb-1">Day</Label>
           <Select
             onValueChange={(value) =>
               handleInputChange({
-                target: { name: "setId", value },
+                target: { name: "day", value },
               } as React.ChangeEvent<HTMLInputElement>)
             }
-            value={formState.setId}
+            value={formState.day.toString()}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a set" />
+              <SelectValue placeholder="Select day" />
             </SelectTrigger>
             <SelectContent>
-              {setOptions.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.name}
+              {Array.from({ length: 7 }, (_, i) => i + 1).map((day) => (
+                <SelectItem key={day} value={day.toString()}>
+                  Day {day}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -225,28 +258,6 @@ function SetInPlanForm({
           </Select>
         </div>
 
-        <div className="w-full md:col-span-2">
-          <Label className="block text-sm font-medium mb-2">Day</Label>
-          <div className="flex flex-wrap gap-3">
-            {availableDays.map((day) => (
-              <div key={day} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id={`day-${day}`}
-                  name="day"
-                  value={day}
-                  checked={formState.day === day}
-                  onChange={() => handleDayChange(day)}
-                  className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
-                />
-                <Label htmlFor={`day-${day}`} className="cursor-pointer">
-                  Day {day}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="w-full">
           <Label className="block text-sm font-medium mb-1">
             Calories Burned
@@ -258,18 +269,98 @@ function SetInPlanForm({
             onChange={handleInputChange}
             placeholder="Estimated calories burned"
             className="w-full rounded-md border border-input bg-background px-3 py-2"
+            readOnly
           />
         </div>
       </div>
-
       {startDate && endDate && (
-        <div className="mt-4 text-sm text-muted-foreground">
+        <div className="mb-4 text-sm text-muted-foreground">
           <p>
             Plan duration: {totalWeeks} weeks ({startDate.toLocaleDateString()}{" "}
             - {endDate.toLocaleDateString()})
           </p>
         </div>
       )}
+
+      <div className="w-full">
+        <Label className="block text-sm font-medium mb-1">Select Set</Label>
+        <div className="flex flex-row items-center gap-4 w-full">
+          <OptimizedSelect
+            value={selectedSet}
+            onValueChange={(value) => setSelectedSet(value)}
+            options={setOptions}
+          />
+          <Button
+            type="button"
+            className="mb-2"
+            onClick={() => {
+              setSelectedSets((prev) => {
+                const selectedSetTemp = setOptions.find(
+                  (set) => set.id === selectedSet
+                );
+                if (selectedSet) {
+                  const exists = prev.some(
+                    (set) => set.id === selectedSetTemp.id
+                  );
+                  if (exists) {
+                    return prev;
+                  }
+                  return [...prev, { ...selectedSetTemp }];
+                }
+                return prev;
+              });
+            }}
+          >
+            Add set
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <Label className="block text-sm font-medium mb-1">Selected Sets</Label>
+        <div className="flex flex-col gap-2">
+          {selectedSets.map((set) => (
+            <div
+              key={set.id}
+              className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100"
+            >
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{set.description}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {set.type}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground flex gap-4">
+                  <span className="flex items-center">
+                    <span className="font-semibold text-primary mr-1">
+                      {set.total_calories}
+                    </span>{" "}
+                    calories
+                  </span>
+                  <span className="flex items-center">
+                    <span className="font-semibold text-primary mr-1">
+                      {set.numberOfExercises}
+                    </span>{" "}
+                    exercises
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive/90"
+                onClick={() =>
+                  setSelectedSets((prev) => prev.filter((s) => s.id !== set.id))
+                }
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="flex justify-end mt-6">
         <Button
@@ -286,7 +377,7 @@ function SetInPlanForm({
           onClick={submitSetForm}
           className="bg-primary hover:opacity-70"
         >
-          {editingSetId ? "Update Set" : "Add Set to Plan"}
+          {editingSetId ? "Update Sets" : "Add Sets to Plan"}
         </Button>
       </div>
     </Card>

@@ -3,7 +3,7 @@ import { AxiosResponse } from "axios";
 import apiService from "./api.service";
 
 class ChallengeService {
-  addChallenge(challenge: AddUpdateChallengeData): Promise<AxiosResponse> {
+  addChallenge(challenge: any): Promise<AxiosResponse> {
     return apiService.post<AxiosResponse>("/challenges", challenge);
   }
   updateChallenge(
@@ -34,7 +34,11 @@ class ChallengeService {
     status?: string;
   }): Promise<AxiosResponse> {
     return apiService.get(
-      `/challenges?page=${page}&limit=${limit}&type=${type}&sort_by=${sort_by}&order_by=${order_by}&status=${status}`
+      `/challenges?page=${page}&limit=${limit}${type ? `&type=${type}` : ""}${
+        sort_by ? `&sort_by=${sort_by}` : ""
+      }${order_by ? `&order_by=${order_by}` : ""}${
+        status ? `&status=${status}` : ""
+      }`
     );
   }
   activateChallenge(id: string): Promise<AxiosResponse> {

@@ -16,7 +16,7 @@ export default function Community() {
       <h1 className="text-3xl font-bold mb-6">Health Community</h1>
 
       <Tabs defaultValue="published" onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 mb-6 bg-muted shadow-md overflow-hidden w-full relative !px-0">
+        <TabsList className="grid grid-cols-3 mb-6 bg-muted shadow-md overflow-hidden w-full relative !px-0">
           <TabsTrigger
             value="published"
             className="flex items-center justify-center transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-50"
@@ -29,15 +29,26 @@ export default function Community() {
           >
             Pending Verification
           </TabsTrigger>
+          <TabsTrigger
+            value="rejected"
+            className="flex items-center justify-center transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-50"
+          >
+            Rejected Posts
+          </TabsTrigger>
           <motion.div
             className="absolute bottom-0 h-1 bg-primary rounded-full"
             layout
             initial={false}
             animate={{
-              left: activeTab === "published" ? "0%" : "50%",
+              left:
+                activeTab === "published"
+                  ? "0%"
+                  : activeTab === "pending"
+                  ? "33.33%"
+                  : "66.66%",
+              width: "33.33%",
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            style={{ width: "50%" }}
           />
         </TabsList>
 
@@ -47,6 +58,10 @@ export default function Community() {
 
         <TabsContent value="pending">
           <PostFeed type="pending" />
+        </TabsContent>
+
+        <TabsContent value="rejected">
+          <PostFeed type="rejected" />
         </TabsContent>
       </Tabs>
 

@@ -12,11 +12,18 @@ import AddMealPlan from "@/pages/meals/add-meal-plan";
 import AddMeal from "@/pages/meals/add-meal";
 import AddIngredient from "@/pages/meals/add-ingredient";
 import AddDish from "@/pages/meals/add-dish";
-import AddExerciseChallenge from "@/pages/challenges/add-exercise-challenge";
-import AddMealChallenge from "@/pages/challenges/add-meal-challenge";
 import AddSpecialist from "@/pages/specialist/add-specialist";
 import ProtectedRoute from "./protected-route";
-const Specialist = React.lazy(() => import("@/pages/specialist"));
+import AddChallengePage from "@/pages/challenges/add-challenge";
+import Specialist from "@/pages/specialist";
+import AddHealthPlan from "@/pages/challenges/add-health-plan";
+import ExerciseDetail from "@/pages/exercises/detail";
+import ExerciseSetDetail from "@/pages/exercises/set-detail";
+import IngredientDetail from "@/pages/meals/ingredient-detail";
+import DishDetail from "@/pages/meals/dish-detail";
+import MealDetail from "@/pages/meals/meal-detail";
+import SpecialistDetailPage from "@/pages/specialist/detail";
+import ChallengeDetail from "@/pages/challenges/detail";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -70,6 +77,14 @@ const router = createBrowserRouter([
             path: "/manage-exercises/add-exercise-set",
             element: <AddExerciseSetPage />,
           },
+          {
+            path: "/manage-exercises/exercises/:id",
+            element: <ExerciseDetail />,
+          },
+          {
+            path: "/manage-exercises/exercise-sets/:id",
+            element: <ExerciseSetDetail />,
+          },
         ],
       },
       {
@@ -95,6 +110,18 @@ const router = createBrowserRouter([
             path: "/manage-meals/add-dish",
             element: <AddDish />,
           },
+          {
+            path: "/manage-meals/ingredients/:id",
+            element: <IngredientDetail />,
+          },
+          {
+            path: "/manage-meals/dishes/:id",
+            element: <DishDetail />,
+          },
+          {
+            path: "/manage-meals/meals/:id",
+            element: <MealDetail />,
+          },
         ],
       },
       {
@@ -105,12 +132,16 @@ const router = createBrowserRouter([
             element: withSuspense(ManageChallenges),
           },
           {
-            path: "/manage-challenges/add-exercise-challenge",
-            element: <AddExerciseChallenge />,
+            path: "/manage-challenges/add-challenge",
+            element: <AddChallengePage />,
           },
           {
-            path: "/manage-challenges/add-meal-challenge",
-            element: <AddMealChallenge />,
+            path: "/manage-challenges/add-health-plan",
+            element: <AddHealthPlan />,
+          },
+          {
+            path: "/manage-challenges/:id",
+            element: <ChallengeDetail />,
           },
         ],
       },
@@ -119,11 +150,15 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: withSuspense(Specialist),
+            element: <Specialist />,
           },
           {
             path: "/manage-specialists/add-specialist",
             element: <AddSpecialist />,
+          },
+          {
+            path: "/manage-specialists/:id",
+            element: <SpecialistDetailPage />,
           },
         ],
       },

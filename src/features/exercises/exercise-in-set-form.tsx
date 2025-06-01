@@ -4,21 +4,22 @@ import { Card } from "@/components/ui/card";
 import { CreateExerciseInSetType } from "@/constants/types";
 import { X } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import OptimizedSelect from "@/components/ui/optimized-select";
 
 type Props = {
   exerciseOptions: { id: string; description: string }[];
   editingExerciseId: string | null;
   setExercisesList: React.Dispatch<
     React.SetStateAction<
-      (CreateExerciseInSetType & { id: string; name: string })[]
+      (CreateExerciseInSetType & { _id: string; name: string })[]
     >
   >;
   setEditingExerciseId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -33,12 +34,14 @@ function ExerciseInSetForm({
   setAddingExercise,
 }: Props) {
   const defaultFormState: CreateExerciseInSetType = {
-    exerciseId: "",
+    exercise_id: "",
     duration: 0,
     reps: 0,
     rounds: 0,
-    restPerRound: 0,
-    estimatedCaloriesBurned: 0,
+    rest_per_round: 0,
+    estimated_calories_burned: 0,
+    timePerRound: 0,
+    orderNumber: 0,
   };
 
   const [formState, setFormState] =
@@ -47,15 +50,20 @@ function ExerciseInSetForm({
   useEffect(() => {
     if (editingExerciseId) {
       setExercisesList((prev) => {
-        const existingExercise = prev.find((ex) => ex.id === editingExerciseId);
+        const existingExercise = prev.find(
+          (ex) => ex._id === editingExerciseId
+        );
         if (existingExercise) {
           setFormState({
-            exerciseId: existingExercise.exerciseId,
+            exercise_id: existingExercise.exercise_id,
             duration: existingExercise.duration,
             reps: existingExercise.reps,
             rounds: existingExercise.rounds,
-            restPerRound: existingExercise.restPerRound,
-            estimatedCaloriesBurned: existingExercise.estimatedCaloriesBurned,
+            rest_per_round: existingExercise.rest_per_round,
+            estimated_calories_burned:
+              existingExercise.estimated_calories_burned,
+            timePerRound: existingExercise.timePerRound,
+            orderNumber: existingExercise.orderNumber,
           });
         }
         return prev;
@@ -67,31 +75,32 @@ function ExerciseInSetForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    console.log("Input changed:", name, value);
     setFormState((prev) => ({
       ...prev,
-      [name]: name === "exerciseId" ? value : Number(value),
+      [name]: name === "exercise_id" ? value : Number(value),
     }));
   };
 
   function submitExerciseForm() {
     console.log("Exercise data:", formState);
 
-    if (!formState.exerciseId) {
+    if (!formState.exercise_id) {
       alert("Please select an exercise");
       return;
     }
 
     const selectedExercise = exerciseOptions.find(
-      (exercise) => exercise.id === formState.exerciseId
+      (exercise) => exercise.id === formState.exercise_id
     );
 
     if (editingExerciseId) {
       setExercisesList((prev) =>
         prev.map((ex) =>
-          ex.id === editingExerciseId
+          ex._id === editingExerciseId
             ? {
                 ...formState,
-                id: ex.id,
+                _id: ex._id,
                 name: selectedExercise?.description || ex.name,
               }
             : ex
@@ -103,7 +112,7 @@ function ExerciseInSetForm({
         ...prev,
         {
           ...formState,
-          id: Date.now().toString(),
+          _id: Date.now().toString(),
           name: selectedExercise?.description || "Unknown Exercise",
         },
       ]);
@@ -135,17 +144,16 @@ function ExerciseInSetForm({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="w-full">
-          <Label className="block text-sm font-medium mb-1">
-            Exercise Type
-          </Label>
-          <Select
-            onValueChange={(value) =>
+        <div className="w-full col-span-2">
+          <Label className="block text-sm font-medium mb-1">Exercise</Label>
+          {/* <Select
+            onValueChange={(value) => {
+              console.log("Selected exercise ID:", value);
               handleInputChange({
-                target: { name: "exerciseId", value },
-              } as React.ChangeEvent<HTMLInputElement>)
-            }
-            value={formState.exerciseId}
+                target: { name: "exercise_id", value },
+              } as React.ChangeEvent<HTMLInputElement>);
+            }}
+            value={formState.exercise_id}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select an exercise" />
@@ -157,7 +165,17 @@ function ExerciseInSetForm({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select> */}
+          <OptimizedSelect
+            value={formState.exercise_id}
+            onValueChange={(value) => {
+              console.log("Selected exercise ID:", value);
+              handleInputChange({
+                target: { name: "exercise_id", value },
+              } as React.ChangeEvent<HTMLInputElement>);
+            }}
+            options={exerciseOptions}
+          />
         </div>
 
         <div className="w-full">
@@ -170,6 +188,19 @@ function ExerciseInSetForm({
             value={formState.duration}
             onChange={handleInputChange}
             placeholder="Eg, 100 seconds"
+            className="w-full rounded-md border border-input bg-background px-3 py-2"
+          />
+        </div>
+        <div className="w-full">
+          <Label className="block text-sm font-medium mb-1">
+            Estimated Calories Burned
+          </Label>
+          <Input
+            type="number"
+            name="estimated_calories_burned"
+            value={formState.estimated_calories_burned}
+            onChange={handleInputChange}
+            placeholder="Eg, 100 calories"
             className="w-full rounded-md border border-input bg-background px-3 py-2"
           />
         </div>
@@ -204,8 +235,8 @@ function ExerciseInSetForm({
           </Label>
           <Input
             type="number"
-            name="restPerRound"
-            value={formState.restPerRound}
+            name="rest_per_round"
+            value={formState.rest_per_round}
             onChange={handleInputChange}
             placeholder="Eg, 15 seconds"
             className="w-full rounded-md border border-input bg-background px-3 py-2"
@@ -214,14 +245,14 @@ function ExerciseInSetForm({
 
         <div className="w-full">
           <Label className="block text-sm font-medium mb-1">
-            Estimated Calories Burned
+            Time per round (seconds)
           </Label>
           <Input
             type="number"
-            name="estimatedCaloriesBurned"
-            value={formState.estimatedCaloriesBurned}
+            name="timePerRound"
+            value={formState.timePerRound}
             onChange={handleInputChange}
-            placeholder="Eg, 100 calories"
+            placeholder="Eg, 15 seconds"
             className="w-full rounded-md border border-input bg-background px-3 py-2"
           />
         </div>

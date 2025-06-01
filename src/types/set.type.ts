@@ -15,7 +15,7 @@ export interface AddSet {
   image?: string;
   total_calories?: number;
   is_youtube_workout?: boolean;
-  youtube_id?: string;
+  youtube_id?: string | null;
 }
 
 export interface UpdateSet extends AddSet {
