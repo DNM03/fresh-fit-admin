@@ -505,9 +505,9 @@ export function ProfileSettings() {
                               Intermediate
                             </SelectItem>
                             <SelectItem value="Advanced">Advanced</SelectItem>
-                            <SelectItem value="Professional">
+                            {/* <SelectItem value="Professional">
                               Professional
-                            </SelectItem>
+                            </SelectItem> */}
                           </SelectContent>
                         </Select>
                         <FormMessage />
