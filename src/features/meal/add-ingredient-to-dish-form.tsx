@@ -87,12 +87,22 @@ function AddIngredientToDishForm({
     e.preventDefault();
 
     if (!selectedIngredientId) {
-      toast.error("Please select an ingredient");
+      toast.error("Please select an ingredient", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
     if (!quantity || parseFloat(quantity) <= 0) {
-      toast.error("Please enter a valid quantity");
+      toast.error("Please enter a valid quantity", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -110,11 +120,21 @@ function AddIngredientToDishForm({
         unit: unit,
       });
 
-      toast.success("Ingredient added successfully!");
+      toast.success("Ingredient added successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error("Error adding ingredient to dish:", error);
-      toast.error("Failed to add ingredient. Please try again.");
+      toast.error("Failed to add ingredient. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

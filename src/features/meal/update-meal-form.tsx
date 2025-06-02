@@ -123,11 +123,21 @@ function UpdateMealForm({ meal, onSuccess }: UpdateMealFormProps) {
       });
 
       console.log("Meal updated successfully:", response);
-      toast.success("Meal updated successfully!");
+      toast.success("Meal updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update meal. Please try again.");
+      toast.error("Failed to update meal. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

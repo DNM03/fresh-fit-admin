@@ -227,7 +227,12 @@ function UpdateHealthPlanForm({
           setDayPlans(processedDayPlans);
         } catch (error) {
           console.error("Error loading day plan details:", error);
-          toast.error("Failed to load health plan details");
+          toast.error("Failed to load health plan details", {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          });
         } finally {
           setIsLoading(false);
         }
@@ -284,11 +289,21 @@ function UpdateHealthPlanForm({
       };
 
       await healthPlanService.updateHealthPlan(healthPlan._id, updateData);
-      toast.success("Health plan general information updated successfully!");
+      toast.success("Health plan general information updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setCurrentStep(2); // Move to the next step after saving
     } catch (error) {
       console.error("Error updating health plan:", error);
-      toast.error("Failed to update health plan. Please try again.");
+      toast.error("Failed to update health plan. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSavingGeneralInfo(false);
     }
@@ -362,7 +377,13 @@ function UpdateHealthPlanForm({
 
         setDayPlans((prev) => [...prev, formattedDay]);
         toast.success(
-          `Day ${newDay.day} Week ${newDay.week} added successfully!`
+          `Day ${newDay.day} Week ${newDay.week} added successfully!`,
+          {
+            style: {
+              background: "#3ac76b",
+              color: "#fff",
+            },
+          }
         );
 
         // Reset form for next addition
@@ -379,7 +400,12 @@ function UpdateHealthPlanForm({
       }
     } catch (error) {
       console.error("Error adding new day:", error);
-      toast.error("Failed to add new day. Please try again.");
+      toast.error("Failed to add new day. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsAddingDay(false);
     }
@@ -404,11 +430,22 @@ function UpdateHealthPlanForm({
       // Remove the day from state
       setDayPlans((prev) => prev.filter((day) => day._id !== dayId));
       toast.success(
-        `Day ${dayToDelete.day} Week ${dayToDelete.week} deleted successfully!`
+        `Day ${dayToDelete.day} Week ${dayToDelete.week} deleted successfully!`,
+        {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        }
       );
     } catch (error) {
       console.error("Error deleting day:", error);
-      toast.error("Failed to delete day. Please try again.");
+      toast.error("Failed to delete day. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsDeletingDay(false);
       setSelectedDayId(null);

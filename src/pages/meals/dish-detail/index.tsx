@@ -135,10 +135,20 @@ function DishDetail() {
         setDish(response.data.dish);
       }
 
-      toast.success("Ingredient removed successfully!");
+      toast.success("Ingredient removed successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
     } catch (err) {
       console.error("Error removing ingredient:", err);
-      toast.error("Failed to remove ingredient. Please try again.");
+      toast.error("Failed to remove ingredient. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsRemovingIngredient(false);
     }

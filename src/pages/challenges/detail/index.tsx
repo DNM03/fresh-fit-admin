@@ -86,12 +86,22 @@ function ChallengeDetail() {
     try {
       setIsDeleting(true);
       await challengeService.deleteChallenge(id);
-      toast.success("Challenge deleted successfully");
+      toast.success("Challenge deleted successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting challenge:", err);
-      toast.error("Failed to delete challenge. Please try again.");
+      toast.error("Failed to delete challenge. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsDeleting(false);
     }

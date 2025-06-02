@@ -128,9 +128,19 @@ export default function PostFeed({ type }: PostFeedProps) {
       await postService.approvePost(selectedPostId);
       setPosts((prev) => prev.filter((post) => post._id !== selectedPostId));
       setIsVerifyDialogOpen(false);
-      toast.success("Post approved successfully!");
+      toast.success("Post approved successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
     } catch (error) {
-      toast.error("Failed to approve post. Please try again.");
+      toast.error("Failed to approve post. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       console.error("Error approving post:", error);
     }
   };
@@ -149,9 +159,19 @@ export default function PostFeed({ type }: PostFeedProps) {
       });
       setPosts((prev) => prev.filter((post) => post._id !== postId));
       setIsRejectDialogOpen(false);
-      toast.success("Post rejected successfully!");
+      toast.success("Post rejected successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
     } catch (error) {
-      toast.error("Failed to reject post. Please try again.");
+      toast.error("Failed to reject post. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       console.error("Error rejecting post:", error);
     }
   };

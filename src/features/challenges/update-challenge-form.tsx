@@ -184,11 +184,21 @@ export default function UpdateChallengeForm({
         updateData
       );
       console.log("Challenge updated successfully:", response);
-      toast.success("Challenge updated successfully!");
+      toast.success("Challenge updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error("Error updating challenge:", error);
-      toast.error("Failed to update challenge. Please try again.");
+      toast.error("Failed to update challenge. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Upload } from "lucide-react";
+import { CalendarIcon, Eye, EyeOff, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { userService } from "@/services";
+import { authService, userService } from "@/services";
 import mediaService from "@/services/media.service";
 
 const profileFormSchema = z.object({
@@ -89,6 +89,10 @@ export function ProfileSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,7 +168,12 @@ export function ProfileSettings() {
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        toast.error("Failed to load profile data");
+        toast.error("Failed to load profile data", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
       } finally {
         setIsLoading(false);
       }
@@ -218,10 +227,20 @@ export function ProfileSettings() {
         weight: finalData.weight.toString(),
         fitnessLevel: finalData.level,
       });
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      toast.error("Failed to update profile", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -238,15 +257,27 @@ export function ProfileSettings() {
       });
 
       if (response.status === 200) {
-        toast.success("Password changed successfully");
+        toast.success("Password changed successfully", {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        });
         passwordForm.reset();
+        await authService.logout();
       } else {
         throw new Error("Failed to change password");
       }
     } catch (error) {
       console.error("Error changing password:", error);
       toast.error(
-        "Failed to change password. Please check your current password."
+        "Failed to change password. Please check your current password.",
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
       );
     } finally {
       setIsChangingPassword(false);
@@ -474,9 +505,9 @@ export function ProfileSettings() {
                               Intermediate
                             </SelectItem>
                             <SelectItem value="Advanced">Advanced</SelectItem>
-                            <SelectItem value="Professional">
+                            {/* <SelectItem value="Professional">
                               Professional
-                            </SelectItem>
+                            </SelectItem> */}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -520,11 +551,31 @@ export function ProfileSettings() {
                     <FormItem>
                       <FormLabel>Current Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Enter your current password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showOldPassword ? "text" : "password"}
+                            placeholder="Enter your current password"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowOldPassword(!showOldPassword)}
+                          >
+                            {showOldPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                            <span className="sr-only">
+                              {showOldPassword
+                                ? "Hide password"
+                                : "Show password"}
+                            </span>
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -538,11 +589,31 @@ export function ProfileSettings() {
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Enter your new password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showNewPassword ? "text" : "password"}
+                            placeholder="Enter your new password"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            {showNewPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                            <span className="sr-only">
+                              {showNewPassword
+                                ? "Hide password"
+                                : "Show password"}
+                            </span>
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -556,11 +627,33 @@ export function ProfileSettings() {
                     <FormItem>
                       <FormLabel>Confirm New Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Confirm your new password"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="Confirm your new password"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                            <span className="sr-only">
+                              {showConfirmPassword
+                                ? "Hide password"
+                                : "Show password"}
+                            </span>
+                          </Button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

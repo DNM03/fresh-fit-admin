@@ -38,7 +38,12 @@ function UpdateDishIngredientForm({
     e.preventDefault();
 
     if (!quantity || parseFloat(quantity) <= 0) {
-      toast.error("Please enter a valid quantity");
+      toast.error("Please enter a valid quantity", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -50,11 +55,21 @@ function UpdateDishIngredientForm({
         unit: unit,
       });
 
-      toast.success("Ingredient updated successfully!");
+      toast.success("Ingredient updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error("Error updating ingredient in dish:", error);
-      toast.error("Failed to update ingredient. Please try again.");
+      toast.error("Failed to update ingredient. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

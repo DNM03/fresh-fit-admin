@@ -299,10 +299,20 @@ function AddSpecialistForm() {
       const response = await specialistService.addSpecialist(dataToSubmit);
       console.log("Specialist created:", response.data);
 
-      toast.success("Specialist account created successfully");
+      toast.success("Specialist account created successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
     } catch (error) {
       console.error("Error creating specialist account:", error);
-      toast.error("Failed to create specialist account. Please try again.");
+      toast.error("Failed to create specialist account. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

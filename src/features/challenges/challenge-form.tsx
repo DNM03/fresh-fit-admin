@@ -97,7 +97,12 @@ export default function ChallengeForm() {
     try {
       setIsSubmitting(true);
       if (!startDate || !endDate) {
-        toast.error("Please select start and end dates");
+        toast.error("Please select start and end dates", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
         return;
       }
 
@@ -121,7 +126,12 @@ export default function ChallengeForm() {
           }
         } catch (error) {
           console.error("Error uploading challenge image:", error);
-          toast.error("Failed to upload challenge image. Please try again.");
+          toast.error("Failed to upload challenge image. Please try again.", {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          });
           return;
         }
       }
@@ -135,7 +145,12 @@ export default function ChallengeForm() {
           }
         } catch (error) {
           console.error("Error uploading prize image:", error);
-          toast.error("Failed to upload prize image. Please try again.");
+          toast.error("Failed to upload prize image. Please try again.", {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          });
           return;
         }
       }
@@ -149,7 +164,12 @@ export default function ChallengeForm() {
           }
         } catch (error) {
           console.error("Error uploading target image:", error);
-          toast.error("Failed to upload target image. Please try again.");
+          toast.error("Failed to upload target image. Please try again.", {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          });
           return;
         }
       }
@@ -170,16 +190,32 @@ export default function ChallengeForm() {
         health_plan_id: healthPlanId, // Changed to singular
       });
       if (!response || !response.data) {
-        toast.error("Failed to create challenge. Please try again.");
+        toast.error("Failed to create challenge. Please try again.", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
         throw new Error("Failed to create challenge. No response data.");
       }
       console.log("Challenge created successfully:", response.data);
-      toast.success("Challenge created successfully!");
+      toast.success("Challenge created successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setFormSubmitted(true);
     } catch (error) {
       console.error("Error saving challenge:", error);
       toast.error(
-        "Failed to create challenge. Make sure all images are uploaded."
+        "Failed to create challenge. Make sure all images are uploaded.",
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
       );
     } finally {
       setIsSubmitting(false);

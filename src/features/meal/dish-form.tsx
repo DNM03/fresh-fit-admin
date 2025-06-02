@@ -144,7 +144,12 @@ export default function DishForm() {
       !newIngredient.quantity ||
       !newIngredient.unit
     ) {
-      toast.error("Please fill in all ingredient fields");
+      toast.error("Please fill in all ingredient fields", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -169,7 +174,12 @@ export default function DishForm() {
     try {
       setLoading(true);
       if (ingredients.length === 0) {
-        toast.error("Please add at least one ingredient");
+        toast.error("Please add at least one ingredient", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
         return;
       }
       let imageRes = null;
@@ -189,7 +199,12 @@ export default function DishForm() {
       };
       const response = await dishService.addDish(finalData);
       if (response) {
-        toast.success("Dish created successfully!");
+        toast.success("Dish created successfully!", {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        });
         setFormSubmitted(true);
         setIngredients([]);
         setImageFiles([]);
@@ -197,7 +212,12 @@ export default function DishForm() {
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to create dish. Please try again.");
+      toast.error("Failed to create dish. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     } finally {
       setLoading(false);

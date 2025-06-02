@@ -9,6 +9,8 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
 import bg_image from "@/assets/images/fresh-fit-bg.jpg";
 import app_logo from "@/assets/images/freshfit_logo.png";
+// Import Eye and EyeOff icons
+import { Eye, EyeOff } from "lucide-react";
 
 const schema = z
   .object({
@@ -30,12 +32,21 @@ function ResetPasswordPage() {
   const forgot_password_token = location.state?.forgot_password_token;
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  // Add state for password visibility
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (!forgot_password_token) {
       navigate("/forgot-password");
       toast.error(
-        "Please follow the password reset process from the beginning"
+        "Please follow the password reset process from the beginning",
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
       );
     }
   }, [forgot_password_token, navigate]);
@@ -57,12 +68,22 @@ function ResetPasswordPage() {
         password: data.newPassword,
         confirm_password: data.newPassword,
       });
-      toast.success("Password reset successful!");
+      toast.success("Password reset successful!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       navigate("/login");
     } catch (error: any) {
       setError("An error occurred. Please try again.");
       console.error("Reset password error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -85,24 +106,60 @@ function ResetPasswordPage() {
           </p>
 
           <div className="flex flex-col gap-y-1 w-full">
-            <Input
-              type="password"
-              placeholder="New Password"
-              {...register("newPassword")}
-              className="text-slate-900 rounded-md min-w-72"
-            />
+            <div className="relative">
+              <Input
+                type={showNewPassword ? "text" : "password"}
+                placeholder="New Password"
+                {...register("newPassword")}
+                className="text-slate-900 rounded-md min-w-72"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 text-slate-900 hover:text-slate-700"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+                <span className="sr-only">
+                  {showNewPassword ? "Hide password" : "Show password"}
+                </span>
+              </Button>
+            </div>
             {errors.newPassword && (
               <p className="text-red-500">{errors.newPassword.message}</p>
             )}
           </div>
 
           <div className="flex flex-col gap-y-1 w-full">
-            <Input
-              type="password"
-              placeholder="Confirm Password"
-              {...register("confirmPassword")}
-              className="text-slate-900 rounded-md"
-            />
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                {...register("confirmPassword")}
+                className="text-slate-900 rounded-md"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 text-slate-900 hover:text-slate-700"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+                <span className="sr-only">
+                  {showConfirmPassword ? "Hide password" : "Show password"}
+                </span>
+              </Button>
+            </div>
             {errors.confirmPassword && (
               <p className="text-red-500">{errors.confirmPassword.message}</p>
             )}

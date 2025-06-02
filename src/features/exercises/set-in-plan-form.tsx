@@ -138,12 +138,22 @@ function SetInPlanForm({
   function submitSetForm() {
     console.log(formState);
     if (!formState.planId) {
-      toast.error("Please select a set");
+      toast.error("Please select a set", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
     if (!formState.day) {
-      toast.error("Please select a day");
+      toast.error("Please select a day", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 

@@ -246,7 +246,12 @@ function UpdateExerciseSetForm({
 
   const handleSaveExercise = () => {
     if (!selectedExercise) {
-      toast.error("Please select an exercise");
+      toast.error("Please select an exercise", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -333,7 +338,12 @@ function UpdateExerciseSetForm({
 
   const submitForm = async (data: any) => {
     if (exercisesList.length === 0) {
-      toast.error("Please add at least one exercise to the set");
+      toast.error("Please add at least one exercise to the set", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -378,11 +388,21 @@ function UpdateExerciseSetForm({
       });
 
       console.log("Exercise set updated successfully:", response);
-      toast.success("Exercise set updated successfully!");
+      toast.success("Exercise set updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error("Error updating exercise set:", error);
-      toast.error("Failed to update exercise set. Please try again.");
+      toast.error("Failed to update exercise set. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }
