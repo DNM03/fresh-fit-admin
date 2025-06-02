@@ -338,7 +338,12 @@ function HealthPlanForm() {
           });
         }
       }
-      toast.success("Health plan created successfully!");
+      toast.success("Health plan created successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
 
       setFormSubmitted(true);
       // Reset form and state
@@ -350,7 +355,12 @@ function HealthPlanForm() {
       navigate(-1);
     } catch (error) {
       console.error("Error submitting health plan:", error);
-      toast.error("Failed to create health plan. Please try again.");
+      toast.error("Failed to create health plan. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsLoading(false);
     }

@@ -121,11 +121,21 @@ function UpdateIngredientForm({
       );
 
       console.log("Ingredient updated successfully:", response);
-      toast.success("Ingredient updated successfully!");
+      toast.success("Ingredient updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update ingredient. Please try again.");
+      toast.error("Failed to update ingredient. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

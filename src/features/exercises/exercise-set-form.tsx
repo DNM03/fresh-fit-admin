@@ -156,14 +156,24 @@ function ExerciseSetForm() {
       const response = await setService.addSet(finalData);
 
       console.log("Set created successfully:", response.data);
-      toast.success("Exercise set created successfully!");
+      toast.success("Exercise set created successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setFormSubmitted(true);
       form.reset(defaultValues);
       setExercisesList([]);
       setBackgroundImage([]);
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to create set. Please try again.");
+      toast.error("Failed to create set. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsLoading(false);
     }

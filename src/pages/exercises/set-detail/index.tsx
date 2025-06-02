@@ -148,12 +148,22 @@ function ExerciseSetDetail() {
     try {
       setIsDeleting(true);
       await setService.deleteSet(id);
-      toast.success("Exercise set deleted successfully");
+      toast.success("Exercise set deleted successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting exercise set:", err);
-      toast.error("Failed to delete exercise set. Please try again.");
+      toast.error("Failed to delete exercise set. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsDeleting(false);
     }

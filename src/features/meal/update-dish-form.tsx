@@ -140,11 +140,21 @@ function UpdateDishForm({ dish, onSuccess }: UpdateDishFormProps) {
       });
 
       console.log("Dish updated successfully:", response);
-      toast.success("Dish updated successfully!");
+      toast.success("Dish updated successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error("Failed to update dish. Please try again.");
+      toast.error("Failed to update dish. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

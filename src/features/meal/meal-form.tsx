@@ -86,7 +86,12 @@ export default function MealForm() {
     try {
       setIsLoading(true);
       if (selectedDishes.length === 0) {
-        toast.error("Please add at least one dish to the meal");
+        toast.error("Please add at least one dish to the meal", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
         return;
       }
       let imageRes;
@@ -110,13 +115,23 @@ export default function MealForm() {
         setFormSubmitted(true);
         setImageFiles([]);
         setSelectedDishes([]);
-        toast.success("Meal created successfully!");
+        toast.success("Meal created successfully!", {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        });
         form.reset(defaultValues);
         navigate(-1);
       }
     } catch (error) {
       console.error("Error submitting meal form:", error);
-      toast.error("Failed to create meal. Please try again.");
+      toast.error("Failed to create meal. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsLoading(false);
       setFormSubmitted(true);

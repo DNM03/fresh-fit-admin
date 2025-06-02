@@ -87,12 +87,22 @@ function IngredientDetail() {
     try {
       setIsDeleting(true);
       await ingredientService.deleteIngredient(id);
-      toast.success("Ingredient deleted successfully");
+      toast.success("Ingredient deleted successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting ingredient:", err);
-      toast.error("Failed to delete ingredient. Please try again.");
+      toast.error("Failed to delete ingredient. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsDeleting(false);
     }

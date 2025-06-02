@@ -86,14 +86,24 @@ function IngredientForm() {
       });
 
       console.log("Ingredient created successfully:", response);
-      toast.success("Ingredient created successfully!");
+      toast.success("Ingredient created successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       form.reset(defaultValues);
       setImageFiles([]);
       navigate(-1);
     } catch (error) {
       console.error(error);
       // Error feedback
-      toast.error("Failed to create ingredient. Please try again.");
+      toast.error("Failed to create ingredient. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -9,11 +9,16 @@ import { Button } from "@/components/ui/button";
 import { authService } from "@/services";
 import { useState } from "react";
 import { toast } from "sonner";
+// Import Eye and EyeOff icons
+import { Eye, EyeOff } from "lucide-react";
 
 function LoginPage() {
   const navigate = useNavigate();
   const [_loading, setLoading] = useState<boolean>(false);
   const [_error, setError] = useState<string | null>(null);
+  // Add state for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
   const {
     control,
     handleSubmit,
@@ -40,8 +45,22 @@ function LoginPage() {
     setLoading(true);
     try {
       const response = await authService.login(data.email, data.password);
+      if (response.result.role !== 1) {
+        toast.error("You are not authorized to access this application.", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+        return;
+      }
       console.log("Login successful", response);
-      toast.success("Login successful!");
+      toast.success("Login successful!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       navigate("/");
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -52,7 +71,12 @@ function LoginPage() {
         setError("An error occurred. Please try again.");
       }
       console.error("Login error:", error);
-      toast.error("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -62,7 +86,7 @@ function LoginPage() {
       className="flex h-screen w-full items-center justify-center bg-slate-900 bg-cover bg-no-repeat"
       style={{ backgroundImage: `url(${bg_image})` }}
     >
-      <div className="rounded-xl bg-slate-200/50  px-16 py-10 shadow-lg backdrop-blur-md max-sm:px-8">
+      <div className="rounded-xl bg-slate-200/50 px-16 py-10 shadow-lg backdrop-blur-md max-sm:px-8">
         <form
           className="flex flex-col items-center text-[#176219] gap-y-4"
           onSubmit={handleSubmit(onSubmit)}
@@ -81,7 +105,7 @@ function LoginPage() {
                   onChange={onChange}
                 />
                 {errors.email && (
-                  <p className="text-red-500 ">{errors.email.message}</p>
+                  <p className="text-red-500">{errors.email.message}</p>
                 )}
               </div>
             )}
@@ -91,15 +115,33 @@ function LoginPage() {
             name="password"
             render={({ field: { value, onChange } }) => (
               <div className="flex flex-col gap-y-1 w-full">
-                <Input
-                  placeholder="Enter password"
-                  type="password"
-                  className="text-slate-900 rounded-md"
-                  value={value}
-                  onChange={onChange}
-                />
+                <div className="relative">
+                  <Input
+                    placeholder="Enter password"
+                    type={showPassword ? "text" : "password"}
+                    className="text-slate-900 rounded-md"
+                    value={value}
+                    onChange={onChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 text-slate-900 hover:text-slate-700"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Hide password" : "Show password"}
+                    </span>
+                  </Button>
+                </div>
                 {errors.password && (
-                  <p className="text-red-500 ">{errors.password.message}</p>
+                  <p className="text-red-500">{errors.password.message}</p>
                 )}
               </div>
             )}

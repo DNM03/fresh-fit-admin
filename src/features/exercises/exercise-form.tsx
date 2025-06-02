@@ -180,7 +180,12 @@ function ExerciseForm() {
 
       console.log("Exercise created successfully:", response);
       // console.log(data);
-      toast.success("Exercise created successfully!");
+      toast.success("Exercise created successfully!", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       form.reset(defaultValues);
       setImageFiles([]);
       setVideoFile(null);
@@ -188,7 +193,12 @@ function ExerciseForm() {
     } catch (error) {
       console.error(error);
       // Error feedback
-      toast.error("Failed to create exercise. Please try again.");
+      toast.error("Failed to create exercise. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

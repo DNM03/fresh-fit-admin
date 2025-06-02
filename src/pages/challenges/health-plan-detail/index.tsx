@@ -203,12 +203,22 @@ function HealthPlanDetail() {
     try {
       setIsDeleting(true);
       await healthPlanService.deleteHealthPlan(id);
-      toast.success("Health plan deleted successfully");
+      toast.success("Health plan deleted successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting health plan:", err);
-      toast.error("Failed to delete health plan. Please try again.");
+      toast.error("Failed to delete health plan. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsDeleting(false);
     }

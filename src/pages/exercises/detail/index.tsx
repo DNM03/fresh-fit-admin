@@ -65,12 +65,22 @@ function ExerciseDetail() {
     try {
       setIsDeleting(true);
       await exerciseService.deleteExercise(id);
-      toast.success("Exercise deleted successfully");
+      toast.success("Exercise deleted successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setIsDeleteDialogOpen(false);
       navigate(-1);
     } catch (err) {
       console.error("Error deleting exercise:", err);
-      toast.error("Failed to delete exercise. Please try again.");
+      toast.error("Failed to delete exercise. Please try again.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     } finally {
       setIsDeleting(false);
     }

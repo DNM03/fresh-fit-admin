@@ -87,7 +87,12 @@ function ExerciseInSetForm({
     console.log("Exercise data:", formState);
 
     if (!formState.exercise_id) {
-      toast.error("Please select an exercise");
+      toast.error("Please select an exercise", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
