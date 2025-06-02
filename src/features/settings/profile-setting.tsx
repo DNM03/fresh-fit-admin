@@ -40,6 +40,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { authService, userService } from "@/services";
 import mediaService from "@/services/media.service";
+import { useNavigate } from "react-router-dom";
 
 const profileFormSchema = z.object({
   username: z
@@ -84,6 +85,7 @@ const passwordFormSchema = z
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export function ProfileSettings() {
+  const navigate = useNavigate();
   const [avatar, setAvatar] = useState("/placeholder.svg?height=100&width=100");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,6 +248,17 @@ export function ProfileSettings() {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      authService.clearAuth();
+    } finally {
+      navigate("/login");
+    }
+  };
+
   async function onPasswordSubmit(data: PasswordFormValues) {
     try {
       setIsChangingPassword(true);
@@ -264,7 +277,7 @@ export function ProfileSettings() {
           },
         });
         passwordForm.reset();
-        await authService.logout();
+        handleLogout();
       } else {
         throw new Error("Failed to change password");
       }
