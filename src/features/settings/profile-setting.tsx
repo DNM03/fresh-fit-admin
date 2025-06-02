@@ -186,7 +186,7 @@ export function ProfileSettings() {
     try {
       setIsSubmitting(true);
       const updateData = {
-        fullName: data.fullName,
+        // fullName: data.fullName, // Removed fullName since it's read-only
         date_of_birth: data.dob.toISOString(),
         gender: data.gender === "Female" ? 1 : 0,
         height: parseFloat(data.height || "0"),
@@ -211,7 +211,7 @@ export function ProfileSettings() {
 
       form.reset({
         ...form.getValues(),
-        fullName: finalData.fullName,
+        // Still keeping fullName in the form reset to maintain form state
         dob: new Date(finalData.date_of_birth),
         gender: finalData.gender === 1 ? "Female" : "Male",
         height: finalData.height.toString(),
@@ -355,7 +355,7 @@ export function ProfileSettings() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} />
+                          <Input placeholder="John Doe" {...field} disabled />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -489,7 +489,7 @@ export function ProfileSettings() {
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
