@@ -161,7 +161,7 @@ export function ProfileSettings() {
             dob: userData.date_of_birth
               ? new Date(userData.date_of_birth)
               : defaultValues.dob,
-            gender: userData.gender === 1 ? "Female" : "Male",
+            gender: userData.gender,
             height: userData.height?.toString() || defaultValues.height,
             weight: userData.weight?.toString() || defaultValues.weight,
             fitnessLevel: userData.level || defaultValues.fitnessLevel,
@@ -199,7 +199,7 @@ export function ProfileSettings() {
       const updateData = {
         // fullName: data.fullName, // Removed fullName since it's read-only
         date_of_birth: data.dob.toISOString(),
-        gender: data.gender === "Female" ? 1 : 0,
+        gender: data.gender,
         height: parseFloat(data.height || "0"),
         weight: parseFloat(data.weight || "0"),
         level: data.fitnessLevel,
@@ -224,7 +224,7 @@ export function ProfileSettings() {
         ...form.getValues(),
         // Still keeping fullName in the form reset to maintain form state
         dob: new Date(finalData.date_of_birth),
-        gender: finalData.gender === 1 ? "Female" : "Male",
+        gender: finalData.gender,
         height: finalData.height.toString(),
         weight: finalData.weight.toString(),
         fitnessLevel: finalData.level,
@@ -435,6 +435,7 @@ export function ProfileSettings() {
                               mode="single"
                               selected={field.value}
                               onSelect={field.onChange}
+                              month={field.value}
                               disabled={(date) =>
                                 date > new Date() ||
                                 date < new Date("1900-01-01")
@@ -465,6 +466,7 @@ export function ProfileSettings() {
                           <SelectContent>
                             <SelectItem value="Male">Male</SelectItem>
                             <SelectItem value="Female">Female</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -530,9 +532,9 @@ export function ProfileSettings() {
                 </div>
 
                 <div className="flex justify-end gap-4">
-                  <Button type="button" variant="outline">
+                  {/* <Button type="button" variant="outline">
                     Cancel
-                  </Button>
+                  </Button> */}
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </Button>

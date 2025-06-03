@@ -41,7 +41,7 @@ export interface ProfileUpdateData {
   username?: string;
   fuillName?: string;
   date_of_birth?: string | null;
-  gender?: number | null;
+  gender?: string;
   avatar?: string;
   height?: number | null;
   weight?: number | null;
