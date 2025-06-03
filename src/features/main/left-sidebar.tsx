@@ -1,6 +1,7 @@
 import {
   ChartColumn,
   Dumbbell,
+  File,
   Handshake,
   House,
   LogOut,
@@ -53,6 +54,11 @@ function LeftSidebar() {
       label: "Statistics",
       icon: <ChartColumn size={20} />,
       path: "/statistics",
+    },
+    {
+      label: "Reports",
+      icon: <File size={20} />,
+      path: "/reports",
     },
     {
       label: "Settings",
