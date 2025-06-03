@@ -28,6 +28,8 @@ import HealthPlanDetail from "@/pages/challenges/health-plan-detail";
 import ForgotPasswordPage from "@/pages/forgot-password.tsx";
 import ResetPasswordPage from "@/pages/forgot-password.tsx/reset-password";
 import VerifyOtpPage from "@/pages/forgot-password.tsx/verify-otp";
+import ReportPage from "@/pages/report";
+import ReportDetailPage from "@/pages/report/detail";
 const ManageExercises = React.lazy(() => import("@/pages/exercises"));
 const ManageMeals = React.lazy(() => import("@/pages/meals"));
 const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
@@ -181,6 +183,19 @@ const router = createBrowserRouter([
       {
         path: "/settings",
         element: withSuspense(Settings),
+      },
+      {
+        path: "/reports",
+        children: [
+          {
+            index: true,
+            element: <ReportPage />,
+          },
+          {
+            path: "/reports/:id",
+            element: <ReportDetailPage />,
+          },
+        ],
       },
     ],
   },
