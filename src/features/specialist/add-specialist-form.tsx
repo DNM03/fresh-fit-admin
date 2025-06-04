@@ -162,9 +162,9 @@ function AddSpecialistForm() {
       fullName: "",
       gender: "",
       specialization: "",
-      experienceYears: 0,
+      experienceYears: undefined,
       bio: "",
-      consultationFee: 0,
+      consultationFee: undefined,
       certifications: [
         {
           name: "",
@@ -291,7 +291,7 @@ function AddSpecialistForm() {
       const dataToSubmit = {
         ...valuesWithDatesConverted,
         avatar:
-          imageRes.result.url ||
+          imageRes?.result?.url ||
           "https://i.pinimg.com/736x/77/19/21/771921cf4e62ae9fa505645ccd2cbe76.jpg",
       };
 
@@ -305,14 +305,31 @@ function AddSpecialistForm() {
           color: "#fff",
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating specialist account:", error);
-      toast.error("Failed to create specialist account. Please try again.", {
-        style: {
-          background: "#cc3131",
-          color: "#fff",
-        },
-      });
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 400
+      ) {
+        toast.error("Email already exists.", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+      } else {
+        toast.error("Failed to create specialist account. Please try again.", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -442,9 +459,9 @@ function AddSpecialistForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -459,7 +476,21 @@ function AddSpecialistForm() {
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="097722333" {...field} />
+                        <Input
+                          placeholder="097722333"
+                          {...field}
+                          type="tel"
+                          pattern="[0-9]*"
+                          onKeyPress={(event) => {
+                            if (!/[0-9]/.test(event.key)) {
+                              event.preventDefault();
+                            }
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, "");
+                            field.onChange(value);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -539,6 +570,7 @@ function AddSpecialistForm() {
                           onChange={(e) =>
                             field.onChange(parseInt(e.target.value) || 0)
                           }
+                          placeholder="e.g., 5"
                         />
                       </FormControl>
                       <FormMessage />
@@ -561,6 +593,7 @@ function AddSpecialistForm() {
                           onChange={(e) =>
                             field.onChange(parseInt(e.target.value) || 0)
                           }
+                          placeholder="e.g., 200000"
                         />
                       </FormControl>
                       <FormMessage />

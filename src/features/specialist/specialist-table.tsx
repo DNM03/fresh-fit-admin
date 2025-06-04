@@ -20,8 +20,8 @@ function SpecialistTable() {
         const response = await specialistService.getSpecialists({
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize,
-          sort_by: "created_at",
-          order_by: "desc",
+          sort_by: "createdAt",
+          order_by: "DESC",
         });
         if (response.data) {
           setSpecialists(response.data.data.experts);
