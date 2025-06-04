@@ -41,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import specialistService from "@/services/specialist.service";
 import mediaService from "@/services/media.service";
 import { toast } from "sonner";
+import SkillManageDialog from "./skill-manage-dialog";
 
 const certificationSchema = z.object({
   name: z.string().min(1, "Certification name is required"),
@@ -140,17 +141,15 @@ function AddSpecialistForm() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skills, setSkills] = useState<any>([]);
-
+  const fetchSkills = async () => {
+    try {
+      const response = await specialistService.getSkills();
+      setSkills(response.data.data.skills || []);
+    } catch (error) {
+      console.error("Error fetching skills:", error);
+    }
+  };
   useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const response = await specialistService.getSkills();
-        setSkills(response.data.data.skills || []);
-      } catch (error) {
-        console.error("Error fetching skills:", error);
-      }
-    };
-
     fetchSkills();
   }, []);
 
@@ -633,7 +632,14 @@ function AddSpecialistForm() {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <FormItem>
-                  <FormLabel>Main Skills</FormLabel>
+                  <div className="flex justify-between items-center mb-2">
+                    <FormLabel>Main Skills</FormLabel>
+                    <SkillManageDialog
+                      skills={skills}
+                      onSkillsChange={fetchSkills}
+                      selectedSkillIds={selectedSkills}
+                    />
+                  </div>
                   <div className="border rounded-md p-4">
                     <div className="flex flex-wrap gap-2 mb-4">
                       {selectedSkills.map((skillId) => {
