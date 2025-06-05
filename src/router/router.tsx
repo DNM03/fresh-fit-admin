@@ -1,12 +1,12 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Suspense } from "react";
+// import { Suspense } from "react";
 import LoginPage from "../pages/login";
 import MainLayout from "@/components/layout/main-layout";
 import DashboardPage from "@/pages/dashboard";
-import React from "react";
+// import React from "react";
 import AddExercisePlanPage from "@/pages/exercises/add-exercise-plan";
 import AddExercisePage from "@/pages/exercises/add-exercise";
-import OverlayLoading from "@/components/overlay-loading/overlay-loading";
+// import OverlayLoading from "@/components/overlay-loading/overlay-loading";
 import AddExerciseSetPage from "@/pages/exercises/add-exercise-set";
 import AddMealPlan from "@/pages/meals/add-meal-plan";
 import AddMeal from "@/pages/meals/add-meal";
@@ -30,26 +30,32 @@ import ResetPasswordPage from "@/pages/forgot-password.tsx/reset-password";
 import VerifyOtpPage from "@/pages/forgot-password.tsx/verify-otp";
 import ReportPage from "@/pages/report";
 import ReportDetailPage from "@/pages/report/detail";
-const ManageExercises = React.lazy(() => import("@/pages/exercises"));
-const ManageMeals = React.lazy(() => import("@/pages/meals"));
-const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
-const Community = React.lazy(() => import("@/pages/community"));
-const Statistics = React.lazy(() => import("@/pages/statistics"));
-const Settings = React.lazy(() => import("@/pages/settings"));
+import ManageMeals from "@/pages/meals";
+import ManageExercises from "@/pages/exercises";
+import ManageChallenges from "@/pages/challenges";
+import Community from "@/pages/community";
+import Statistics from "@/pages/statistics";
+import SettingsPage from "@/pages/settings";
+// const ManageExercises = React.lazy(() => import("@/pages/exercises"));
+// const ManageMeals = React.lazy(() => import("@/pages/meals"));
+// const ManageChallenges = React.lazy(() => import("@/pages/challenges"));
+// const Community = React.lazy(() => import("@/pages/community"));
+// const Statistics = React.lazy(() => import("@/pages/statistics"));
+// const Settings = React.lazy(() => import("@/pages/settings"));
 
-const withSuspense = (
-  Component: React.LazyExoticComponent<React.ComponentType<any>>
-) => (
-  <Suspense
-    fallback={
-      <div className="w-full h-full flex justify-center items-center">
-        <OverlayLoading />
-      </div>
-    }
-  >
-    <Component />
-  </Suspense>
-);
+// const withSuspense = (
+//   Component: React.LazyExoticComponent<React.ComponentType<any>>
+// ) => (
+//   <Suspense
+//     fallback={
+//       <div className="w-full h-full flex justify-center items-center">
+//         <OverlayLoading />
+//       </div>
+//     }
+//   >
+//     <Component />
+//   </Suspense>
+// );
 
 const router = createBrowserRouter([
   {
@@ -69,7 +75,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: withSuspense(ManageExercises),
+            element: <ManageExercises />,
           },
           {
             path: "/manage-exercises/add-exercise-plan",
@@ -98,7 +104,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: withSuspense(ManageMeals),
+            element: <ManageMeals />,
           },
           {
             path: "/manage-meals/add-meal-plan",
@@ -135,7 +141,7 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: withSuspense(ManageChallenges),
+            element: <ManageChallenges />,
           },
           {
             path: "/manage-challenges/add-challenge",
@@ -174,15 +180,15 @@ const router = createBrowserRouter([
       },
       {
         path: "/community",
-        element: withSuspense(Community),
+        element: <Community />,
       },
       {
         path: "/statistics",
-        element: withSuspense(Statistics),
+        element: <Statistics />,
       },
       {
         path: "/settings",
-        element: withSuspense(Settings),
+        element: <SettingsPage />,
       },
       {
         path: "/reports",
