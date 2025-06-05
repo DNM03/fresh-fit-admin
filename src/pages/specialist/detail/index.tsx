@@ -10,6 +10,10 @@ import {
   ArrowLeft,
   Shield,
   Clock,
+  Mail,
+  Phone,
+  VenusAndMars,
+  Calendar,
 } from "lucide-react";
 
 import {
@@ -35,7 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import specialistService from "@/services/specialist.service";
@@ -101,6 +105,14 @@ interface SpecialistDetail {
   expertSkills: ExpertSkill[];
   createdAt: string;
   updatedAt: string;
+  user?: {
+    _id: string;
+    avatar?: string;
+    gender?: string;
+    phoneNumber?: string;
+    email?: string;
+    date_of_birth?: string;
+  };
 }
 
 export default function SpecialistDetailPage() {
@@ -141,6 +153,7 @@ export default function SpecialistDetailPage() {
         setLoading(true);
         const response = await specialistService.getSpecialistById(id);
         const expertInfo = response.data.data.expertInfo;
+        console.log("Fetched specialist details:", expertInfo);
         setSpecialist(expertInfo);
 
         if (expertInfo?.userId) {
@@ -284,6 +297,7 @@ export default function SpecialistDetailPage() {
           <Card>
             <CardHeader className="text-center">
               <Avatar className="h-24 w-24 mx-auto mb-4">
+                <AvatarImage src={specialist?.user?.avatar} />
                 <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
                   {specialist?.fullName
                     ? getInitials(specialist.fullName)
@@ -302,6 +316,28 @@ export default function SpecialistDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <div className="flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{specialist?.user?.email}</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{specialist?.user?.phoneNumber}</span>
+                </div>
+                <div className="flex items-center">
+                  <VenusAndMars className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{specialist?.user?.gender || "Male"}</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {specialist?.user?.date_of_birth && (
+                    <span>
+                      {new Date(
+                        specialist?.user?.date_of_birth
+                      ).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                   <span>
