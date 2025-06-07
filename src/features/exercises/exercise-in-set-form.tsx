@@ -4,13 +4,6 @@ import { Card } from "@/components/ui/card";
 import { CreateExerciseInSetType } from "@/constants/types";
 import { X } from "lucide-react";
 import { Label } from "@/components/ui/label";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import OptimizedSelect from "@/components/ui/optimized-select";
 import { toast } from "sonner";
@@ -25,6 +18,15 @@ type Props = {
   >;
   setEditingExerciseId: React.Dispatch<React.SetStateAction<string | null>>;
   setAddingExercise: React.Dispatch<React.SetStateAction<boolean>>;
+  // Add these new props
+  isLoadingExercises: boolean;
+  exercisePagination: {
+    currentPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  onExercisePageChange: (page: number) => void;
+  onExerciseSearch: (term: string) => void;
 };
 
 function ExerciseInSetForm({
@@ -33,6 +35,11 @@ function ExerciseInSetForm({
   setExercisesList,
   setEditingExerciseId,
   setAddingExercise,
+  // Include the new props
+  isLoadingExercises,
+  exercisePagination,
+  onExercisePageChange,
+  onExerciseSearch,
 }: Props) {
   const defaultFormState: CreateExerciseInSetType = {
     exercise_id: "",
@@ -144,6 +151,7 @@ function ExerciseInSetForm({
           size="icon"
           onClick={cancelAddEdit}
           className="text-gray-500"
+          type="button"
         >
           <X size={18} />
         </Button>
@@ -152,26 +160,6 @@ function ExerciseInSetForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="w-full col-span-2">
           <Label className="block text-sm font-medium mb-1">Exercise</Label>
-          {/* <Select
-            onValueChange={(value) => {
-              console.log("Selected exercise ID:", value);
-              handleInputChange({
-                target: { name: "exercise_id", value },
-              } as React.ChangeEvent<HTMLInputElement>);
-            }}
-            value={formState.exercise_id}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an exercise" />
-            </SelectTrigger>
-            <SelectContent>
-              {exerciseOptions.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.description}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select> */}
           <OptimizedSelect
             value={formState.exercise_id}
             onValueChange={(value) => {
@@ -181,6 +169,14 @@ function ExerciseInSetForm({
               } as React.ChangeEvent<HTMLInputElement>);
             }}
             options={exerciseOptions}
+            placeholder="Search and select an exercise..."
+            useServerPagination={true}
+            currentPage={exercisePagination.currentPage}
+            totalItems={exercisePagination.totalItems}
+            totalPages={exercisePagination.totalPages}
+            isLoading={isLoadingExercises}
+            onPageChange={onExercisePageChange}
+            onSearch={onExerciseSearch}
           />
         </div>
 

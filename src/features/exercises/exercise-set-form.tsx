@@ -47,28 +47,60 @@ function ExerciseSetForm() {
   );
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [exercisePagination, setExercisePagination] = useState({
+    currentPage: 1,
+    totalItems: 0,
+    totalPages: 1,
+  });
+  const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
+  const [searchExerciseQuery, setSearchExerciseQuery] = useState<string>("");
 
   useEffect(() => {
-    const fetchExercises = async () => {
-      try {
-        const response = await exerciseService.getAllForSelect();
-        if (response.status === 200) {
-          // setExercisesList(response.data?.exercises);
-          setExerciseOptions(
-            response.data?.exercises.map((exercise: any) => ({
-              id: exercise._id,
-              description: exercise.name,
-            })) || []
-          );
-        } else {
-          console.error("Failed to fetch exercises");
-        }
-      } catch (error) {
-        console.error("Error fetching exercises:", error);
-      }
-    };
-    fetchExercises();
+    fetchExercises(1);
   }, []);
+
+  const fetchExercises = async (page: number = 1, search: string = "") => {
+    setIsLoadingExercises(true);
+    try {
+      const response = await exerciseService.searchExercise({
+        page,
+        limit: 20,
+        search,
+      });
+
+      if (response.data?.result) {
+        const { exercises, total_items, total_pages } = response.data.result;
+
+        const options = exercises.map((exercise: any) => ({
+          id: exercise._id,
+          description: exercise.name,
+        }));
+
+        setExerciseOptions(options);
+        setExercisePagination({
+          currentPage: page,
+          totalItems: total_items || exercises.length,
+          totalPages: total_pages || 1,
+        });
+      } else {
+        console.error("Failed to fetch exercises");
+      }
+    } catch (error) {
+      console.error("Error fetching exercises:", error);
+      toast.error("Failed to load exercises");
+    } finally {
+      setIsLoadingExercises(false);
+    }
+  };
+
+  const handleExercisePageChange = (page: number) => {
+    fetchExercises(page, searchExerciseQuery);
+  };
+
+  const handleExerciseSearch = (term: string) => {
+    setSearchExerciseQuery(term);
+    fetchExercises(1, term);
+  };
 
   const defaultValues: CreateExerciseSetType = {
     description: "",
@@ -163,8 +195,8 @@ function ExerciseSetForm() {
         },
       });
       setFormSubmitted(true);
-      form.reset(defaultValues);
-      setExercisesList([]);
+      // form.reset(defaultValues);
+      // setExercisesList([]);
       setBackgroundImage([]);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -233,6 +265,9 @@ function ExerciseSetForm() {
             type="button"
             onClick={() => {
               setFormSubmitted(false);
+              form.reset(defaultValues);
+              setExercisesList([]);
+              setBackgroundImage([]);
               setCurrentStep(1);
             }}
             className="bg-primary hover:opacity-80"
@@ -380,14 +415,14 @@ function ExerciseSetForm() {
                               <span className="inline-flex items-center justify-center h-3 w-3 mr-1 text-gray-400 font-bold">
                                 ×
                               </span>
-                              Reps: {exercise.reps || "N/A"}
+                              Reps: {exercise.reps || "0"}
                             </div>
 
                             <div className="flex items-center">
                               <span className="inline-flex items-center justify-center h-3 w-3 mr-1 text-gray-400 font-bold">
                                 ⟳
                               </span>
-                              Rounds: {exercise.rounds}
+                              Rounds: {exercise.rounds || "0"}
                             </div>
                           </div>
 
@@ -445,6 +480,10 @@ function ExerciseSetForm() {
                 setAddingExercise={setAddingExercise}
                 editingExerciseId={editingExerciseId}
                 setEditingExerciseId={setEditingExerciseId}
+                isLoadingExercises={isLoadingExercises}
+                exercisePagination={exercisePagination}
+                onExercisePageChange={handleExercisePageChange}
+                onExerciseSearch={handleExerciseSearch}
               />
             )}
 
