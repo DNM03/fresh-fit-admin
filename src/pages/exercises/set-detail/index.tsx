@@ -49,13 +49,13 @@ interface ExerciseInSet {
   exercise_id: string;
   duration: number;
   reps: number;
-  rounds: number;
+  round: number;
   timePerRound: number;
   rest_per_round: number;
   estimated_calories_burned: number;
   status: string;
   orderNumber: number;
-  exercise?: Exercise; // Exercise details loaded separately
+  exercise?: Exercise;
 }
 
 interface ExerciseSet {
@@ -265,7 +265,7 @@ function ExerciseSetDetail() {
               </DialogHeader>
               <div className="py-4">
                 <UpdateExerciseSetForm
-                  exerciseSet={exerciseSet}
+                  exerciseSet={exerciseSet as any}
                   onSuccess={() => {
                     setIsUpdateDialogOpen(false);
                     window.location.reload();
@@ -507,7 +507,7 @@ function ExerciseSetDetail() {
                                       Rounds
                                     </p>
                                     <p className="font-medium">
-                                      {exerciseItem.rounds}
+                                      {exerciseItem.round}
                                     </p>
                                   </div>
                                   <div className="bg-gray-50 p-2 rounded-md">

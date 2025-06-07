@@ -40,12 +40,13 @@ interface ExerciseInSet {
   exercise_id: string;
   duration: number;
   reps: number;
-  rounds: number;
+  round: number;
   timePerRound: number;
   rest_per_round: number;
   estimated_calories_burned: number;
   status: string;
   orderNumber: number;
+  exercise: Exercise;
 }
 
 interface UpdateExerciseSetFormProps {
@@ -73,7 +74,7 @@ function UpdateExerciseSetForm({
   const [activeTab, setActiveTab] = useState("details");
   const [backgroundImage, setBackgroundImage] = useState<ImageFile[]>([]);
   const [exercisesList, setExercisesList] = useState<
-    (ExerciseInSet & { name?: string })[]
+    (ExerciseInSet & { name?: string; image?: string })[]
   >([]);
   const [exerciseOptions, setExerciseOptions] = useState<
     { id: string; description: string }[]
@@ -87,7 +88,7 @@ function UpdateExerciseSetForm({
   const [exerciseFormData, setExerciseFormData] = useState({
     duration: 0,
     reps: 0,
-    rounds: 1,
+    round: 1,
     rest_per_round: 0,
     timePerRound: 0,
     estimated_calories_burned: 0,
@@ -95,46 +96,87 @@ function UpdateExerciseSetForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize with existing exercise set data
-  useEffect(() => {
-    const fetchExercises = async () => {
-      try {
-        const response = await exerciseService.searchExercise({
-          page: 1,
-          limit: 100, // Get a reasonable number of exercises
+  const [exercisePagination, setExercisePagination] = useState({
+    currentPage: 1,
+    totalItems: 0,
+    totalPages: 1,
+  });
+  const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
+  const [searchExerciseQuery, setSearchExerciseQuery] = useState<string>("");
+
+  const fetchExercises = async (page: number = 1, search: string = "") => {
+    setIsLoadingExercises(true);
+    try {
+      const response = await exerciseService.searchExercise({
+        page,
+        limit: 20,
+        search,
+      });
+
+      if (response.data?.result) {
+        const { exercises, total_items, total_pages } = response.data.result;
+        setAllExercises(exercises);
+
+        const options = exercises.map((exercise: Exercise) => ({
+          id: exercise._id,
+          description: exercise.name,
+          // Store original data if needed
+          _originalData: exercise,
+        }));
+
+        setExerciseOptions(options);
+        setExercisePagination({
+          currentPage: page,
+          totalItems: total_items || exercises.length,
+          totalPages: total_pages || 1,
         });
-
-        if (response.data?.result?.exercises) {
-          const exercises = response.data.result.exercises;
-          setAllExercises(exercises);
-
-          const options = exercises.map((exercise: Exercise) => ({
-            id: exercise._id,
-            description: exercise.name,
-          }));
-
-          setExerciseOptions(options);
-        }
-      } catch (error) {
-        console.error("Failed to fetch exercises:", error);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch exercises:", error);
+      toast.error("Failed to load exercises");
+    } finally {
+      setIsLoadingExercises(false);
+    }
+  };
 
-    // Initialize exercises list with existing exercises in the set
-    const enrichedExercises = exerciseSet.set_exercises.map((ex) => {
-      // Find the exercise name if available
-      const exerciseDetails = allExercises.find(
-        (e) => e._id === ex.exercise_id
+  // Add these handler functions
+  const handleExercisePageChange = (page: number) => {
+    fetchExercises(page, searchExerciseQuery);
+  };
+
+  const handleExerciseSearch = (term: string) => {
+    setSearchExerciseQuery(term);
+    fetchExercises(1, term);
+  };
+
+  useEffect(() => {
+    fetchExercises(1);
+
+    const initialExercises = exerciseSet.set_exercises.map((ex) => ({
+      ...ex,
+      name: ex.exercise.name || "Unknown Exercise",
+      image: ex.exercise.image || "",
+    }));
+
+    setExercisesList(initialExercises);
+  }, [exerciseSet._id]);
+
+  useEffect(() => {
+    if (allExercises.length > 0) {
+      setExercisesList((prev) =>
+        prev.map((ex) => {
+          const exerciseDetails = allExercises.find(
+            (e) => e._id === ex.exercise_id
+          );
+
+          return {
+            ...ex,
+            name: exerciseDetails?.name || ex.name || "Unknown Exercise",
+          };
+        })
       );
-      return {
-        ...ex,
-        name: exerciseDetails?.name || "Unknown Exercise",
-      };
-    });
-
-    setExercisesList(enrichedExercises);
-    fetchExercises();
-  }, [exerciseSet.set_exercises, allExercises]);
+    }
+  }, [allExercises]);
 
   const defaultValues = {
     name: exerciseSet.name,
@@ -183,7 +225,7 @@ function UpdateExerciseSetForm({
     setExerciseFormData({
       duration: 0,
       reps: 0,
-      rounds: 1,
+      round: 1,
       rest_per_round: 0,
       timePerRound: 0,
       estimated_calories_burned: 0,
@@ -199,7 +241,7 @@ function UpdateExerciseSetForm({
     setExerciseFormData({
       duration: exercise.duration,
       reps: exercise.reps,
-      rounds: exercise.rounds,
+      round: exercise.round,
       rest_per_round: exercise.rest_per_round,
       timePerRound: exercise.timePerRound,
       estimated_calories_burned: exercise.estimated_calories_burned,
@@ -271,7 +313,7 @@ function UpdateExerciseSetForm({
       name: exerciseName,
       duration: Number(exerciseFormData.duration),
       reps: Number(exerciseFormData.reps),
-      rounds: Number(exerciseFormData.rounds),
+      round: Number(exerciseFormData.round),
       timePerRound: Number(exerciseFormData.timePerRound),
       rest_per_round: Number(exerciseFormData.rest_per_round),
       estimated_calories_burned: Number(
@@ -282,6 +324,13 @@ function UpdateExerciseSetForm({
         editingExerciseIndex !== null
           ? exercisesList[editingExerciseIndex].orderNumber
           : exercisesList.length,
+      exercise: exerciseDetails || {
+        _id: selectedExercise,
+        name: exerciseName,
+        description: "",
+        image: "",
+        category: "",
+      },
     };
 
     if (editingExerciseIndex !== null) {
@@ -306,14 +355,11 @@ function UpdateExerciseSetForm({
     );
   };
 
-  const calculateTotalDuration = () => {
+  function calculateTotalDuration() {
     return exercisesList.reduce((total, exercise) => {
-      const exerciseDuration =
-        exercise.rounds * (exercise.duration + exercise.rest_per_round) -
-        exercise.rest_per_round;
-      return total + exerciseDuration;
+      return total + (exercise.duration || 0);
     }, 0);
-  };
+  }
 
   const formatTime = (seconds: number) => {
     if (seconds === 0) return "0 seconds";
@@ -357,18 +403,17 @@ function UpdateExerciseSetForm({
         );
       }
 
-      // Prepare the exercises for submission
       const exercisesToSubmit = exercisesList.map((ex, index) => ({
-        _id: ex._id.startsWith("temp-") ? undefined : ex._id, // Don't send temporary IDs
+        _id: ex._id.startsWith("temp-") ? undefined : ex._id,
         exercise_id: ex.exercise_id,
         duration: ex.duration,
         reps: ex.reps,
-        rounds: ex.rounds,
+        round: ex.round,
         rest_per_round: ex.rest_per_round,
         timePerRound: ex.timePerRound,
         estimated_calories_burned: ex.estimated_calories_burned,
         status: ex.status,
-        orderNumber: index, // Update the order to match current position
+        orderNumber: index,
       }));
 
       const totalDuration = calculateTotalDuration();
@@ -569,6 +614,7 @@ function UpdateExerciseSetForm({
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsAddingExercise(false)}
+                        type="button"
                       >
                         Cancel
                       </Button>
@@ -586,6 +632,13 @@ function UpdateExerciseSetForm({
                             }
                             options={exerciseOptions}
                             placeholder="Search and select an exercise..."
+                            useServerPagination={true}
+                            currentPage={exercisePagination.currentPage}
+                            totalItems={exercisePagination.totalItems}
+                            totalPages={exercisePagination.totalPages}
+                            isLoading={isLoadingExercises}
+                            onPageChange={handleExercisePageChange}
+                            onSearch={handleExerciseSearch}
                           />
                         </div>
 
@@ -633,11 +686,11 @@ function UpdateExerciseSetForm({
                             type="number"
                             min="1"
                             className="w-full rounded-md border border-gray-300 py-2 px-3"
-                            value={exerciseFormData.rounds}
+                            value={exerciseFormData.round}
                             onChange={(e) =>
                               setExerciseFormData({
                                 ...exerciseFormData,
-                                rounds: parseInt(e.target.value) || 1,
+                                round: parseInt(e.target.value) || 1,
                               })
                             }
                           />
@@ -723,10 +776,14 @@ function UpdateExerciseSetForm({
                         return (
                           <Card key={index} className="overflow-hidden">
                             <div className="flex flex-col md:flex-row">
-                              {exerciseDetails?.image && (
+                              {(exercise?.image || exerciseDetails?.image) && (
                                 <div className="w-full md:w-1/4">
                                   <img
-                                    src={exerciseDetails.image}
+                                    src={
+                                      exercise.image ||
+                                      exerciseDetails?.image ||
+                                      ""
+                                    }
                                     alt={exercise.name || "Exercise"}
                                     className="h-full w-full object-cover"
                                   />
@@ -806,7 +863,7 @@ function UpdateExerciseSetForm({
                                       Reps
                                     </p>
                                     <p className="font-medium">
-                                      {exercise.reps || "N/A"}
+                                      {exercise.reps || "0"}
                                     </p>
                                   </div>
                                   <div className="bg-gray-50 p-2 rounded">
@@ -814,7 +871,7 @@ function UpdateExerciseSetForm({
                                       Rounds
                                     </p>
                                     <p className="font-medium">
-                                      {exercise.rounds}
+                                      {exercise.round || "0"}
                                     </p>
                                   </div>
                                   <div className="bg-gray-50 p-2 rounded">
