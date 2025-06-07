@@ -66,8 +66,13 @@ const OptimizedSelect = ({
     setSearchTerm(newSearchTerm);
 
     if (useServerPagination && onSearch) {
-      // For a production app, you'd want to add debounce here
-      onSearch(newSearchTerm);
+      // Add debounce to avoid excessive API calls
+      const debounceTimeout = setTimeout(() => {
+        onSearch(newSearchTerm);
+      }, 1000); // 1000ms debounce time
+
+      // Clear timeout on each keystroke
+      return () => clearTimeout(debounceTimeout);
     }
   };
 
@@ -117,7 +122,7 @@ const OptimizedSelect = ({
         <SelectTrigger className="w-full">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="max-h-[300px] overflow-auto min-w-[600px]">
+        <SelectContent className="max-h-[300px] min-h-[300px] overflow-auto min-w-[600px]">
           <div className="sticky top-0 bg-white p-2 z-10">
             <div className="flex items-center border rounded-md px-2">
               <Search className="w-4 h-4 text-gray-400" />
