@@ -98,7 +98,6 @@ function ExerciseSetDetail() {
         if (response.data?.set) {
           setExerciseSet(response.data.set);
 
-          // Fetch individual exercise details
           const exerciseIds = response.data.set.set_exercises.map(
             (exercise: ExerciseInSet) => exercise.exercise_id
           );
@@ -333,7 +332,13 @@ function ExerciseSetDetail() {
               </Badge>
               <div className="flex items-center text-muted-foreground">
                 <Clock className="mr-1 h-4 w-4" />
-                <span>{exerciseSet.time || "No time specified"}</span>
+                <span>
+                  {exerciseSet.time
+                    ? exerciseSet.time.includes(" seconds")
+                      ? exerciseSet.time.replace(/ \d+ seconds/, "")
+                      : exerciseSet.time
+                    : "No time specified"}
+                </span>
               </div>
               <div className="flex items-center text-muted-foreground">
                 <Dumbbell className="mr-1 h-4 w-4" />
