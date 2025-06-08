@@ -123,14 +123,42 @@ function UpdateExerciseSetForm({
 
       if (response.data?.result) {
         const { exercises, total_items, total_pages } = response.data.result;
-        setAllExercises(exercises);
+        setAllExercises((prev) => {
+          const existingIds = new Set(prev.map((e) => e._id));
+          const uniqueNewExercises = exercises.filter(
+            (e: any) => !existingIds.has(e._id)
+          );
+          return [...prev, ...uniqueNewExercises];
+        });
 
-        const options = exercises.map((exercise: Exercise) => ({
+        let options = exercises.map((exercise: Exercise) => ({
           id: exercise._id,
           description: exercise.name,
-          // Store original data if needed
           _originalData: exercise,
         }));
+
+        if (selectedExercise && selectedExercise !== "") {
+          const isSelectedInOptions = options.some(
+            (option: any) => option.id === selectedExercise
+          );
+
+          if (!isSelectedInOptions) {
+            const selectedExerciseData = allExercises.find(
+              (ex) => ex._id === selectedExercise
+            );
+
+            if (selectedExerciseData) {
+              options = [
+                {
+                  id: selectedExercise,
+                  description: selectedExerciseData.name,
+                  _originalData: selectedExerciseData,
+                },
+                ...options,
+              ];
+            }
+          }
+        }
 
         setExerciseOptions(options);
         setExercisePagination({
@@ -147,7 +175,55 @@ function UpdateExerciseSetForm({
     }
   };
 
-  // Add these handler functions
+  useEffect(() => {
+    if (selectedExercise && selectedExercise !== "") {
+      const fetchExerciseDetails = async () => {
+        const getExerciseById = await exerciseService.getExerciseById(
+          selectedExercise
+        );
+        if (getExerciseById.data?.exercise) {
+          const exerciseDetails = getExerciseById.data.exercise;
+
+          const exerciseExists = exerciseOptions.some(
+            (option) => option.id === selectedExercise
+          );
+
+          if (!exerciseExists) {
+            setExerciseOptions((prev) => [
+              ...prev,
+              {
+                id: selectedExercise,
+                description: exerciseDetails.name || "Unknown Exercise",
+                _originalData: exerciseDetails,
+              },
+            ]);
+          } else {
+            setExerciseOptions((prev) =>
+              prev.map((option) =>
+                option.id === selectedExercise
+                  ? {
+                      ...option,
+                      description: exerciseDetails.name || "Unknown Exercise",
+                      _originalData: exerciseDetails,
+                    }
+                  : option
+              )
+            );
+          }
+
+          setAllExercises((prev) => {
+            const exists = prev.some((ex) => ex._id === exerciseDetails._id);
+            if (!exists) {
+              return [...prev, exerciseDetails];
+            }
+            return prev;
+          });
+        }
+      };
+      fetchExerciseDetails();
+    }
+  }, [selectedExercise]);
+
   const handleExercisePageChange = (page: number) => {
     fetchExercises(page, searchExerciseQuery);
   };
@@ -294,7 +370,7 @@ function UpdateExerciseSetForm({
     setExercisesList(newList);
   };
 
-  const handleSaveExercise = () => {
+  const handleSaveExercise = async () => {
     if (!selectedExercise) {
       toast.error("Please select an exercise", {
         style: {
@@ -305,18 +381,32 @@ function UpdateExerciseSetForm({
       return;
     }
 
-    // Find the exercise details
-    const exerciseDetails = allExercises.find(
-      (e) => e._id === selectedExercise
+    // Check that either reps or timePerRound is set, but not both
+    if (
+      (exerciseFormData.reps === 0 || !exerciseFormData.reps) &&
+      (exerciseFormData.timePerRound === 0 || !exerciseFormData.timePerRound)
+    ) {
+      toast.error("Please set either Reps or Time per round", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
+      return;
+    }
+
+    const exerciseDetails = await exerciseService.getExerciseById(
+      selectedExercise
     );
-    const exerciseName = exerciseDetails?.name || "Unknown Exercise";
+    const exerciseName =
+      exerciseDetails?.data.exercise.name || "Unknown Exercise";
 
     const newExercise = {
       _id:
         editingExerciseIndex !== null &&
         exercisesList[editingExerciseIndex]?._id
           ? exercisesList[editingExerciseIndex]._id
-          : `temp-${Date.now()}`,
+          : "",
       exercise_id: selectedExercise,
       name: exerciseName,
       duration: Number(exerciseFormData.duration),
@@ -332,7 +422,7 @@ function UpdateExerciseSetForm({
         editingExerciseIndex !== null
           ? exercisesList[editingExerciseIndex].orderNumber
           : exercisesList.length,
-      exercise: exerciseDetails || {
+      exercise: exerciseDetails.data.exercise || {
         _id: selectedExercise,
         name: exerciseName,
         description: "",
@@ -342,12 +432,10 @@ function UpdateExerciseSetForm({
     };
 
     if (editingExerciseIndex !== null) {
-      // Update existing exercise
       const newList = [...exercisesList];
       newList[editingExerciseIndex] = newExercise;
       setExercisesList(newList);
     } else {
-      // Add new exercise
       setExercisesList([...exercisesList, newExercise]);
       form.setValue("numberOfExercises", exercisesList.length + 1);
     }
@@ -458,6 +546,31 @@ function UpdateExerciseSetForm({
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Update the onChange handler for exerciseFormData to make reps and timePerRound mutually exclusive
+  const handleExerciseFormChange = (field: string, value: any) => {
+    if (field === "reps" && Number(value) > 0) {
+      // If reps is set, clear timePerRound
+      setExerciseFormData((prev) => ({
+        ...prev,
+        [field]: parseInt(value) || 0,
+        timePerRound: 0, // Reset timePerRound when reps is set
+      }));
+    } else if (field === "timePerRound" && Number(value) > 0) {
+      // If timePerRound is set, clear reps
+      setExerciseFormData((prev) => ({
+        ...prev,
+        [field]: parseInt(value) || 0,
+        reps: 0, // Reset reps when timePerRound is set
+      }));
+    } else {
+      // Normal handling for other fields
+      setExerciseFormData((prev) => ({
+        ...prev,
+        [field]: field === "status" ? value : parseInt(value) || 0,
+      }));
     }
   };
 
@@ -676,16 +789,23 @@ function UpdateExerciseSetForm({
                           <input
                             type="number"
                             min="0"
-                            className="w-full rounded-md border border-gray-300 py-2 px-3"
+                            className={`w-full rounded-md border border-gray-300 py-2 px-3 ${
+                              (exerciseFormData.timePerRound ?? 0) > 0
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                             value={exerciseFormData.reps}
+                            disabled={(exerciseFormData.timePerRound ?? 0) > 0}
                             onChange={(e) =>
-                              setExerciseFormData({
-                                ...exerciseFormData,
-                                reps: parseInt(e.target.value) || 0,
-                              })
+                              handleExerciseFormChange("reps", e.target.value)
                             }
                             placeholder="E.g., 10"
                           />
+                          {(exerciseFormData.timePerRound ?? 0) > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Cannot set reps when time per round is set
+                            </p>
+                          )}
                         </div>
 
                         <div>
@@ -733,16 +853,26 @@ function UpdateExerciseSetForm({
                           <input
                             type="number"
                             min="0"
-                            className="w-full rounded-md border border-gray-300 py-2 px-3"
+                            className={`w-full rounded-md border border-gray-300 py-2 px-3 ${
+                              (exerciseFormData.reps ?? 0) > 0
+                                ? "bg-gray-100 cursor-not-allowed"
+                                : ""
+                            }`}
                             value={exerciseFormData.timePerRound}
+                            disabled={(exerciseFormData.reps ?? 0) > 0}
                             onChange={(e) =>
-                              setExerciseFormData({
-                                ...exerciseFormData,
-                                timePerRound: parseInt(e.target.value) || 0,
-                              })
+                              handleExerciseFormChange(
+                                "timePerRound",
+                                e.target.value
+                              )
                             }
                             placeholder="E.g., 20"
                           />
+                          {(exerciseFormData.reps ?? 0) > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Cannot set time per round when reps is set
+                            </p>
+                          )}
                         </div>
 
                         <div>
