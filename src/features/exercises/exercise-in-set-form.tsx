@@ -27,6 +27,8 @@ type Props = {
   };
   onExercisePageChange: (page: number) => void;
   onExerciseSearch: (term: string) => void;
+  // Add this prop to get detailed exercise info if needed
+  getExerciseById?: (id: string) => Promise<any>;
 };
 
 function ExerciseInSetForm({
@@ -40,20 +42,43 @@ function ExerciseInSetForm({
   exercisePagination,
   onExercisePageChange,
   onExerciseSearch,
+  getExerciseById,
 }: Props) {
   const defaultFormState: CreateExerciseInSetType = {
     exercise_id: "",
-    duration: 0,
-    reps: 0,
-    rounds: 0,
-    rest_per_round: 0,
-    estimated_calories_burned: 0,
-    timePerRound: 0,
-    orderNumber: 0,
+    duration: undefined,
+    reps: undefined,
+    rounds: undefined,
+    rest_per_round: undefined,
+    estimated_calories_burned: undefined,
+    timePerRound: undefined,
+    orderNumber: undefined,
   };
 
   const [formState, setFormState] =
     useState<CreateExerciseInSetType>(defaultFormState);
+  const [displayOptions, setDisplayOptions] = useState<
+    { id: string; description: string }[]
+  >([]);
+  const [selectedExerciseDetails, setSelectedExerciseDetails] = useState<{
+    id: string;
+    description: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let newOptions = [...exerciseOptions];
+
+    if (formState.exercise_id && selectedExerciseDetails) {
+      const selectedExists = newOptions.some(
+        (option) => option.id === formState.exercise_id
+      );
+      if (!selectedExists) {
+        newOptions = [selectedExerciseDetails, ...newOptions];
+      }
+    }
+
+    setDisplayOptions(newOptions);
+  }, [exerciseOptions, formState.exercise_id, selectedExerciseDetails]);
 
   useEffect(() => {
     if (editingExerciseId) {
@@ -73,21 +98,75 @@ function ExerciseInSetForm({
             timePerRound: existingExercise.timePerRound,
             orderNumber: existingExercise.orderNumber,
           });
+
+          if (existingExercise.exercise_id && existingExercise.name) {
+            setSelectedExerciseDetails({
+              id: existingExercise.exercise_id,
+              description: existingExercise.name,
+            });
+          }
         }
         return prev;
       });
     }
   }, [editingExerciseId, setExercisesList]);
 
+  const handleExerciseSelect = async (exerciseId: string) => {
+    const exerciseInOptions = exerciseOptions.find(
+      (ex) => ex.id === exerciseId
+    );
+
+    if (exerciseInOptions) {
+      setSelectedExerciseDetails(exerciseInOptions);
+    } else if (getExerciseById && exerciseId) {
+      try {
+        const exerciseData = await getExerciseById(exerciseId);
+        if (exerciseData) {
+          setSelectedExerciseDetails({
+            id: exerciseId,
+            description: exerciseData.name || "Unknown Exercise",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching exercise details:", error);
+      }
+    }
+
+    setFormState((prev) => ({
+      ...prev,
+      exercise_id: exerciseId,
+    }));
+  };
+
+  // Update the handleInputChange function to make reps and timePerRound mutually exclusive
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     console.log("Input changed:", name, value);
-    setFormState((prev) => ({
-      ...prev,
-      [name]: name === "exercise_id" ? value : Number(value),
-    }));
+
+    // Special handling for reps and timePerRound fields
+    if (name === "reps" && Number(value) > 0) {
+      // If user enters reps, set timePerRound to 0
+      setFormState((prev) => ({
+        ...prev,
+        [name]: Number(value),
+        timePerRound: 0, // Reset timePerRound when reps is set
+      }));
+    } else if (name === "timePerRound" && Number(value) > 0) {
+      // If user enters timePerRound, set reps to 0
+      setFormState((prev) => ({
+        ...prev,
+        [name]: Number(value),
+        reps: 0, // Reset reps when timePerRound is set
+      }));
+    } else {
+      // Normal handling for other fields
+      setFormState((prev) => ({
+        ...prev,
+        [name]: name === "exercise_id" ? value : Number(value),
+      }));
+    }
   };
 
   function submitExerciseForm() {
@@ -103,9 +182,33 @@ function ExerciseInSetForm({
       return;
     }
 
-    const selectedExercise = exerciseOptions.find(
+    // Check that either reps or timePerRound is set, but not both
+    if (
+      (formState.reps === 0 || !formState.reps) &&
+      (formState.timePerRound === 0 || !formState.timePerRound)
+    ) {
+      toast.error("Please set either Reps or Time per round", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
+      return;
+    }
+
+    let exerciseName = "Unknown Exercise";
+    const selectedExercise = displayOptions.find(
       (exercise) => exercise.id === formState.exercise_id
     );
+
+    if (selectedExercise) {
+      exerciseName = selectedExercise.description;
+    } else if (
+      selectedExerciseDetails &&
+      selectedExerciseDetails.id === formState.exercise_id
+    ) {
+      exerciseName = selectedExerciseDetails.description;
+    }
 
     if (editingExerciseId) {
       setExercisesList((prev) =>
@@ -114,7 +217,7 @@ function ExerciseInSetForm({
             ? {
                 ...formState,
                 _id: ex._id,
-                name: selectedExercise?.description || ex.name,
+                name: exerciseName,
               }
             : ex
         )
@@ -126,16 +229,18 @@ function ExerciseInSetForm({
         {
           ...formState,
           _id: Date.now().toString(),
-          name: selectedExercise?.description || "Unknown Exercise",
+          name: exerciseName,
         },
       ]);
     }
     setFormState(defaultFormState);
+    setSelectedExerciseDetails(null);
     setAddingExercise(false);
   }
 
   function cancelAddEdit() {
     setFormState(defaultFormState);
+    setSelectedExerciseDetails(null);
     setAddingExercise(false);
     setEditingExerciseId(null);
   }
@@ -164,11 +269,9 @@ function ExerciseInSetForm({
             value={formState.exercise_id}
             onValueChange={(value) => {
               console.log("Selected exercise ID:", value);
-              handleInputChange({
-                target: { name: "exercise_id", value },
-              } as React.ChangeEvent<HTMLInputElement>);
+              handleExerciseSelect(value);
             }}
-            options={exerciseOptions}
+            options={displayOptions}
             placeholder="Search and select an exercise..."
             useServerPagination={true}
             currentPage={exercisePagination.currentPage}
@@ -207,6 +310,7 @@ function ExerciseInSetForm({
           />
         </div>
 
+        {/* Reps field */}
         <div className="w-full">
           <Label className="block text-sm font-medium mb-1">Reps</Label>
           <Input
@@ -216,7 +320,16 @@ function ExerciseInSetForm({
             onChange={handleInputChange}
             placeholder="Eg, 5 reps"
             className="w-full rounded-md border border-input bg-background px-3 py-2"
+            disabled={
+              formState.timePerRound ? formState.timePerRound > 0 : false
+            }
           />
+          {formState.timePerRound !== undefined &&
+            formState.timePerRound > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Disabled when Time per round is set
+              </p>
+            )}
         </div>
 
         <div className="w-full">
@@ -245,6 +358,7 @@ function ExerciseInSetForm({
           />
         </div>
 
+        {/* Time per round field */}
         <div className="w-full">
           <Label className="block text-sm font-medium mb-1">
             Time per round (seconds)
@@ -256,7 +370,13 @@ function ExerciseInSetForm({
             onChange={handleInputChange}
             placeholder="Eg, 15 seconds"
             className="w-full rounded-md border border-input bg-background px-3 py-2"
+            disabled={formState.reps ? formState.reps > 0 : false}
           />
+          {formState.reps !== undefined && formState.reps > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Disabled when Reps is set
+            </p>
+          )}
         </div>
       </div>
 

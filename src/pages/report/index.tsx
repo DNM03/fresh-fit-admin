@@ -133,11 +133,14 @@ function ReportPage() {
       </h1>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Reports</CardTitle>
-          <CardDescription>
-            View and manage user reports submitted through the application.
-          </CardDescription>
+        <CardHeader className="flex justify-between items-center flex-row">
+          <div>
+            <CardTitle>Reports</CardTitle>
+            <CardDescription>
+              View and manage user reports submitted through the application.
+            </CardDescription>
+          </div>
+          <Button onClick={fetchReports}>Reload</Button>
         </CardHeader>
         <CardContent>
           {reports.length === 0 && isLoading ? (

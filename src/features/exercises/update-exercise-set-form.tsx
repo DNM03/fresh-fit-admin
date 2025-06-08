@@ -85,13 +85,21 @@ function UpdateExerciseSetForm({
   >(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<string>("");
-  const [exerciseFormData, setExerciseFormData] = useState({
-    duration: 0,
-    reps: 0,
-    round: 1,
-    rest_per_round: 0,
-    timePerRound: 0,
-    estimated_calories_burned: 0,
+  const [exerciseFormData, setExerciseFormData] = useState<{
+    duration: number | undefined;
+    reps: number | undefined;
+    round: number | undefined;
+    rest_per_round: number | undefined;
+    timePerRound: number | undefined;
+    estimated_calories_burned: number | undefined;
+    status: string;
+  }>({
+    duration: undefined,
+    reps: undefined,
+    round: undefined,
+    rest_per_round: undefined,
+    timePerRound: undefined,
+    estimated_calories_burned: undefined,
     status: "Undone",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -223,12 +231,12 @@ function UpdateExerciseSetForm({
     setEditingExerciseIndex(null);
     setSelectedExercise("");
     setExerciseFormData({
-      duration: 0,
-      reps: 0,
-      round: 1,
-      rest_per_round: 0,
-      timePerRound: 0,
-      estimated_calories_burned: 0,
+      duration: undefined,
+      reps: undefined,
+      round: undefined,
+      rest_per_round: undefined,
+      timePerRound: undefined,
+      estimated_calories_burned: undefined,
       status: "Undone",
     });
   };
@@ -657,6 +665,7 @@ function UpdateExerciseSetForm({
                                 duration: parseInt(e.target.value) || 0,
                               })
                             }
+                            placeholder="E.g., 60"
                           />
                         </div>
 
@@ -675,6 +684,7 @@ function UpdateExerciseSetForm({
                                 reps: parseInt(e.target.value) || 0,
                               })
                             }
+                            placeholder="E.g., 10"
                           />
                         </div>
 
@@ -693,6 +703,7 @@ function UpdateExerciseSetForm({
                                 round: parseInt(e.target.value) || 1,
                               })
                             }
+                            placeholder="E.g., 3"
                           />
                         </div>
 
@@ -711,6 +722,7 @@ function UpdateExerciseSetForm({
                                 rest_per_round: parseInt(e.target.value) || 0,
                               })
                             }
+                            placeholder="E.g., 30"
                           />
                         </div>
 
@@ -729,6 +741,7 @@ function UpdateExerciseSetForm({
                                 timePerRound: parseInt(e.target.value) || 0,
                               })
                             }
+                            placeholder="E.g., 20"
                           />
                         </div>
 
@@ -748,6 +761,7 @@ function UpdateExerciseSetForm({
                                   parseInt(e.target.value) || 0,
                               })
                             }
+                            placeholder="E.g., 100"
                           />
                         </div>
                       </div>
@@ -814,6 +828,7 @@ function UpdateExerciseSetForm({
                                         handleMoveExercise(index, "up")
                                       }
                                       disabled={index === 0}
+                                      type="button"
                                     >
                                       <MoveUp size={18} />
                                     </Button>
@@ -826,6 +841,7 @@ function UpdateExerciseSetForm({
                                       disabled={
                                         index === exercisesList.length - 1
                                       }
+                                      type="button"
                                     >
                                       <MoveDown size={18} />
                                     </Button>
@@ -833,6 +849,7 @@ function UpdateExerciseSetForm({
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleEditExercise(index)}
+                                      type="button"
                                     >
                                       <Edit size={18} />
                                     </Button>
@@ -843,6 +860,7 @@ function UpdateExerciseSetForm({
                                       onClick={() =>
                                         handleDeleteExercise(index)
                                       }
+                                      type="button"
                                     >
                                       <Trash2 size={18} />
                                     </Button>
@@ -904,6 +922,7 @@ function UpdateExerciseSetForm({
                           variant="outline"
                           className="mt-2"
                           onClick={handleAddExercise}
+                          type="button"
                         >
                           Add First Exercise
                         </Button>
