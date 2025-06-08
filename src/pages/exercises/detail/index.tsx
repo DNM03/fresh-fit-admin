@@ -336,54 +336,206 @@ function ExerciseDetail() {
               </div>
             </TabsContent>
 
-            <TabsContent value="media" className="pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {exercise.image && (
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Exercise Image</h3>
-                    <img
-                      src={exercise.image}
-                      alt={exercise.name}
-                      className="w-full rounded-md shadow-md"
-                    />
-                    <div className="flex justify-end">
-                      <a
-                        href={exercise.image}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary flex items-center"
-                      >
-                        View full size <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    </div>
-                  </div>
-                )}
+            <TabsContent value="media" className="pt-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 border-b pb-3">
+                  <PlaySquare className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Exercise Media</h2>
+                </div>
 
-                {exercise.video && (
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Exercise Video</h3>
-                    <div className="aspect-video w-full rounded-md overflow-hidden shadow-md">
-                      <iframe
-                        src={exercise.video}
-                        title={`${exercise.name} demonstration`}
-                        width="100%"
-                        height="100%"
-                        allowFullScreen
-                        className="border-0"
-                      />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {exercise.image ? (
+                    <div className="space-y-3 bg-slate-50 rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-slate-800 flex items-center">
+                          <img
+                            src="/icons/image.svg"
+                            alt=""
+                            className="w-4 h-4 mr-2"
+                          />
+                          Image Reference
+                        </h3>
+                        <a
+                          href={exercise.image}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:text-primary/80 flex items-center"
+                        >
+                          View full size{" "}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </div>
+
+                      <div className="relative overflow-hidden rounded-md aspect-[4/3] bg-white">
+                        <img
+                          src={exercise.image}
+                          alt={exercise.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder-exercise.png";
+                            e.currentTarget.classList.add("opacity-60");
+                          }}
+                        />
+                      </div>
+
+                      <p className="text-sm text-slate-500 italic">
+                        Visual demonstration of proper{" "}
+                        {exercise.name.toLowerCase()} form
+                      </p>
                     </div>
-                    <div className="flex justify-end">
+                  ) : (
+                    <div className="flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6 space-y-3 shadow-sm border border-dashed border-slate-300">
+                      <img
+                        src="/icons/no-image.svg"
+                        alt="No image"
+                        className="w-16 h-16 opacity-40"
+                      />
+                      <p className="text-slate-500 text-center">
+                        No image available for this exercise
+                      </p>
+                    </div>
+                  )}
+
+                  {exercise.video ? (
+                    <div className="space-y-3 bg-slate-50 rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-slate-800 flex items-center">
+                          <PlaySquare className="h-4 w-4 mr-2 text-red-500" />
+                          Video Demonstration
+                        </h3>
+                        <a
+                          href={exercise.video}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:text-primary/80 flex items-center"
+                        >
+                          Open Video <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </div>
+
+                      <div className="relative overflow-hidden rounded-md aspect-video bg-black">
+                        {exercise.video.includes("youtube.com") ||
+                        exercise.video.includes("youtu.be") ? (
+                          // YouTube video handling
+                          <iframe
+                            src={exercise.video
+                              .replace(
+                                "youtube.com/watch?v=",
+                                "youtube.com/embed/"
+                              )
+                              .replace("youtu.be/", "youtube.com/embed/")}
+                            title={`${exercise.name} demonstration`}
+                            width="100%"
+                            height="100%"
+                            allowFullScreen
+                            className="border-0"
+                            loading="lazy"
+                          />
+                        ) : exercise.video.includes("vimeo.com") ? (
+                          // Vimeo video handling
+                          <iframe
+                            src={exercise.video.replace(
+                              "vimeo.com/",
+                              "player.vimeo.com/video/"
+                            )}
+                            title={`${exercise.name} demonstration`}
+                            width="100%"
+                            height="100%"
+                            allowFullScreen
+                            className="border-0"
+                            loading="lazy"
+                          />
+                        ) : exercise.video.match(/\.(mp4|webm|ogv)$/i) ? (
+                          // Direct video file handling
+                          <video
+                            controls
+                            className="w-full h-full"
+                            preload="metadata"
+                          >
+                            <source
+                              src={exercise.video}
+                              type={`video/${exercise.video.split(".").pop()}`}
+                            />
+                            Your browser does not support the video tag.
+                          </video>
+                        ) : (
+                          // Fallback for other video sources
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <a
+                              href={exercise.video}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-primary text-white rounded-md flex items-center"
+                            >
+                              <PlaySquare className="mr-2 h-5 w-5" />
+                              Watch Video
+                            </a>
+                            <p className="text-white text-sm mt-2">
+                              Video available at external source
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-slate-500 italic">
+                        Watch the proper technique and movement pattern for{" "}
+                        {exercise.name}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center bg-slate-50 rounded-lg p-6 space-y-3 shadow-sm border border-dashed border-slate-300">
+                      <PlaySquare className="w-16 h-16 opacity-40" />
+                      <p className="text-slate-500 text-center">
+                        No video available for this exercise
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-8 border-t pt-4">
+                  <h3 className="text-sm font-medium text-slate-500 mb-3">
+                    Additional Resources
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      asChild
+                    >
                       <a
-                        href={exercise.video}
+                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(
+                          exercise.name + " proper form"
+                        )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-primary flex items-center"
                       >
-                        Watch on YouTube <PlaySquare className="h-3 w-3 ml-1" />
+                        <PlaySquare className="h-4 w-4" /> Find more videos
                       </a>
-                    </div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      asChild
+                    >
+                      <a
+                        href={`https://www.google.com/search?q=${encodeURIComponent(
+                          exercise.name + " muscle anatomy"
+                        )}&tbm=isch`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src="/icons/muscles.svg"
+                          alt=""
+                          className="w-4 h-4"
+                        />{" "}
+                        Muscle anatomy
+                      </a>
+                    </Button>
                   </div>
-                )}
+                </div>
               </div>
             </TabsContent>
 
