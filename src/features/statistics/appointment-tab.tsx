@@ -375,7 +375,7 @@ export function AppointmentTab({ timeRange }: AppointmentTabProps) {
           </CardContent>
           <CardFooter className="border-t pt-4">
             <Button variant="ghost" size="sm" asChild className="ml-auto">
-              <Link to="/specialists">
+              <Link to="/manage-specialists">
                 View all specialists
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
@@ -449,7 +449,7 @@ export function AppointmentTab({ timeRange }: AppointmentTabProps) {
                       asChild
                       className="h-8 px-2"
                     >
-                      <Link to={`/specialists/detail/${expert.id}`}>
+                      <Link to={`/manage-specialists/${expert.userId}`}>
                         <CircleUser className="h-4 w-4 mr-1" />
                         Profile
                       </Link>
@@ -466,7 +466,7 @@ export function AppointmentTab({ timeRange }: AppointmentTabProps) {
           </CardContent>
           <CardFooter className="border-t pt-4">
             <Button variant="ghost" size="sm" asChild className="ml-auto">
-              <Link to="/specialists">
+              <Link to="/manage-specialists">
                 View all specialists
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>

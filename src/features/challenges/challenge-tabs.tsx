@@ -1,16 +1,36 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import React from "react";
+import React, { useRef, useState } from "react";
 import ChallengeTable from "./challenge-table";
 import HealthPlanTable from "./health-plan-table";
 
 function ChallengeTabs() {
   const [activeTab, setActiveTab] = React.useState("challenges");
   const navigate = useNavigate();
+  const [isRefetching, setIsRefetching] = useState(false);
+  const refetchChallengesRef = useRef<(() => void | Promise<any>) | null>(null);
+
+  const handleRefetchChallenges = () => {
+    if (refetchChallengesRef.current) {
+      setIsRefetching(true);
+      const result = refetchChallengesRef.current();
+      if (result instanceof Promise) {
+        result.finally(() => {
+          setIsRefetching(false);
+        });
+      } else {
+        setIsRefetching(false);
+      }
+    }
+  };
+
+  const registerRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+    refetchChallengesRef.current = refetchFn;
+  };
 
   return (
     <div className="w-full space-y-6 max-w-6xl mx-auto">
@@ -51,17 +71,34 @@ function ChallengeTabs() {
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
                 <h2 className="text-xl font-medium text-primary">Challenges</h2>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-challenge")}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Add Challenge</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    className=" flex items-center gap-2 px-4"
+                    variant={"outline"}
+                    onClick={handleRefetchChallenges}
+                    disabled={isRefetching}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        isRefetching ? "animate-spin" : ""
+                      }`}
+                    />
+                    <span>{isRefetching ? "Refreshing..." : "Refresh"}</span>
+                  </Button>
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
+                    onClick={() => navigate("add-challenge")}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Add Challenge</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <ChallengeTable />
+                  <ChallengeTable
+                    onRefetchTriggered={registerRefetchFunction}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -83,9 +120,6 @@ function ChallengeTabs() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  {/* <div className="p-10 text-center text-muted-foreground">
-                    Your Health Plans table will appear here
-                  </div> */}
                   <HealthPlanTable />
                 </div>
               </CardContent>

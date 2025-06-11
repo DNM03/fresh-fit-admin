@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { AlertCircle, ImageIcon, Target, Trophy } from "lucide-react";
+import { AlertCircle, ImageIcon, Trophy } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 import InputWithLabel from "@/components/inputs/input-with-label";
@@ -35,7 +35,7 @@ export default function UpdateChallengeForm({
   // Image files
   const [challengeImage, setChallengeImage] = useState<ImageFile[]>([]);
   const [prizeImage, setPrizeImage] = useState<ImageFile[]>([]);
-  const [targetImage, setTargetImage] = useState<ImageFile[]>([]);
+  const [targetImage] = useState<ImageFile[]>([]);
 
   // Dates
   const [startDate, setStartDate] = useState<Date | undefined>(
@@ -191,6 +191,7 @@ export default function UpdateChallengeForm({
         },
       });
       onSuccess();
+      window.location.reload();
     } catch (error) {
       console.error("Error updating challenge:", error);
       toast.error("Failed to update challenge. Please try again.", {
@@ -405,7 +406,7 @@ export default function UpdateChallengeForm({
                 required
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <Label>Prize Image</Label>
                   {challenge.prize_image && (
@@ -436,7 +437,7 @@ export default function UpdateChallengeForm({
                   />
                 </div>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label>Target Image</Label>
                   {challenge.target_image && (
                     <div className="mb-3">
@@ -464,7 +465,7 @@ export default function UpdateChallengeForm({
                     }}
                     icon={<Target className="h-16 w-16 text-gray-300 mb-4" />}
                   />
-                </div>
+                </div> */}
               </div>
 
               <SelectWithLabel
@@ -480,7 +481,7 @@ export default function UpdateChallengeForm({
                 required
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputWithLabel
                   fieldTitle="Weight Loss Target (kg)"
                   nameInSchema="weight_loss_target"
@@ -496,7 +497,7 @@ export default function UpdateChallengeForm({
                   type="number"
                   className="w-full"
                 />
-              </div>
+              </div> */}
             </TabsContent>
 
             <TabsContent value="healthplan" className="mt-0 space-y-6">

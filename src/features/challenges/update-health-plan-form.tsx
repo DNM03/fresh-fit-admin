@@ -11,6 +11,7 @@ import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
 import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -728,22 +729,26 @@ function UpdateHealthPlanForm({
                   </div>
 
                   <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedSets([]);
-                        setSelectedMeals([]);
-                        setNewDay({
-                          name: "",
-                          day: 1,
-                          week: 1,
-                          workout_details: [],
-                          nutrition_details: [],
-                        });
-                      }}
-                    >
-                      Cancel
-                    </Button>
+                    <DialogClose asChild>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          console.log("Cancel clicked");
+                          // Reset form data
+                          setSelectedSets([]);
+                          setSelectedMeals([]);
+                          setNewDay({
+                            name: "",
+                            day: 1,
+                            week: 1,
+                            workout_details: [],
+                            nutrition_details: [],
+                          });
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogClose>
                     <Button
                       onClick={addNewDay}
                       disabled={
