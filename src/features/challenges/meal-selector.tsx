@@ -14,6 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Utensils } from "lucide-react";
 import mealService from "@/services/meal.service"; // Import the meal service
 
@@ -41,6 +48,8 @@ export default function MealSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMealIds, setSelectedMealIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("name");
+  const [orderBy, setOrderBy] = useState("asc");
 
   const [meals, setMeals] = useState<MealType[]>(availableMeals);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,13 +83,15 @@ export default function MealSelector({
     try {
       setIsLoading(true);
 
-      // Call the API to get meals
+      // Call the API to get meals with sorting parameters
       const response = await mealService.getMeals({
         page,
         limit: pagination.limit,
         search,
         type: "System",
         meal_type: "All",
+        sort_by: sortBy,
+        order_by: orderBy.toUpperCase(),
       });
 
       if (response.data?.result) {
@@ -111,7 +122,7 @@ export default function MealSelector({
     if (dialogOpen) {
       fetchMeals(1, debouncedSearchQuery);
     }
-  }, [dialogOpen, debouncedSearchQuery]);
+  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy]);
 
   const handlePageChange = (newPage: number) => {
     fetchMeals(newPage, debouncedSearchQuery);
@@ -167,8 +178,8 @@ export default function MealSelector({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex items-center justify-between my-4">
-              <div className="relative w-full max-w-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+              <div className="relative col-span-1 md:col-span-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search meals..."
@@ -176,6 +187,40 @@ export default function MealSelector({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+
+              <div className="col-span-1 md:col-span-1">
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) => setSortBy(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="calories">Calories</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-1 md:col-span-1">
+                <Select
+                  value={orderBy}
+                  onValueChange={(value) => setOrderBy(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">
+                      Ascending (A-Z, Low-High)
+                    </SelectItem>
+                    <SelectItem value="desc">
+                      Descending (Z-A, High-Low)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

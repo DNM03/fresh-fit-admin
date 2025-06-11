@@ -24,6 +24,7 @@ import {
   Pause,
   CheckCircle,
   AlertTriangle,
+  ChevronRight,
 } from "lucide-react";
 import challengeService from "@/services/challenge.service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -309,7 +310,7 @@ function ChallengeDetail() {
                   challenge={challenge}
                   onSuccess={() => {
                     setIsUpdateDialogOpen(false);
-                    window.location.reload();
+                    // window.location.reload();
                   }}
                 />
               </div>
@@ -463,31 +464,9 @@ function ChallengeDetail() {
                       </div>
                     )}
                   </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">
-                      Challenge Information
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-lg border p-4">
-                        <div className="flex items-center text-sm text-muted-foreground mb-1">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Type
-                        </div>
-                        <div className="font-medium">{challenge.type}</div>
-                      </div>
-                      <div className="rounded-lg border p-4">
-                        <div className="flex items-center text-sm text-muted-foreground mb-1">
-                          <Target className="h-4 w-4 mr-1" />
-                          Target
-                        </div>
-                        <div className="font-medium">{challenge.target}</div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-7">
                   <div className="rounded-lg border p-4">
                     <h3 className="text-lg font-medium border-b pb-2 mb-3">
                       Prize Details
@@ -520,8 +499,29 @@ function ChallengeDetail() {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-4">
+                    {/* <h3 className="text-lg font-medium mb-2">
+                      Challenge Information
+                    </h3> */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="rounded-lg border p-4">
+                        <div className="flex items-center text-sm text-muted-foreground mb-1">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Type
+                        </div>
+                        <div className="font-medium">{challenge.type}</div>
+                      </div>
+                      <div className="rounded-lg border p-4">
+                        <div className="flex items-center text-sm text-muted-foreground mb-1">
+                          <Target className="h-4 w-4 mr-1" />
+                          Target
+                        </div>
+                        <div className="font-medium">{challenge.target}</div>
+                      </div>
+                    </div>
+                  </div>
 
-                  <div className="rounded-lg border p-4">
+                  {/* <div className="rounded-lg border p-4">
                     <h3 className="text-lg font-medium border-b pb-2 mb-3">
                       Target Details
                     </h3>
@@ -560,7 +560,7 @@ function ChallengeDetail() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </TabsContent>
@@ -569,13 +569,27 @@ function ChallengeDetail() {
               {challenge.health_plan ? (
                 <div className="space-y-4">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        {challenge.health_plan.name}
-                      </CardTitle>
-                      <CardDescription>
-                        {challenge.health_plan.description}
-                      </CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div className="flex flex-col items-start space-x-2">
+                        <CardTitle className="text-lg">
+                          {challenge.health_plan.name}
+                        </CardTitle>
+                        <CardDescription>
+                          {challenge.health_plan.description}
+                        </CardDescription>
+                      </div>
+                      {/* <Button
+                        variant="outline"
+                        className="flex items-center"
+                        onClick={() =>
+                          navigate(
+                            `/manage-challenges/health-plans/${challenge.health_plan.id}`
+                          )
+                        }
+                      >
+                        View Health Plan
+                        <ChevronRight className="mr-2 h-4 w-4" />
+                      </Button> */}
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -630,6 +644,20 @@ function ChallengeDetail() {
                             </div>
                           </div>
                         </div>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          variant="outline"
+                          className="flex items-center"
+                          onClick={() =>
+                            navigate(
+                              `/manage-challenges/health-plans/${challenge.health_plan._id}`
+                            )
+                          }
+                        >
+                          View Health Plan
+                          <ChevronRight className="mr-2 h-4 w-4" />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

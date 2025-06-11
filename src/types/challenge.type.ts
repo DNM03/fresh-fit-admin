@@ -13,4 +13,5 @@ export interface AddUpdateChallengeData {
   start_date: Date;
   end_date: Date;
   health_plan_id?: string | null;
+  weeks_duration?: number;
 }

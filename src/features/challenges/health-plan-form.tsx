@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,17 +25,31 @@ import { useNavigate } from "react-router-dom";
 import healthPlanService from "@/services/health-plan.service";
 import { toast } from "sonner";
 
-interface HealthPlanFormData {
-  name: string;
-  description: string;
-  estimated_calories_burned: number;
-  estimated_calories_intake: number;
-  status: "Done" | "Undone";
-  level: "Beginner" | "Intermediate" | "Advanced";
-  start_date: Date;
-  end_date: Date;
-  number_of_weeks: number;
-}
+const healthPlanFormSchema = z.object({
+  name: z.string().min(1, "Plan name is required"),
+  description: z.string().min(1, "Description is required"),
+  estimated_calories_burned: z.number().min(0, "Must be a positive number"),
+  estimated_calories_intake: z.number().min(0, "Must be a positive number"),
+  status: z.enum(["Done", "Undone"]),
+  level: z.enum(["Beginner", "Intermediate", "Advanced"]),
+  start_date: z.date({
+    required_error: "Start date is required",
+  }),
+  end_date: z
+    .date({
+      required_error: "End date is required",
+    })
+    .refine((date) => date > new Date(), {
+      message: "End date must be in the future",
+    }),
+  number_of_weeks: z
+    .number()
+    .int()
+    .min(1, "Must be at least 1 week")
+    .max(52, "Cannot exceed 52 weeks"),
+});
+
+type HealthPlanFormData = z.infer<typeof healthPlanFormSchema>;
 
 interface DayPlanData {
   id: string;
@@ -80,6 +96,8 @@ function HealthPlanForm() {
 
   const form = useForm<HealthPlanFormData>({
     defaultValues,
+    resolver: zodResolver(healthPlanFormSchema),
+    mode: "onChange",
   });
 
   const calculateWeeksBetween = (startDate: Date, endDate: Date) => {
@@ -366,17 +384,35 @@ function HealthPlanForm() {
     }
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep === 1) {
-      // Validate first step fields
-      form.trigger(["name", "description", "level", "number_of_weeks"]);
-      if (form.formState.isValid) {
-        // Generate days if moving to step 2 for the first time
+      const fieldsToValidate = [
+        "name",
+        "description",
+        "level",
+        "start_date",
+        "end_date",
+        "number_of_weeks",
+      ];
+
+      const result = await form.trigger(
+        fieldsToValidate as Array<keyof HealthPlanFormData>
+      );
+
+      if (result) {
         if (dayPlans.length === 0) {
           const weeks = form.getValues("number_of_weeks") || 12;
           setDayPlans(generateInitialDays(weeks));
         }
         setCurrentStep(2);
+      } else {
+        // If validation fails, we can show a toast message
+        // toast.error("Please fill in all required fields correctly", {
+        //   style: {
+        //     background: "#cc3131",
+        //     color: "#fff",
+        //   },
+        // });
       }
     }
   };
@@ -762,6 +798,21 @@ function HealthPlanForm() {
             )}
 
             <CardContent className="px-0">{renderStepContent()}</CardContent>
+
+            {/* {Object.keys(form.formState.errors).length > 0 && (
+              <div className="text-red-500 text-sm mt-4 p-3 bg-red-50 rounded-md">
+                <p className="font-medium mb-1">
+                  Please correct the following errors:
+                </p>
+                <ul className="list-disc list-inside">
+                  {Object.entries(form.formState.errors).map(
+                    ([field, error]) => (
+                      <li key={field}>{error.message as string}</li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )} */}
 
             {!formSubmitted && (
               <div className="flex justify-between mt-6">

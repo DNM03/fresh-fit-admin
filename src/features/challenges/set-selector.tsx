@@ -14,9 +14,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Activity } from "lucide-react";
 import setService from "@/services/set.service";
-// Import the set service
 
 type SetSelectorProps = {
   availableSets?: any[];
@@ -36,6 +42,8 @@ export default function SetSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("name");
+  const [orderBy, setOrderBy] = useState("asc");
 
   const [sets, setSets] = useState<any[]>(availableSets);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,6 +69,7 @@ export default function SetSelector({
       setSelectedSetIds([]);
     }
   }, [dialogOpen]);
+
   const fetchSets = async (page = 1, search = "") => {
     try {
       setIsLoading(true);
@@ -70,6 +79,8 @@ export default function SetSelector({
         limit: pagination.limit,
         search,
         type: "System",
+        sort_by: sortBy,
+        order_by: orderBy.toUpperCase(),
       });
 
       if (response?.data?.result) {
@@ -100,7 +111,7 @@ export default function SetSelector({
     if (dialogOpen) {
       fetchSets(1, debouncedSearchQuery);
     }
-  }, [dialogOpen, debouncedSearchQuery]);
+  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy]);
 
   const handlePageChange = (newPage: number) => {
     fetchSets(newPage, debouncedSearchQuery);
@@ -157,8 +168,8 @@ export default function SetSelector({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex items-center justify-between my-4">
-              <div className="relative w-full max-w-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+              <div className="relative col-span-1 md:col-span-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search exercise sets..."
@@ -166,6 +177,46 @@ export default function SetSelector({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+
+              <div className="col-span-1 md:col-span-1">
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) => setSortBy(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="rating">Rating</SelectItem>
+                    <SelectItem value="number_of_exercises">
+                      Number of Exercises
+                    </SelectItem>
+                    <SelectItem value="total_calories">
+                      Total Calories
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-1 md:col-span-1">
+                <Select
+                  value={orderBy}
+                  onValueChange={(value) => setOrderBy(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">
+                      Ascending (A-Z, Low-High)
+                    </SelectItem>
+                    <SelectItem value="desc">
+                      Descending (Z-A, High-Low)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -189,8 +240,10 @@ export default function SetSelector({
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium">{set.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {set.total_calories} calories
+                        <div className="flex gap-4 text-xs text-gray-500 mt-1">
+                          <span>{set.total_calories} calories</span>
+                          <span>{set.number_of_exercises || 0} exercises</span>
+                          <span>Rating: {set.rating || 0}</span>
                         </div>
                       </div>
                       <div

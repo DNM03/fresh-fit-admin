@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { ArrowRight, Check, Trophy, Target, ImageIcon } from "lucide-react";
+import { ArrowRight, Check, Trophy, ImageIcon } from "lucide-react";
 import type { PlanType } from "@/constants/types";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 import InputWithLabel from "@/components/inputs/input-with-label";
@@ -19,17 +19,19 @@ import { z } from "zod";
 import challengeService from "@/services/challenge.service";
 import HealthPlanSelector from "./health-plan-selector";
 import { toast } from "sonner";
+import { addWeeks } from "date-fns";
 
 export default function ChallengeForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [, setStartDate] = useState<Date | undefined>(new Date());
+  const [weeksDuration, setWeeksDuration] = useState<number>(4); // Default 4 weeks
   const [endDate, setEndDate] = useState<Date | undefined>(
     new Date(new Date().setMonth(new Date().getMonth() + 1))
   );
   const [challengeImage, setChallengeImage] = useState<ImageFile[]>([]);
   const [prizeImage, setPrizeImage] = useState<ImageFile[]>([]);
-  const [targetImage, setTargetImage] = useState<ImageFile[]>([]);
+  const [targetImage] = useState<ImageFile[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,7 +49,8 @@ export default function ChallengeForm() {
     weight_loss_target: 0,
     status: "Inactive",
     start_date: new Date(),
-    end_date: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    end_date: addWeeks(new Date(), 4),
+    weeks_duration: 4,
     health_plan_id: null,
   };
 
@@ -74,9 +77,12 @@ export default function ChallengeForm() {
         start_date: z.date().refine((date) => date > new Date(), {
           message: "Start date must be in the future",
         }),
-        end_date: z.date().refine((date) => date > new Date(), {
-          message: "End date must be in the future",
-        }),
+        end_date: z.date(),
+        weeks_duration: z
+          .number()
+          .min(1, "Duration must be at least 1 week")
+          .max(52, "Duration cannot exceed 52 weeks")
+          .optional(),
         image: z.string().optional(),
         prize_image: z.string().optional(),
         target_image: z.string().optional(),
@@ -84,6 +90,16 @@ export default function ChallengeForm() {
       })
     ),
   });
+
+  const startDateValue = form.watch("start_date");
+
+  useEffect(() => {
+    if (form.getValues().start_date && weeksDuration) {
+      const newEndDate = addWeeks(startDateValue, weeksDuration);
+      setEndDate(newEndDate);
+      form.setValue("end_date", newEndDate);
+    }
+  }, [startDateValue, weeksDuration]);
 
   const handleAddHealthPlan = (plan: any) => {
     setSelectedHealthPlan(plan);
@@ -96,8 +112,8 @@ export default function ChallengeForm() {
   const onSubmit = form.handleSubmit(async (_data) => {
     try {
       setIsSubmitting(true);
-      if (!startDate || !endDate) {
-        toast.error("Please select start and end dates", {
+      if (!startDateValue) {
+        toast.error("Please select a start date", {
           style: {
             background: "#cc3131",
             color: "#fff",
@@ -106,11 +122,13 @@ export default function ChallengeForm() {
         return;
       }
 
-      // Add health plan ID (singular) to the form data
+      const calculatedEndDate = addWeeks(startDateValue, weeksDuration);
+
       const healthPlanId = selectedHealthPlan?._id;
 
-      form.setValue("start_date", startDate);
-      form.setValue("end_date", endDate);
+      form.setValue("start_date", startDateValue);
+      form.setValue("end_date", calculatedEndDate);
+      form.setValue("weeks_duration", weeksDuration);
 
       if (selectedPlan) {
         form.setValue("health_plan_id", selectedPlan.id);
@@ -178,16 +196,19 @@ export default function ChallengeForm() {
 
       console.log("Saving challenge:", {
         ...updatedData,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        health_plan_id: healthPlanId, // Changed to singular
+        start_date: startDateValue.toISOString(),
+        end_date: calculatedEndDate.toISOString(),
+        weeks_duration: weeksDuration,
+        health_plan_id: healthPlanId,
       });
 
+      const { weeks_duration, ...dataWithoutWeeksDuration } = updatedData;
       const response = await challengeService.addChallenge({
-        ...updatedData,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        health_plan_id: healthPlanId, // Changed to singular
+        ...dataWithoutWeeksDuration,
+        start_date: startDateValue.toISOString(),
+        end_date: calculatedEndDate.toISOString(),
+        health_plan_id: healthPlanId,
+        target_image: "",
       });
       if (!response || !response.data) {
         toast.error("Failed to create challenge. Please try again.", {
@@ -231,7 +252,7 @@ export default function ChallengeForm() {
         "description",
         "type",
         "start_date",
-        "end_date",
+        "weeks_duration", // Replace end_date with weeks_duration
         "status"
       );
     } else if (currentStep === 2) {
@@ -287,8 +308,8 @@ export default function ChallengeForm() {
             <div className="flex justify-between text-sm">
               <span>Type: {form.getValues().type}</span>
               <span>
-                {startDate && endDate
-                  ? `${format(startDate, "MMM d")} - ${format(
+                {startDateValue && endDate
+                  ? `${format(startDateValue, "MMM d")} - ${format(
                       endDate,
                       "MMM d, yyyy"
                     )}`
@@ -369,10 +390,44 @@ export default function ChallengeForm() {
                   required
                 />
 
-                <DatePickerWithLabel<AddUpdateChallengeData>
-                  fieldTitle="End Date"
-                  nameInSchema="end_date"
-                  required
+                <div className="space-y-3">
+                  <Label
+                    htmlFor="weeks_duration"
+                    className="text-sm font-medium"
+                  >
+                    Duration (weeks)<span className="text-red-500">*</span>
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      id="weeks_duration"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      min="1"
+                      max="52"
+                      value={weeksDuration}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value > 0) {
+                          setWeeksDuration(value);
+                          form.setValue("weeks_duration", value);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Display calculated end date as read-only */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  End Date (calculated)
+                </Label>
+                <input
+                  type="text"
+                  className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed opacity-70"
+                  value={endDate ? format(endDate, "MMMM dd, yyyy") : ""}
+                  readOnly
+                  disabled
                 />
               </div>
 
@@ -423,7 +478,7 @@ export default function ChallengeForm() {
                 required
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <Label>Prize Image</Label>
                   <ImageDropzone
@@ -435,7 +490,7 @@ export default function ChallengeForm() {
                     icon={<Trophy className="h-16 w-16 text-gray-300 mb-4" />}
                   />
                 </div>
-
+                {/* 
                 <div className="space-y-2">
                   <Label>Target Image</Label>
                   <ImageDropzone
@@ -446,7 +501,7 @@ export default function ChallengeForm() {
                     }}
                     icon={<Target className="h-16 w-16 text-gray-300 mb-4" />}
                   />
-                </div>
+                </div> */}
               </div>
 
               <SelectWithLabel<AddUpdateChallengeData>
@@ -462,7 +517,7 @@ export default function ChallengeForm() {
                 required
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputWithLabel<AddUpdateChallengeData>
                   fieldTitle="Weight Loss Target (kg)"
                   nameInSchema="weight_loss_target"
@@ -490,7 +545,7 @@ export default function ChallengeForm() {
                     form.setValue("fat_percent", numericValue || 0);
                   }}
                 />
-              </div>
+              </div> */}
             </div>
           </>
         );
