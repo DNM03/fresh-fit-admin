@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import exerciseService from "@/services/exercise.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,16 +22,18 @@ function ExerciseTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
-
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
   // Convert to useCallback to enable reuse through ref
   const fetchExercises = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await exerciseService.searchExercise({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -39,7 +45,7 @@ function ExerciseTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchExercises();
@@ -58,6 +64,16 @@ function ExerciseTable({
         accessorKey: "name",
         header: "Name",
       },
+
+      {
+        accessorKey: "mechanics",
+        header: "Mechanics",
+      },
+
+      {
+        accessorKey: "experience_level",
+        header: "Experience Level",
+      },
       {
         accessorKey: "description",
         header: "Description",
@@ -68,16 +84,7 @@ function ExerciseTable({
               : row.original.description}
           </p>
         ),
-      },
-
-      {
-        accessorKey: "mechanics",
-        header: "Mechanics",
-      },
-
-      {
-        accessorKey: "experience_level",
-        header: "Experience Level",
+        enableSorting: false,
       },
     ],
     []
@@ -91,12 +98,14 @@ function ExerciseTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-exercises/exercises/${row.original._id}`);
       }}
+      onSortingChange={setSorting}
+      enableColumnFilters={false}
     />
   );
 }

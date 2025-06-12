@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import ingredientService from "@/services/ingredient.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,16 +22,19 @@ function IngredientTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
 
   // Convert to useCallback to enable reuse through ref
   const fetchIngredients = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await ingredientService.getIngredients({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -39,7 +46,7 @@ function IngredientTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchIngredients();
@@ -58,6 +65,16 @@ function IngredientTable({
         accessorKey: "name",
         header: "Name",
       },
+
+      {
+        accessorKey: "calories",
+        header: "Calories",
+      },
+
+      {
+        accessorKey: "protein",
+        header: "Protein",
+      },
       {
         accessorKey: "description",
         header: "Description",
@@ -68,16 +85,7 @@ function IngredientTable({
               : row.original.description}
           </p>
         ),
-      },
-
-      {
-        accessorKey: "calories",
-        header: "Calories",
-      },
-
-      {
-        accessorKey: "protein",
-        header: "Protein",
+        enableSorting: false,
       },
     ],
     []
@@ -90,12 +98,14 @@ function IngredientTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-meals/ingredients/${row.original._id}`);
       }}
       onGlobalFilterChange={setGlobalFilter}
+      enableColumnFilters={false}
+      onSortingChange={setSorting}
     />
   );
 }

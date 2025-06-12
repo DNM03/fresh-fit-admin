@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import setService from "@/services/set.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,17 +22,19 @@ function ExerciseSetTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
-
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
   // Convert to useCallback to enable reuse through ref
   const fetchExerciseSets = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await setService.searchSet({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         type: "System",
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -40,7 +46,7 @@ function ExerciseSetTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchExerciseSets();
@@ -60,6 +66,10 @@ function ExerciseSetTable({
         header: "Name",
       },
       {
+        accessorKey: "number_of_exercises",
+        header: "Number of Exercises",
+      },
+      {
         accessorKey: "description",
         header: "Description",
         Cell: ({ row }) => (
@@ -69,21 +79,17 @@ function ExerciseSetTable({
               : row.original.description}
           </p>
         ),
+        enableSorting: false,
       },
-
-      {
-        accessorKey: "number_of_exercises",
-        header: "Number of Exercises",
-      },
-
       {
         accessorKey: "type",
         header: "Type",
+        enableSorting: false,
       },
     ],
     []
   );
-  
+
   return (
     <Table
       columns={columns}
@@ -92,12 +98,14 @@ function ExerciseSetTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-exercises/exercise-sets/${row.original._id}`);
       }}
+      enableColumnFilters={false}
+      onSortingChange={setSorting}
     />
   );
 }

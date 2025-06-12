@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import mealService from "@/services/meal.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,18 +22,21 @@ function MealTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
-  
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+
   // Convert to useCallback to enable reuse through ref
   const fetchMeals = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await mealService.getMeals({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         type: "System",
         meal_type: "All",
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -41,12 +48,12 @@ function MealTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchMeals();
   }, [fetchMeals]);
-  
+
   // Register the refetch function with the parent component
   useEffect(() => {
     if (onRefetchTriggered) {
@@ -60,6 +67,16 @@ function MealTable({
         accessorKey: "name",
         header: "Name",
       },
+
+      {
+        accessorKey: "calories",
+        header: "Calories",
+      },
+
+      {
+        accessorKey: "meal_type",
+        header: "Meal Type",
+      },
       {
         accessorKey: "description",
         header: "Description",
@@ -70,16 +87,7 @@ function MealTable({
               : row.original.description}
           </p>
         ),
-      },
-
-      {
-        accessorKey: "calories",
-        header: "Calories",
-      },
-
-      {
-        accessorKey: "meal_type",
-        header: "Meal Type",
+        enableSorting: false,
       },
     ],
     []
@@ -92,12 +100,14 @@ function MealTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-meals/meals/${row.original._id}`);
       }}
       onGlobalFilterChange={setGlobalFilter}
+      enableColumnFilters={false}
+      onSortingChange={setSorting}
     />
   );
 }

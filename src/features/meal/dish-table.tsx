@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import dishService from "@/services/dish.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,16 +22,19 @@ function DishTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
 
   // Convert to useCallback to enable reuse through ref
   const fetchDishes = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await dishService.searchDishes({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -39,7 +46,7 @@ function DishTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchDishes();
@@ -58,17 +65,6 @@ function DishTable({
         accessorKey: "name",
         header: "Name",
       },
-      {
-        accessorKey: "description",
-        header: "Description",
-        Cell: ({ row }) => (
-          <p>
-            {row.original.description.length > 25
-              ? `${row.original.description.substring(0, 25)}...`
-              : row.original.description}
-          </p>
-        ),
-      },
 
       {
         accessorKey: "calories",
@@ -79,6 +75,18 @@ function DishTable({
         accessorKey: "prep_time",
         header: "Preparation Time",
         Cell: ({ row }) => <span>{row.original.prep_time / 60} minutes</span>,
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+        Cell: ({ row }) => (
+          <p>
+            {row.original.description.length > 25
+              ? `${row.original.description.substring(0, 25)}...`
+              : row.original.description}
+          </p>
+        ),
+        enableSorting: false,
       },
     ],
     []
@@ -91,12 +99,14 @@ function DishTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-meals/dishes/${row.original._id}`);
       }}
       onGlobalFilterChange={setGlobalFilter}
+      enableColumnFilters={false}
+      onSortingChange={setSorting}
     />
   );
 }

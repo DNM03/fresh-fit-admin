@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import specialistService from "@/services/specialist.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,16 +22,19 @@ function SpecialistTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
 
   // Convert to useCallback to enable reuse through ref
   const fetchSpecialists = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "createdAt", desc: true };
       const response = await specialistService.getSpecialists({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
-        sort_by: "createdAt",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -39,7 +46,7 @@ function SpecialistTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchSpecialists();
@@ -87,6 +94,7 @@ function SpecialistTable({
             </span>
           );
         },
+        enableSorting: false,
       },
     ],
     []
@@ -100,12 +108,14 @@ function SpecialistTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-specialists/${row.original.userId}`);
       }}
+      onSortingChange={setSorting}
+      enableColumnFilters={false}
     />
   );
 }
