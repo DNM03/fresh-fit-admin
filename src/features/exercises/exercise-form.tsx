@@ -12,7 +12,7 @@ import { Form } from "@/components/ui/form";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 import VideoDropzone, { VideoFile } from "@/components/ui/video-dropzone";
 import { ExerciseType } from "@/constants/types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import mediaService from "@/services/media.service";
 import exerciseService from "@/services/exercise.service";
@@ -213,8 +213,39 @@ function ExerciseForm() {
     }
   };
 
+  const handleStepChange = async (newTab: string) => {
+    if (activeTab === "details" && newTab === "media") {
+      const fieldsToValidate = [
+        "name",
+        "description",
+        "category",
+        "calories_burn_per_minutes",
+        "type",
+        "mechanics",
+        "forceType",
+        "experience_level",
+      ] as const;
+
+      const isValid = await form.trigger(fieldsToValidate);
+
+      if (!isValid) {
+        // toast.error("Please complete all required fields before continuing", {
+        //   style: {
+        //     background: "#cc3131",
+        //     color: "#fff",
+        //   },
+        // });
+        return;
+      }
+    }
+
+    setActiveTab(newTab);
+  };
+
+  // const { trigger } = form;
+
   return (
-    <div className="w-full max-w-4xl mx-auto  mt-8">
+    <div className="w-full max-w-4xl mx-auto mt-8">
       <div className="mb-6 px-6">
         <h1 className="text-2xl font-semibold">Add New Exercise</h1>
 
@@ -222,14 +253,21 @@ function ExerciseForm() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(submitForm)}>
+        <form
+          onSubmit={form.handleSubmit(submitForm)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+            }
+          }}
+        >
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleStepChange} // Replace direct setter with validation handler
             className="w-full"
           >
             <div className="px-6 relative">
-              <TabsList className="grid grid-cols-2 mb-6 bg-muted shadow-md overflow-hidden w-full relative  !px-0">
+              <TabsList className="grid grid-cols-2 mb-6 bg-muted shadow-md overflow-hidden w-full relative !px-0">
                 <TabsTrigger
                   value="details"
                   className="flex items-center justify-center transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-100"
@@ -244,7 +282,7 @@ function ExerciseForm() {
 
                 <TabsTrigger
                   value="media"
-                  className="flex items-center justify-center  transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-100"
+                  className="flex items-center justify-center transition-all duration-300 data-[state=active]:text-primary data-[state=active]:bg-green-100"
                 >
                   Step 2: Media Upload
                   {hasMediaErrors && (
@@ -404,10 +442,11 @@ function ExerciseForm() {
                 <div className="flex justify-end pt-2">
                   <Button
                     type="button"
-                    onClick={() => setActiveTab("media")}
-                    disabled={hasDetailsErrors}
+                    onClick={() => handleStepChange("media")}
+                    className="bg-primary hover:opacity-80"
                   >
                     Continue to Media Upload
+                    <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
               </TabsContent>
@@ -550,13 +589,28 @@ function ExerciseForm() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setActiveTab("details")}
+                    onClick={() => handleStepChange("details")}
                   >
                     Back to Details
                   </Button>
                 </div>
               </TabsContent>
             </CardContent>
+
+            {/* {Object.keys(form.formState.errors).length > 0 && (
+              <div className="mx-6 mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="font-medium text-red-700">
+                  Please fix the following errors:
+                </p>
+                <ul className="mt-1 list-disc list-inside text-sm text-red-600">
+                  {Object.entries(form.formState.errors).map(
+                    ([field, error]) => (
+                      <li key={field}>{error.message as string}</li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )} */}
 
             <CardFooter className="px-6 py-4 border-t flex justify-between">
               <Button type="button" onClick={handleReset} variant="outline">

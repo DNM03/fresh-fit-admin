@@ -119,7 +119,7 @@ function UpdateDishForm({ dish, onSuccess }: UpdateDishFormProps) {
       let imageRes;
 
       if (imageFiles[0]?.file) {
-        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+        imageRes = await mediaService.backupUploadImage(imageFiles[0].file);
       }
 
       const response = await dishService.updateDishInfo(dish._id, {

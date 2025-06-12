@@ -74,7 +74,7 @@ function IngredientForm() {
     try {
       let imageRes;
       if (imageFiles[0]?.file) {
-        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+        imageRes = await mediaService.backupUploadImage(imageFiles[0].file);
       }
 
       const { id, ...ingredientData } = data;

@@ -6,17 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Check, ArrowRight } from "lucide-react";
-import type { MealType, DishType } from "@/constants/types";
+import type { DishType, AddMealType } from "@/constants/types";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 import { Form } from "@/components/ui/form";
-import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
+// import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
 import DishSelector from "./dish-selector";
 import mediaService from "@/services/media.service";
 import mealService from "@/services/meal.service";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 export default function MealForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -31,7 +33,7 @@ export default function MealForm() {
     (DishType & { quantity?: number })[]
   >([]);
 
-  const defaultValues: Partial<MealType> = {
+  const defaultValues: Partial<AddMealType> = {
     name: "",
     description: "",
     image: "",
@@ -41,24 +43,45 @@ export default function MealForm() {
     date: new Date(),
   };
 
-  const form = useForm<MealType>({
-    defaultValues: defaultValues as MealType,
+  const mealFormSchema = z.object({
+    name: z.string().min(1, "Meal name is required"),
+    description: z.string().min(1, "Description is required"),
+    image: z.string().optional(),
+    calories: z.number().min(0, "Calories must be at least 0"),
+    pre_time: z.number().min(0, "Preparation time must be at least 0"),
+    mealType: z.enum(["Breakfast", "Lunch", "Dinner"], {
+      required_error: "Meal type is required",
+    }),
+    date: z.date({
+      required_error: "Date is required",
+    }),
+    dishes: z.array(z.string()).optional(),
+  });
+
+  const form = useForm<AddMealType>({
+    defaultValues: defaultValues as AddMealType,
+    resolver: zodResolver(mealFormSchema as z.ZodType<AddMealType>),
+    mode: "onChange",
   });
 
   const handleAddDish = (dish: DishType & { quantity?: number }) => {
-    setSelectedDishes((prev) => [...prev, dish]);
+    setSelectedDishes((prev) => {
+      const updatedDishes = [...prev, dish];
 
-    const totalCalories =
-      selectedDishes.reduce(
+      const totalCalories = updatedDishes.reduce(
         (sum, d) => sum + d.calories * (d.quantity || 1),
         0
-      ) +
-      dish.calories * (dish.quantity || 1);
-    form.setValue("calories", totalCalories);
+      );
+      form.setValue("calories", totalCalories);
 
-    const totalPrepTime =
-      selectedDishes.reduce((sum, d) => sum + d.prep_time, 0) + dish.prep_time;
-    form.setValue("pre_time", totalPrepTime / 60);
+      const totalPrepTime = updatedDishes.reduce(
+        (sum, d) => sum + d.prep_time,
+        0
+      );
+      form.setValue("pre_time", totalPrepTime / 60);
+
+      return updatedDishes;
+    });
   };
 
   const handleRemoveDish = (dishId: string) => {
@@ -82,7 +105,7 @@ export default function MealForm() {
     }
   };
 
-  async function submitForm(data: MealType) {
+  async function submitForm(data: AddMealType) {
     try {
       setIsLoading(true);
       if (selectedDishes.length === 0) {
@@ -96,7 +119,7 @@ export default function MealForm() {
       }
       let imageRes;
       if (imageFiles[0]?.file) {
-        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+        imageRes = await mediaService.backupUploadImage(imageFiles[0].file);
       }
 
       if (date) {
@@ -138,19 +161,46 @@ export default function MealForm() {
     }
   }
 
-  const nextStep = () => {
-    const fieldsToValidate: (keyof MealType)[] = [];
+  const nextStep = async () => {
+    const fieldsToValidate: (keyof AddMealType)[] = [];
 
     if (currentStep === 1) {
       fieldsToValidate.push("name", "description", "mealType");
+
+      const validationResult = await Promise.all(
+        fieldsToValidate.map((field) => form.trigger(field))
+      );
+
+      const isValid = validationResult.every((result) => result === true);
+
+      if (!isValid) {
+        // toast.error("Please fill in all required fields correctly", {
+        //   style: {
+        //     background: "#cc3131",
+        //     color: "#fff",
+        //   },
+        // });
+        return;
+      }
+
+      if (imageFiles.length === 0) {
+        toast.warning("No image selected. You can add one if desired.", {
+          style: {
+            background: "#f59e0b",
+            color: "#fff",
+          },
+        });
+      }
     }
 
-    const isValid = fieldsToValidate.every((field) => {
-      return form.trigger(field);
-    });
+    setCurrentStep((prev) => prev + 1);
+  };
 
-    if (isValid) {
-      setCurrentStep((prev) => prev + 1);
+  const handleStepClick = async (step: number) => {
+    if (step > currentStep) {
+      await nextStep();
+    } else {
+      setCurrentStep(step);
     }
   };
 
@@ -210,8 +260,8 @@ export default function MealForm() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputWithLabel<MealType>
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                <InputWithLabel<AddMealType>
                   fieldTitle="Meal Name"
                   nameInSchema="name"
                   placeholder="E.g., Monday Breakfast"
@@ -219,15 +269,15 @@ export default function MealForm() {
                   required
                 />
 
-                <div className="space-y-2">
-                  <DatePickerWithLabel<MealType>
+                {/* <div className="space-y-2">
+                  <DatePickerWithLabel<AddMealType>
                     fieldTitle="Date"
                     nameInSchema="date"
                   />
-                </div>
+                </div> */}
               </div>
 
-              <TextAreaWithLabel<MealType>
+              <TextAreaWithLabel<AddMealType>
                 fieldTitle="Description"
                 nameInSchema="description"
                 placeholder="A brief description of the meal..."
@@ -342,7 +392,11 @@ export default function MealForm() {
             {!formSubmitted && (
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
+                  {/* Make step 1 clickable */}
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => handleStepClick(1)}
+                  >
                     <div
                       className={`flex items-center justify-center w-8 h-8 rounded-full ${
                         currentStep >= 1
@@ -362,6 +416,8 @@ export default function MealForm() {
                       Basic Info
                     </span>
                   </div>
+
+                  {/* Divider */}
                   <div className="flex-1 mx-4 h-1 bg-gray-200">
                     <div
                       className={`h-1 bg-primary transition-all ${
@@ -369,7 +425,12 @@ export default function MealForm() {
                       }`}
                     ></div>
                   </div>
-                  <div className="flex items-center">
+
+                  {/* Make step 2 clickable */}
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => handleStepClick(2)}
+                  >
                     <div
                       className={`flex items-center justify-center w-8 h-8 rounded-full ${
                         currentStep >= 2
@@ -394,6 +455,21 @@ export default function MealForm() {
             )}
 
             {renderStepContent()}
+
+            {/* {Object.keys(form.formState.errors).length > 0 && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="font-medium text-red-700">
+                  Please fix the following errors:
+                </p>
+                <ul className="mt-1 list-disc list-inside text-sm text-red-600">
+                  {Object.entries(form.formState.errors).map(
+                    ([field, error]) => (
+                      <li key={field}>{error.message as string}</li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )} */}
 
             {!formSubmitted && (
               <div className="flex justify-between mt-6">
@@ -424,7 +500,7 @@ export default function MealForm() {
                   <Button
                     type="submit"
                     className="bg-primary hover:opacity-80"
-                    disabled={isLoading}
+                    disabled={isLoading || selectedDishes.length === 0}
                   >
                     {isLoading ? "Saving..." : "Save Meal"}
                   </Button>

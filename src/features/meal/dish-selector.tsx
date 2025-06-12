@@ -14,6 +14,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { DishType } from "@/constants/types";
 import dishService from "@/services/dish.service";
 
@@ -34,6 +41,8 @@ export default function DishSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDishIds, setSelectedDishIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("name");
+  const [orderBy, setOrderBy] = useState("asc");
 
   const [dishes, setDishes] = useState<DishType[]>(initialDishes);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,6 +77,8 @@ export default function DishSelector({
         page,
         limit: pagination.limit,
         search,
+        sort_by: sortBy,
+        order_by: orderBy.toUpperCase(),
       });
 
       if (response.data?.result) {
@@ -98,7 +109,7 @@ export default function DishSelector({
     if (dialogOpen) {
       fetchDishes(1, debouncedSearchQuery);
     }
-  }, [dialogOpen, debouncedSearchQuery]);
+  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy]);
 
   const handlePageChange = (newPage: number) => {
     fetchDishes(newPage, debouncedSearchQuery);
@@ -151,8 +162,8 @@ export default function DishSelector({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex items-center justify-between my-4">
-              <div className="relative w-full max-w-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+              <div className="relative col-span-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search dishes..."
@@ -162,6 +173,41 @@ export default function DishSelector({
                     setSearchQuery(e.target.value);
                   }}
                 />
+              </div>
+
+              <div className="col-span-1">
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) => setSortBy(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="calories">Calories</SelectItem>
+                    <SelectItem value="prep_time">Preparation Time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-1">
+                <Select
+                  value={orderBy}
+                  onValueChange={(value) => setOrderBy(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">
+                      Ascending (A-Z, Low-High)
+                    </SelectItem>
+                    <SelectItem value="desc">
+                      Descending (Z-A, High-Low)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -175,7 +221,12 @@ export default function DishSelector({
                 dishes.map((dish) => (
                   <div
                     key={dish._id}
-                    className="flex items-start space-x-3 p-3 border rounded-md hover:bg-gray-50"
+                    className={`flex items-start space-x-3 p-3 border rounded-md cursor-pointer ${
+                      selectedDishIds.includes(dish._id)
+                        ? "border-primary bg-green-50"
+                        : "hover:bg-gray-50"
+                    }`}
+                    onClick={() => handleCheckboxChange(dish._id)}
                   >
                     <Checkbox
                       id={`dish-${dish._id}`}
@@ -183,13 +234,15 @@ export default function DishSelector({
                       onCheckedChange={() => handleCheckboxChange(dish._id)}
                     />
                     <div className="flex flex-1 items-center">
-                      {/* <div className="w-12 h-12 rounded overflow-hidden mr-3 flex-shrink-0">
-                        <img
-                          src={dish.image || "/placeholder.svg"}
-                          alt={dish.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div> */}
+                      {dish.image && (
+                        <div className="w-12 h-12 rounded overflow-hidden mr-3 flex-shrink-0">
+                          <img
+                            src={dish.image || "/placeholder.svg"}
+                            alt={dish.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="flex-1">
                         <Label
                           htmlFor={`dish-${dish._id}`}
@@ -201,7 +254,7 @@ export default function DishSelector({
                           {dish.description}
                         </p>
                         <div className="flex text-xs text-gray-500 mt-1">
-                          <span className="mr-2">{dish.calories} cal</span>
+                          <span className="mr-2">{dish.calories} cal •</span>
                           <span>{dish.prep_time / 60} min</span>
                         </div>
                       </div>
@@ -254,6 +307,7 @@ export default function DishSelector({
               <Button
                 onClick={handleAddSelected}
                 disabled={selectedDishIds.length === 0 || isLoading}
+                className="bg-primary hover:bg-primary/90"
               >
                 Add {selectedDishIds.length}{" "}
                 {selectedDishIds.length === 1 ? "Dish" : "Dishes"}
@@ -269,45 +323,23 @@ export default function DishSelector({
             <Card key={dish._id} className="p-3 hover:bg-gray-50">
               <div className="flex justify-between items-center">
                 <div className="flex items-center flex-1">
-                  {/* <div className="w-10 h-10 rounded overflow-hidden mr-3 flex-shrink-0">
-                    <img
-                      src={dish.image || "/placeholder.svg"}
-                      alt={dish.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div> */}
+                  {dish.image && (
+                    <div className="w-10 h-10 rounded overflow-hidden mr-3 flex-shrink-0">
+                      <img
+                        src={dish.image || "/placeholder.svg"}
+                        alt={dish.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex-1">
                     <div className="font-medium">{dish.name}</div>
                     <div className="flex text-xs text-gray-500">
-                      <span className="mr-2">{dish.calories} cal</span>
+                      <span className="mr-2">{dish.calories} cal •</span>
                       <span>{dish.prep_time / 60} min</span>
                     </div>
                   </div>
                 </div>
-
-                {/* {onUpdateQuantity && (
-                  <div className="flex items-center mr-4">
-                    <Label
-                      htmlFor={`quantity-${dish._id}`}
-                      className="mr-2 text-sm"
-                    >
-                      Quantity:
-                    </Label>
-                    <Input
-                      id={`quantity-${dish._id}`}
-                      type="number"
-                      className="w-16 h-8 text-sm"
-                      value={dish.quantity || 1}
-                      onChange={(e) =>
-                        onUpdateQuantity(
-                          dish._id,
-                          Number.parseInt(e.target.value) || 1
-                        )
-                      }
-                      min={1}
-                    />
-                  </div>
-                )} */}
 
                 <Button
                   type="button"
