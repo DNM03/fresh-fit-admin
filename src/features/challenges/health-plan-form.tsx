@@ -10,7 +10,7 @@ import { Form } from "@/components/ui/form";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import SelectWithLabel from "@/components/inputs/select-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
-import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
+// import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
 import { format } from "date-fns";
 
 import {
@@ -25,100 +25,77 @@ import { useNavigate } from "react-router-dom";
 import healthPlanService from "@/services/health-plan.service";
 import { toast } from "sonner";
 
-const healthPlanFormSchema = z.object({
-  name: z.string().min(1, "Plan name is required"),
-  description: z.string().min(1, "Description is required"),
-  estimated_calories_burned: z.number().min(0, "Must be a positive number"),
-  estimated_calories_intake: z.number().min(0, "Must be a positive number"),
-  status: z.enum(["Done", "Undone"]),
-  level: z.enum(["Beginner", "Intermediate", "Advanced"]),
-  start_date: z.date({
-    required_error: "Start date is required",
-  }),
-  end_date: z
-    .date({
-      required_error: "End date is required",
-    })
-    .refine((date) => date > new Date(), {
-      message: "End date must be in the future",
-    }),
-  number_of_weeks: z
-    .number()
-    .int()
-    .min(1, "Must be at least 1 week")
-    .max(52, "Cannot exceed 52 weeks"),
-});
-
-type HealthPlanFormData = z.infer<typeof healthPlanFormSchema>;
-
-interface DayPlanData {
-  id: string;
-  name: string;
-  day: number;
-  week: number;
-  workout_details: Array<{
-    set: string;
-    set_name?: string;
-    total_calories?: number;
-  }>;
-  nutrition_details: Array<{
-    meal: string;
-    meal_name?: string;
-    calories?: number;
-  }>;
-  estimated_calories_burned: number;
-  estimated_calories_intake: number;
-}
-
+// Modified the form to use only weeks input, with dates calculated automatically
 function HealthPlanForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(
-    new Date(new Date().setMonth(new Date().getMonth() + 3))
+    new Date(new Date().setDate(new Date().getDate() + 7))
   );
-  const [dayPlans, setDayPlans] = useState<DayPlanData[]>([]);
+  const [dayPlans, setDayPlans] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeWeekTab, setActiveWeekTab] = useState("week-1");
   const navigate = useNavigate();
 
-  const defaultValues: HealthPlanFormData = {
+  const healthPlanFormSchema = z.object({
+    name: z.string().min(1, "Plan name is required"),
+    description: z.string().min(1, "Description is required"),
+    estimated_calories_burned: z.number().min(0, "Must be a positive number"),
+    estimated_calories_intake: z.number().min(0, "Must be a positive number"),
+    status: z.enum(["Done", "Undone"]),
+    level: z.enum(["Beginner", "Intermediate", "Advanced"]),
+    number_of_weeks: z
+      .number()
+      .int()
+      .min(1, "Must be at least 1 week")
+      .max(52, "Cannot exceed 52 weeks"),
+  });
+
+  const defaultValues = {
     name: "",
     description: "",
     estimated_calories_burned: 0,
     estimated_calories_intake: 0,
     status: "Undone",
     level: "Beginner",
-    start_date: startDate,
-    end_date: endDate,
     number_of_weeks: 1,
   };
 
-  const form = useForm<HealthPlanFormData>({
+  const form = useForm({
     defaultValues,
-    resolver: zodResolver(healthPlanFormSchema),
+    resolver: zodResolver(healthPlanFormSchema as any),
     mode: "onChange",
   });
 
-  const calculateWeeksBetween = (startDate: Date, endDate: Date) => {
-    const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffWeeks = Math.ceil(diffTime / millisecondsPerWeek);
-    return diffWeeks;
+  // Function to update end date based on weeks
+  const updateDatesFromWeeks = (weeks: number) => {
+    const newStartDate = new Date(); // Always today
+    const newEndDate = new Date();
+    newEndDate.setDate(newStartDate.getDate() + weeks * 7);
+
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
   };
 
-  useEffect(() => {
-    if (startDate && endDate && endDate > startDate) {
-      const weeks = calculateWeeksBetween(startDate, endDate);
+  // Handle weeks change
+  const handleWeeksChange = (weeks: number) => {
+    if (weeks >= 1 && weeks <= 52) {
       form.setValue("number_of_weeks", weeks);
+      updateDatesFromWeeks(weeks);
+      setDayPlans(generateInitialDays(weeks));
+      setActiveWeekTab(`week-1`);
     }
-  }, [startDate, endDate]);
+  };
+
+  // Initialize with 1 week
   useEffect(() => {
-    form.setValue("number_of_weeks", 1);
+    handleWeeksChange(1);
   }, []);
 
+  // Function to generate days based on weeks
   const generateInitialDays = (weeks: number) => {
-    let initialDays: DayPlanData[] = [];
+    let initialDays: any[] = [];
     for (let week = 1; week <= weeks; week++) {
       for (let day = 1; day <= 7; day++) {
         initialDays.push({
@@ -136,43 +113,13 @@ function HealthPlanForm() {
     return initialDays;
   };
 
-  const handleWeeksChange = (weeks: number) => {
-    form.setValue("number_of_weeks", weeks);
-    setDayPlans(generateInitialDays(weeks));
-    setActiveWeekTab(`week-1`);
-  };
-
-  useEffect(() => {
-    const subscription = form.watch((values, { name }) => {
-      if (name === "start_date" && values.start_date) {
-        const newStartDate = values.start_date as Date;
-        setStartDate(newStartDate);
-
-        if (endDate && endDate > newStartDate) {
-          const weeks = calculateWeeksBetween(newStartDate, endDate);
-          form.setValue("number_of_weeks", weeks);
-          setDayPlans(generateInitialDays(weeks));
-        }
-      } else if (name === "end_date" && values.end_date) {
-        const newEndDate = values.end_date as Date;
-        setEndDate(newEndDate);
-
-        if (startDate && newEndDate > startDate) {
-          const weeks = calculateWeeksBetween(startDate, newEndDate);
-          form.setValue("number_of_weeks", weeks);
-          setDayPlans(generateInitialDays(weeks));
-        }
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, startDate, endDate, calculateWeeksBetween]);
-
   const handleAddExerciseToDayPlan = (dayId: string, set: any) => {
     setDayPlans((prevDays) => {
       return prevDays.map((day) => {
         if (day.id === dayId) {
-          const existingExerciseIds = day.workout_details.map((ex) => ex.set);
+          const existingExerciseIds = day.workout_details.map(
+            (ex: any) => ex.set
+          );
           if (existingExerciseIds.includes(set._id)) return day;
 
           const totalCalories =
@@ -204,7 +151,7 @@ function HealthPlanForm() {
           //     (ex) => ex.set === exerciseId
           //   );
           const selectedSet = day.workout_details.find(
-            (ex) => ex.set === exerciseId
+            (ex: any) => ex.set === exerciseId
           );
 
           const caloriesToSubtract = selectedSet ? 500 : 0;
@@ -212,7 +159,7 @@ function HealthPlanForm() {
           return {
             ...day,
             workout_details: day.workout_details.filter(
-              (ex) => ex.set !== exerciseId
+              (ex: any) => ex.set !== exerciseId
             ),
             estimated_calories_burned: Math.max(
               0,
@@ -232,7 +179,7 @@ function HealthPlanForm() {
         if (day.id === dayId) {
           // Add only if not already present
           const existingMealIds = day.nutrition_details.map(
-            (meal) => meal.meal
+            (meal: any) => meal.meal
           );
           if (existingMealIds.includes(meal._id)) return day;
 
@@ -264,7 +211,7 @@ function HealthPlanForm() {
         if (day.id === dayId) {
           // Find the meal in the day's nutrition_details to get its calories
           const mealDetails = day.nutrition_details.find(
-            (m) => m.meal === mealId
+            (m: any) => m.meal === mealId
           );
 
           // Determine calories to subtract (if available from the meal details)
@@ -277,7 +224,7 @@ function HealthPlanForm() {
           return {
             ...day,
             nutrition_details: day.nutrition_details.filter(
-              (m) => m.meal !== mealId
+              (m: any) => m.meal !== mealId
             ),
             estimated_calories_intake: Math.max(
               0,
@@ -290,7 +237,7 @@ function HealthPlanForm() {
     });
   };
 
-  const handleSubmit = async (data: HealthPlanFormData) => {
+  const handleSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       // Calculate total estimated calories for the entire plan
@@ -308,32 +255,24 @@ function HealthPlanForm() {
             day.workout_details.length > 0 || day.nutrition_details.length > 0
         )
         .map((day) => ({
-          name: day.name,
+          name: `Day ${day.day} Week ${day.week}`,
           day: day.day,
           week: day.week,
-          workout_details: day.workout_details.map((workout) => ({
+          workout_details: day.workout_details.map((workout: any) => ({
             set: workout.set,
           })),
-          nutrition_details: day.nutrition_details.map((nutrition) => ({
+          nutrition_details: day.nutrition_details.map((nutrition: any) => ({
             meal: nutrition.meal,
           })),
           estimated_calories_burned: day.estimated_calories_burned,
           estimated_calories_intake: day.estimated_calories_intake,
         }));
 
-      // const fullPlanData = {
-      //   ...data,
-      //   estimated_calories_burned: totalCaloriesBurned,
-      //   estimated_calories_intake: totalCaloriesIntake,
-      //   start_date: startDate.toISOString(),
-      //   end_date: endDate.toISOString(),
-      //   days: formattedDays,
-      // };
-
       const healthPlanData = {
         ...data,
         estimated_calories_burned: totalCaloriesBurned,
         estimated_calories_intake: totalCaloriesIntake,
+        // Use the calculated dates
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
       };
@@ -343,7 +282,7 @@ function HealthPlanForm() {
       );
 
       const healthPlanId = healthPlanResponse.data.health_plan?._id;
-      // console.log("Health Plan ID:", healthPlanId);
+
       if (healthPlanId) {
         for (const day of formattedDays) {
           await healthPlanService.addNewHealthPlanDetails(healthPlanId, {
@@ -356,6 +295,7 @@ function HealthPlanForm() {
           });
         }
       }
+
       toast.success("Health plan created successfully!", {
         style: {
           background: "#3ac76b",
@@ -368,7 +308,7 @@ function HealthPlanForm() {
       form.reset(defaultValues);
       setDayPlans([]);
       setStartDate(new Date());
-      setEndDate(new Date());
+      setEndDate(new Date(new Date().setDate(new Date().getDate() + 7)));
       setCurrentStep(1);
       navigate(-1);
     } catch (error) {
@@ -390,29 +330,19 @@ function HealthPlanForm() {
         "name",
         "description",
         "level",
-        "start_date",
-        "end_date",
         "number_of_weeks",
       ];
 
       const result = await form.trigger(
-        fieldsToValidate as Array<keyof HealthPlanFormData>
+        fieldsToValidate as Array<keyof typeof defaultValues>
       );
 
       if (result) {
         if (dayPlans.length === 0) {
-          const weeks = form.getValues("number_of_weeks") || 12;
+          const weeks = form.getValues("number_of_weeks") || 1;
           setDayPlans(generateInitialDays(weeks));
         }
         setCurrentStep(2);
-      } else {
-        // If validation fails, we can show a toast message
-        // toast.error("Please fill in all required fields correctly", {
-        //   style: {
-        //     background: "#cc3131",
-        //     color: "#fff",
-        //   },
-        // });
       }
     }
   };
@@ -429,7 +359,7 @@ function HealthPlanForm() {
     }
     acc[weekKey].push(day);
     return acc;
-  }, {} as Record<string, DayPlanData[]>);
+  }, {} as Record<string, any[]>);
 
   // Fix week tab ordering by correctly sorting the numeric week values
   const weekTabs = Object.keys(daysByWeek)
@@ -484,7 +414,7 @@ function HealthPlanForm() {
               setDayPlans([]);
               setStartDate(new Date());
               setEndDate(
-                new Date(new Date().setMonth(new Date().getMonth() + 3))
+                new Date(new Date().setDate(new Date().getDate() + 7))
               );
             }}
             className="bg-green-600 hover:bg-green-700"
@@ -537,21 +467,7 @@ function HealthPlanForm() {
               required
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DatePickerWithLabel
-                fieldTitle="Start Date"
-                nameInSchema="start_date"
-                required
-              />
-
-              <DatePickerWithLabel
-                fieldTitle="End Date"
-                nameInSchema="end_date"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div className="space-y-2">
                 <InputWithLabel
                   fieldTitle="Number of Weeks"
@@ -560,19 +476,19 @@ function HealthPlanForm() {
                   min={1}
                   max={52}
                   onChange={(e) =>
-                    handleWeeksChange(parseInt(e.target.value) || 12)
+                    handleWeeksChange(parseInt(e.target.value) || 1)
                   }
                   placeholder="E.g., 12"
                   className="w-full"
                   required
-                  disabled={true}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Calculated automatically from start and end dates
+                  Plan will start today and end after the specified number of
+                  weeks
                 </p>
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <SelectWithLabel
                   fieldTitle="Status"
                   nameInSchema="status"
@@ -582,8 +498,7 @@ function HealthPlanForm() {
                   ]}
                   className="w-full"
                 />
-                <p></p>
-              </div>
+              </div> */}
             </div>
           </div>
         );
@@ -608,85 +523,88 @@ function HealthPlanForm() {
 
                 {Object.entries(daysByWeek).map(([weekKey, days]) => (
                   <TabsContent key={weekKey} value={weekKey} className="mt-0">
-                    {days.map((day) => (
-                      <Accordion
-                        key={day.id}
-                        type="single"
-                        collapsible
-                        className="mb-4 border rounded-md overflow-hidden"
-                      >
-                        <AccordionItem value={day.id} className="border-b-0">
-                          <AccordionTrigger className="px-4 py-3 hover:bg-slate-50">
-                            <div className="flex justify-between items-center w-full">
-                              <div className="flex items-center">
-                                <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">
-                                  Day {day.day}
-                                </span>
-                              </div>
-                              <div className="flex space-x-4 text-sm text-muted-foreground">
+                    {Array.isArray(days) &&
+                      days.map((day: any) => (
+                        <Accordion
+                          key={day.id}
+                          type="single"
+                          collapsible
+                          className="mb-4 border rounded-md overflow-hidden"
+                        >
+                          <AccordionItem value={day.id} className="border-b-0">
+                            <AccordionTrigger className="px-4 py-3 hover:bg-slate-50">
+                              <div className="flex justify-between items-center w-full">
                                 <div className="flex items-center">
-                                  <span>
-                                    {day.estimated_calories_burned} cal burned
+                                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium">
+                                    Day {day.day}
                                   </span>
                                 </div>
-                                <div className="flex items-center">
-                                  <span>
-                                    {day.estimated_calories_intake} cal intake
-                                  </span>
+                                <div className="flex space-x-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center">
+                                    <span>
+                                      {day.estimated_calories_burned} cal burned
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <span>
+                                      {day.estimated_calories_intake} cal intake
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="px-4 py-2">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* Exercise Section - using SetSelector component */}
-                              <div className="border rounded-md p-4">
-                                <SetSelector
-                                  selectedSets={day.workout_details.map(
-                                    (workout) => ({
-                                      _id: workout.set,
-                                      name:
-                                        workout.set_name || "Unknown Exercise",
-                                      total_calories:
-                                        workout.total_calories || 0,
-                                    })
-                                  )}
-                                  onAddSet={(set) =>
-                                    handleAddExerciseToDayPlan(day.id, set)
-                                  }
-                                  onRemoveSet={(setId) =>
-                                    handleRemoveExerciseFromDay(day.id, setId)
-                                  }
-                                  dayId={day.id}
-                                />
-                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 py-2">
+                              {/* Exercise and meal selectors remain the same */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Exercise Section */}
+                                <div className="border rounded-md p-4">
+                                  <SetSelector
+                                    selectedSets={day.workout_details.map(
+                                      (workout: any) => ({
+                                        _id: workout.set,
+                                        name:
+                                          workout.set_name ||
+                                          "Unknown Exercise",
+                                        total_calories:
+                                          workout.total_calories || 0,
+                                      })
+                                    )}
+                                    onAddSet={(set) =>
+                                      handleAddExerciseToDayPlan(day.id, set)
+                                    }
+                                    onRemoveSet={(setId) =>
+                                      handleRemoveExerciseFromDay(day.id, setId)
+                                    }
+                                    dayId={day.id}
+                                  />
+                                </div>
 
-                              {/* Nutrition Section - using MealSelector component */}
-                              <div className="border rounded-md p-4">
-                                <MealSelector
-                                  selectedMeals={day.nutrition_details.map(
-                                    (nutrition) => ({
-                                      _id: nutrition.meal,
-                                      name:
-                                        nutrition.meal_name || "Unknown Meal",
-                                      calories: nutrition.calories || 0,
-                                    })
-                                  )}
-                                  onAddMeal={(meal) =>
-                                    handleAddMealToDayPlan(day.id, meal)
-                                  }
-                                  onRemoveMeal={(mealId) =>
-                                    handleRemoveMealFromDay(day.id, mealId)
-                                  }
-                                  dayId={day.id}
-                                />
+                                {/* Nutrition Section */}
+                                <div className="border rounded-md p-4">
+                                  <MealSelector
+                                    selectedMeals={day.nutrition_details.map(
+                                      (nutrition: any) => ({
+                                        _id: nutrition.meal,
+                                        name:
+                                          nutrition.meal_name || "Unknown Meal",
+                                        calories: nutrition.calories || 0,
+                                      })
+                                    )}
+                                    onAddMeal={(meal) =>
+                                      handleAddMealToDayPlan(day.id, meal)
+                                    }
+                                    onRemoveMeal={(mealId) =>
+                                      handleRemoveMealFromDay(day.id, mealId)
+                                    }
+                                    dayId={day.id}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    ))}
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      ))}
                   </TabsContent>
                 ))}
               </Tabs>
@@ -798,21 +716,6 @@ function HealthPlanForm() {
             )}
 
             <CardContent className="px-0">{renderStepContent()}</CardContent>
-
-            {/* {Object.keys(form.formState.errors).length > 0 && (
-              <div className="text-red-500 text-sm mt-4 p-3 bg-red-50 rounded-md">
-                <p className="font-medium mb-1">
-                  Please correct the following errors:
-                </p>
-                <ul className="list-disc list-inside">
-                  {Object.entries(form.formState.errors).map(
-                    ([field, error]) => (
-                      <li key={field}>{error.message as string}</li>
-                    )
-                  )}
-                </ul>
-              </div>
-            )} */}
 
             {!formSubmitted && (
               <div className="flex justify-between mt-6">
