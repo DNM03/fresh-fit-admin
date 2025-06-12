@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import healthPlanService from "@/services/health-plan.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,18 +22,21 @@ function HealthPlanTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
 
   const fetchHealthPlans = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await healthPlanService.searchHealthPlan({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         level: "All",
         status: "All",
         source: "System",
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -41,7 +48,7 @@ function HealthPlanTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchHealthPlans();
@@ -60,6 +67,16 @@ function HealthPlanTable({
         accessorKey: "name",
         header: "Name",
       },
+
+      {
+        accessorKey: "level",
+        header: "Level",
+      },
+
+      {
+        accessorKey: "number_of_weeks",
+        header: "Number of Weeks",
+      },
       {
         accessorKey: "description",
         header: "Description",
@@ -70,16 +87,7 @@ function HealthPlanTable({
               : row.original.description}
           </p>
         ),
-      },
-
-      {
-        accessorKey: "level",
-        header: "Level",
-      },
-
-      {
-        accessorKey: "number_of_weeks",
-        header: "Number of Weeks",
+        enableSorting: false,
       },
     ],
     []
@@ -92,12 +100,14 @@ function HealthPlanTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-challenges/health-plans/${row.original._id}`);
       }}
+      onSortingChange={setSorting}
+      enableColumnFilters={false}
     />
   );
 }

@@ -1,6 +1,10 @@
 import { Table } from "@/components/ui/mantine-table";
 import challengeService from "@/services/challenge.service";
-import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
+import {
+  MRT_ColumnDef,
+  MRT_PaginationState,
+  MRT_SortingState,
+} from "mantine-react-table";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,17 +22,20 @@ function ChallengeTable({
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
 
   const fetchChallenges = useCallback(async () => {
     try {
       setIsLoading(true);
+      const sortParams =
+        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
       const response = await challengeService.searchChallenge({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         type: "All",
         status: "All",
-        sort_by: "created_at",
-        order_by: "DESC",
+        sort_by: sortParams.id,
+        order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
       });
       if (response.data) {
@@ -40,7 +47,7 @@ function ChallengeTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter, sorting]);
 
   useEffect(() => {
     fetchChallenges();
@@ -59,6 +66,16 @@ function ChallengeTable({
         accessorKey: "name",
         header: "Name",
       },
+
+      {
+        accessorKey: "type",
+        header: "Type",
+      },
+
+      {
+        accessorKey: "status",
+        header: "Status",
+      },
       {
         accessorKey: "description",
         header: "Description",
@@ -69,16 +86,7 @@ function ChallengeTable({
               : row.original.description}
           </p>
         ),
-      },
-
-      {
-        accessorKey: "type",
-        header: "Type",
-      },
-
-      {
-        accessorKey: "status",
-        header: "Status",
+        enableSorting: false,
       },
     ],
     []
@@ -92,12 +100,14 @@ function ChallengeTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading, globalFilter }}
+      state={{ pagination, isLoading, globalFilter, sorting }}
       onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-challenges/${row.original._id}`);
       }}
+      onSortingChange={setSorting}
+      enableColumnFilters={false}
     />
   );
 }
