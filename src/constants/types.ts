@@ -59,6 +59,8 @@ export type CreateExerciseSetType = {
   type: "Beginner" | "Intermediate" | "Advanced";
   description: string;
   numberOfExercises: number;
+  is_youtube_workout: boolean;
+  youtube_id?: string;
 };
 
 export type CreateExerciseInSetType = {
