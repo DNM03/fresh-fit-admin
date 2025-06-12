@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import healthPlanService from "@/services/health-plan.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function HealthPlanTable() {
+function HealthPlanTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [healthPlans, setHealthPlans] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -15,32 +19,40 @@ function HealthPlanTable() {
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  useEffect(() => {
-    const fetchHealthPlans = async () => {
-      try {
-        setIsLoading(true);
-        const response = await healthPlanService.searchHealthPlan({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          level: "All",
-          status: "All",
-          source: "System",
-          sort_by: "created_at",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setHealthPlans(response.data.result.healthPlans);
-          setTotal(response.data.result.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching health plans:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchHealthPlans = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await healthPlanService.searchHealthPlan({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        level: "All",
+        status: "All",
+        source: "System",
+        sort_by: "created_at",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setHealthPlans(response.data.result.healthPlans);
+        setTotal(response.data.result.total_items);
       }
-    };
-    fetchHealthPlans();
+    } catch (error) {
+      console.error("Error fetching health plans:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchHealthPlans();
+  }, [fetchHealthPlans]);
+
+  // Expose refetch function to parent via prop
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchHealthPlans);
+    }
+  }, [fetchHealthPlans, onRefetchTriggered]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [

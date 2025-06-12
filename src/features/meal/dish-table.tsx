@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import dishService from "@/services/dish.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function DishTable() {
+function DishTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [dishes, setDishes] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -15,29 +19,38 @@ function DishTable() {
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  useEffect(() => {
-    const fetchDishes = async () => {
-      try {
-        setIsLoading(true);
-        const response = await dishService.searchDishes({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          sort_by: "created_at",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setDishes(response.data.result.dishes);
-          setTotal(response.data.result.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching dishes:", error);
-      } finally {
-        setIsLoading(false);
+  // Convert to useCallback to enable reuse through ref
+  const fetchDishes = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await dishService.searchDishes({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        sort_by: "created_at",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setDishes(response.data.result.dishes);
+        setTotal(response.data.result.total_items);
       }
-    };
-    fetchDishes();
+    } catch (error) {
+      console.error("Error fetching dishes:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchDishes();
+  }, [fetchDishes]);
+
+  // Register the refetch function with the parent component
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchDishes);
+    }
+  }, [fetchDishes, onRefetchTriggered]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [

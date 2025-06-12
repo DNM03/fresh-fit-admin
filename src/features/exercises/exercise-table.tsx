@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import exerciseService from "@/services/exercise.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function ExerciseTable() {
+function ExerciseTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [exercises, setExercises] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -15,29 +19,38 @@ function ExerciseTable() {
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  useEffect(() => {
-    const fetchExercises = async () => {
-      try {
-        setIsLoading(true);
-        const response = await exerciseService.searchExercise({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          sort_by: "created_at",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setExercises(response.data.result.exercises);
-          setTotal(response.data.result.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching exercises:", error);
-      } finally {
-        setIsLoading(false);
+  // Convert to useCallback to enable reuse through ref
+  const fetchExercises = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await exerciseService.searchExercise({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        sort_by: "created_at",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setExercises(response.data.result.exercises);
+        setTotal(response.data.result.total_items);
       }
-    };
-    fetchExercises();
+    } catch (error) {
+      console.error("Error fetching exercises:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchExercises();
+  }, [fetchExercises]);
+
+  // Register the refetch function with the parent component
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchExercises);
+    }
+  }, [fetchExercises, onRefetchTriggered]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [

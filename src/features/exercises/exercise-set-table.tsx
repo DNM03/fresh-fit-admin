@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import setService from "@/services/set.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function ExerciseSetTable() {
+function ExerciseSetTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [exerciseSets, setExerciseSets] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -15,30 +19,39 @@ function ExerciseSetTable() {
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  useEffect(() => {
-    const fetchExerciseSets = async () => {
-      try {
-        setIsLoading(true);
-        const response = await setService.searchSet({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          type: "System",
-          sort_by: "created_at",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setExerciseSets(response.data.result.sets);
-          setTotal(response.data.result.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching exercises:", error);
-      } finally {
-        setIsLoading(false);
+  // Convert to useCallback to enable reuse through ref
+  const fetchExerciseSets = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await setService.searchSet({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        type: "System",
+        sort_by: "created_at",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setExerciseSets(response.data.result.sets);
+        setTotal(response.data.result.total_items);
       }
-    };
-    fetchExerciseSets();
+    } catch (error) {
+      console.error("Error fetching exercise sets:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchExerciseSets();
+  }, [fetchExerciseSets]);
+
+  // Register the refetch function with the parent component
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchExerciseSets);
+    }
+  }, [fetchExerciseSets, onRefetchTriggered]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
@@ -70,6 +83,7 @@ function ExerciseSetTable() {
     ],
     []
   );
+  
   return (
     <Table
       columns={columns}

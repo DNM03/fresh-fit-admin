@@ -11,25 +11,45 @@ import HealthPlanTable from "./health-plan-table";
 function ChallengeTabs() {
   const [activeTab, setActiveTab] = React.useState("challenges");
   const navigate = useNavigate();
-  const [isRefetching, setIsRefetching] = useState(false);
+  const [isRefetchingChallenges, setIsRefetchingChallenges] = useState(false);
+  const [isRefetchingHealthPlans, setIsRefetchingHealthPlans] = useState(false);
   const refetchChallengesRef = useRef<(() => void | Promise<any>) | null>(null);
+  const refetchHealthPlansRef = useRef<(() => void | Promise<any>) | null>(null);
 
   const handleRefetchChallenges = () => {
     if (refetchChallengesRef.current) {
-      setIsRefetching(true);
+      setIsRefetchingChallenges(true);
       const result = refetchChallengesRef.current();
       if (result instanceof Promise) {
         result.finally(() => {
-          setIsRefetching(false);
+          setIsRefetchingChallenges(false);
         });
       } else {
-        setIsRefetching(false);
+        setIsRefetchingChallenges(false);
       }
     }
   };
 
-  const registerRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const handleRefetchHealthPlans = () => {
+    if (refetchHealthPlansRef.current) {
+      setIsRefetchingHealthPlans(true);
+      const result = refetchHealthPlansRef.current();
+      if (result instanceof Promise) {
+        result.finally(() => {
+          setIsRefetchingHealthPlans(false);
+        });
+      } else {
+        setIsRefetchingHealthPlans(false);
+      }
+    }
+  };
+
+  const registerChallengeRefetchFunction = (refetchFn: () => void | Promise<any>) => {
     refetchChallengesRef.current = refetchFn;
+  };
+
+  const registerHealthPlanRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+    refetchHealthPlansRef.current = refetchFn;
   };
 
   return (
@@ -73,17 +93,17 @@ function ChallengeTabs() {
                 <h2 className="text-xl font-medium text-primary">Challenges</h2>
                 <div className="flex gap-2">
                   <Button
-                    className=" flex items-center gap-2 px-4"
+                    className="flex items-center gap-2 px-4"
                     variant={"outline"}
                     onClick={handleRefetchChallenges}
-                    disabled={isRefetching}
+                    disabled={isRefetchingChallenges}
                   >
                     <RefreshCw
                       className={`h-4 w-4 ${
-                        isRefetching ? "animate-spin" : ""
+                        isRefetchingChallenges ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetching ? "Refreshing..." : "Refresh"}</span>
+                    <span>{isRefetchingChallenges ? "Refreshing..." : "Refresh"}</span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -97,7 +117,7 @@ function ChallengeTabs() {
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
                   <ChallengeTable
-                    onRefetchTriggered={registerRefetchFunction}
+                    onRefetchTriggered={registerChallengeRefetchFunction}
                   />
                 </div>
               </CardContent>
@@ -110,17 +130,34 @@ function ChallengeTabs() {
                 <h2 className="text-xl font-medium text-primary">
                   Health Plans
                 </h2>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-health-plan")}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Add Health Plan</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    className="flex items-center gap-2 px-4"
+                    variant={"outline"}
+                    onClick={handleRefetchHealthPlans}
+                    disabled={isRefetchingHealthPlans}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        isRefetchingHealthPlans ? "animate-spin" : ""
+                      }`}
+                    />
+                    <span>{isRefetchingHealthPlans ? "Refreshing..." : "Refresh"}</span>
+                  </Button>
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
+                    onClick={() => navigate("add-health-plan")}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Add Health Plan</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <HealthPlanTable />
+                  <HealthPlanTable 
+                    onRefetchTriggered={registerHealthPlanRefetchFunction}
+                  />
                 </div>
               </CardContent>
             </Card>
