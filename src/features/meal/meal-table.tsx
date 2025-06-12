@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import mealService from "@/services/meal.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function MealTable() {
+function MealTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [meals, setMeals] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -14,31 +18,41 @@ function MealTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
-  useEffect(() => {
-    const fetchMeals = async () => {
-      try {
-        setIsLoading(true);
-        const response = await mealService.getMeals({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          type: "System",
-          meal_type: "All",
-          sort_by: "created_at",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setMeals(response.data.result.meals);
-          setTotal(response.data.result.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching meals:", error);
-      } finally {
-        setIsLoading(false);
+  
+  // Convert to useCallback to enable reuse through ref
+  const fetchMeals = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await mealService.getMeals({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        type: "System",
+        meal_type: "All",
+        sort_by: "created_at",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setMeals(response.data.result.meals);
+        setTotal(response.data.result.total_items);
       }
-    };
-    fetchMeals();
+    } catch (error) {
+      console.error("Error fetching meals:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchMeals();
+  }, [fetchMeals]);
+  
+  // Register the refetch function with the parent component
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchMeals);
+    }
+  }, [fetchMeals, onRefetchTriggered]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [

@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import specialistService from "@/services/specialist.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function SpecialistTable() {
+function SpecialistTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [specialists, setSpecialists] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -15,29 +19,38 @@ function SpecialistTable() {
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  useEffect(() => {
-    const fetchSpecialists = async () => {
-      try {
-        setIsLoading(true);
-        const response = await specialistService.getSpecialists({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          sort_by: "createdAt",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setSpecialists(response.data.data.experts);
-          setTotal(response.data.data.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching specialists:", error);
-      } finally {
-        setIsLoading(false);
+  // Convert to useCallback to enable reuse through ref
+  const fetchSpecialists = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await specialistService.getSpecialists({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        sort_by: "createdAt",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setSpecialists(response.data.data.experts);
+        setTotal(response.data.data.total_items);
       }
-    };
-    fetchSpecialists();
+    } catch (error) {
+      console.error("Error fetching specialists:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchSpecialists();
+  }, [fetchSpecialists]);
+
+  // Register the refetch function with the parent component
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchSpecialists);
+    }
+  }, [fetchSpecialists, onRefetchTriggered]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [

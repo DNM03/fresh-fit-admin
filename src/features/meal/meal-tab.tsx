@@ -1,10 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React from "react";
+import React, { useRef, useState } from "react"; // Add useRef and useState
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, RefreshCw } from "lucide-react"; // Add RefreshCw
 import IngredientTable from "./ingredient-table";
 import DishTable from "./dish-table";
 import MealTable from "./meal-table";
@@ -12,6 +12,73 @@ import MealTable from "./meal-table";
 function MealTab() {
   const [activeTab, setActiveTab] = React.useState("meals");
   const navigate = useNavigate();
+
+  // Add state for refresh indicators
+  const [isRefetchingMeals, setIsRefetchingMeals] = useState(false);
+  const [isRefetchingDishes, setIsRefetchingDishes] = useState(false);
+  const [isRefetchingIngredients, setIsRefetchingIngredients] = useState(false);
+
+  // Add refs to store refetch functions
+  const refetchMealsRef = useRef<(() => void | Promise<any>) | null>(null);
+  const refetchDishesRef = useRef<(() => void | Promise<any>) | null>(null);
+  const refetchIngredientsRef = useRef<(() => void | Promise<any>) | null>(null);
+
+  // Add handlers for refresh buttons
+  const handleRefetchMeals = () => {
+    if (refetchMealsRef.current) {
+      setIsRefetchingMeals(true);
+      const result = refetchMealsRef.current();
+      if (result instanceof Promise) {
+        result.finally(() => {
+          setIsRefetchingMeals(false);
+        });
+      } else {
+        setIsRefetchingMeals(false);
+      }
+    }
+  };
+
+  const handleRefetchDishes = () => {
+    if (refetchDishesRef.current) {
+      setIsRefetchingDishes(true);
+      const result = refetchDishesRef.current();
+      if (result instanceof Promise) {
+        result.finally(() => {
+          setIsRefetchingDishes(false);
+        });
+      } else {
+        setIsRefetchingDishes(false);
+      }
+    }
+  };
+
+  const handleRefetchIngredients = () => {
+    if (refetchIngredientsRef.current) {
+      setIsRefetchingIngredients(true);
+      const result = refetchIngredientsRef.current();
+      if (result instanceof Promise) {
+        result.finally(() => {
+          setIsRefetchingIngredients(false);
+        });
+      } else {
+        setIsRefetchingIngredients(false);
+      }
+    }
+  };
+
+  // Add functions to register refetch callbacks
+  const registerMealRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+    refetchMealsRef.current = refetchFn;
+  };
+
+  const registerDishRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+    refetchDishesRef.current = refetchFn;
+  };
+
+  const registerIngredientRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+    refetchIngredientsRef.current = refetchFn;
+  };
+
   return (
     <div className="w-full space-y-6 max-w-6xl mx-auto">
       <Tabs className="w-full" value={activeTab} onValueChange={setActiveTab}>
@@ -62,20 +129,33 @@ function MealTab() {
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
                 <h2 className="text-xl font-medium text-primary">Meals</h2>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-meal")}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Add Meal</span>
-                </Button>
+                <div className="flex gap-2">
+                  {/* Add refresh button for meals */}
+                  <Button
+                    className="flex items-center gap-2 px-4"
+                    variant={"outline"}
+                    onClick={handleRefetchMeals}
+                    disabled={isRefetchingMeals}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        isRefetchingMeals ? "animate-spin" : ""
+                      }`}
+                    />
+                    <span>{isRefetchingMeals ? "Refreshing..." : "Refresh"}</span>
+                  </Button>
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
+                    onClick={() => navigate("add-meal")}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Add Meal</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  {/* <div className="p-10 text-center text-muted-foreground">
-                    Your meal table will appear here
-                  </div> */}
-                  <MealTable />
+                  <MealTable onRefetchTriggered={registerMealRefetchFunction} />
                 </div>
               </CardContent>
             </Card>
@@ -85,20 +165,33 @@ function MealTab() {
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
                 <h2 className="text-xl font-medium text-primary">Dishes</h2>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-dish")}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Add Dish</span>
-                </Button>
+                <div className="flex gap-2">
+                  {/* Add refresh button for dishes */}
+                  <Button
+                    className="flex items-center gap-2 px-4"
+                    variant={"outline"}
+                    onClick={handleRefetchDishes}
+                    disabled={isRefetchingDishes}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        isRefetchingDishes ? "animate-spin" : ""
+                      }`}
+                    />
+                    <span>{isRefetchingDishes ? "Refreshing..." : "Refresh"}</span>
+                  </Button>
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
+                    onClick={() => navigate("add-dish")}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Add Dish</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  {/* <div className="p-10 text-center text-muted-foreground">
-                    Your dish table will appear here
-                  </div> */}
-                  <DishTable />
+                  <DishTable onRefetchTriggered={registerDishRefetchFunction} />
                 </div>
               </CardContent>
             </Card>
@@ -110,20 +203,33 @@ function MealTab() {
                 <h2 className="text-xl font-medium text-primary">
                   Ingredients
                 </h2>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                  onClick={() => navigate("add-ingredient")}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Add Ingredient</span>
-                </Button>
+                <div className="flex gap-2">
+                  {/* Add refresh button for ingredients */}
+                  <Button
+                    className="flex items-center gap-2 px-4"
+                    variant={"outline"}
+                    onClick={handleRefetchIngredients}
+                    disabled={isRefetchingIngredients}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        isRefetchingIngredients ? "animate-spin" : ""
+                      }`}
+                    />
+                    <span>{isRefetchingIngredients ? "Refreshing..." : "Refresh"}</span>
+                  </Button>
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
+                    onClick={() => navigate("add-ingredient")}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Add Ingredient</span>
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  {/* <div className="p-10 text-center text-muted-foreground">
-                    Your ingredients table will appear here
-                  </div> */}
-                  <IngredientTable />
+                  <IngredientTable onRefetchTriggered={registerIngredientRefetchFunction} />
                 </div>
               </CardContent>
             </Card>

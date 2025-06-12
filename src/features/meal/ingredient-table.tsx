@@ -1,10 +1,14 @@
 import { Table } from "@/components/ui/mantine-table";
 import ingredientService from "@/services/ingredient.service";
 import { MRT_ColumnDef, MRT_PaginationState } from "mantine-react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-function IngredientTable() {
+function IngredientTable({
+  onRefetchTriggered,
+}: {
+  onRefetchTriggered?: (refetch: () => void) => void;
+}) {
   const navigate = useNavigate();
   const [ingredients, setIngredients] = useState([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -15,29 +19,39 @@ function IngredientTable() {
   const [total, setTotal] = useState(0);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  useEffect(() => {
-    const fetchIngredients = async () => {
-      try {
-        setIsLoading(true);
-        const response = await ingredientService.getIngredients({
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-          sort_by: "created_at",
-          order_by: "DESC",
-          search: globalFilter,
-        });
-        if (response.data) {
-          setIngredients(response.data.result.ingredients);
-          setTotal(response.data.result.total_items);
-        }
-      } catch (error) {
-        console.error("Error fetching ingredients:", error);
-      } finally {
-        setIsLoading(false);
+  // Convert to useCallback to enable reuse through ref
+  const fetchIngredients = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await ingredientService.getIngredients({
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        sort_by: "created_at",
+        order_by: "DESC",
+        search: globalFilter,
+      });
+      if (response.data) {
+        setIngredients(response.data.result.ingredients);
+        setTotal(response.data.result.total_items);
       }
-    };
-    fetchIngredients();
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
+
+  useEffect(() => {
+    fetchIngredients();
+  }, [fetchIngredients]);
+
+  // Register the refetch function with the parent component
+  useEffect(() => {
+    if (onRefetchTriggered) {
+      onRefetchTriggered(fetchIngredients);
+    }
+  }, [fetchIngredients, onRefetchTriggered]);
+
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
       {
