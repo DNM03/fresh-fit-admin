@@ -17,6 +17,7 @@ function ChallengeTable({
   });
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const fetchChallenges = useCallback(async () => {
     try {
@@ -27,7 +28,8 @@ function ChallengeTable({
         type: "All",
         status: "All",
         sort_by: "created_at",
-        order_by: "desc",
+        order_by: "DESC",
+        search: globalFilter,
       });
       if (response.data) {
         setChallenges(response.data.result.challenges);
@@ -38,7 +40,7 @@ function ChallengeTable({
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
 
   useEffect(() => {
     fetchChallenges();
@@ -90,7 +92,8 @@ function ChallengeTable({
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading }}
+      state={{ pagination, isLoading, globalFilter }}
+      onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-challenges/${row.original._id}`);

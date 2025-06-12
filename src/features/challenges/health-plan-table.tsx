@@ -13,6 +13,8 @@ function HealthPlanTable() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [globalFilter, setGlobalFilter] = useState("");
+
   useEffect(() => {
     const fetchHealthPlans = async () => {
       try {
@@ -24,7 +26,8 @@ function HealthPlanTable() {
           status: "All",
           source: "System",
           sort_by: "created_at",
-          order_by: "desc",
+          order_by: "DESC",
+          search: globalFilter,
         });
         if (response.data) {
           setHealthPlans(response.data.result.healthPlans);
@@ -37,7 +40,7 @@ function HealthPlanTable() {
       }
     };
     fetchHealthPlans();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
@@ -77,7 +80,8 @@ function HealthPlanTable() {
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading }}
+      state={{ pagination, isLoading, globalFilter }}
+      onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-challenges/health-plans/${row.original._id}`);

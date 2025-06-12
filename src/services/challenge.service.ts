@@ -25,6 +25,7 @@ class ChallengeService {
     sort_by,
     order_by,
     status,
+    search,
   }: {
     page?: number;
     limit?: number;
@@ -32,13 +33,14 @@ class ChallengeService {
     sort_by?: string;
     order_by?: string;
     status?: string;
+    search?: string;
   }): Promise<AxiosResponse> {
     return apiService.get(
       `/challenges?page=${page}&limit=${limit}${type ? `&type=${type}` : ""}${
         sort_by ? `&sort_by=${sort_by}` : ""
       }${order_by ? `&order_by=${order_by}` : ""}${
         status ? `&status=${status}` : ""
-      }`
+      }${search ? `&search=${search}` : ""}`
     );
   }
   activateChallenge(id: string): Promise<AxiosResponse> {
