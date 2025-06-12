@@ -13,6 +13,8 @@ function ExerciseSetTable() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [globalFilter, setGlobalFilter] = useState("");
+
   useEffect(() => {
     const fetchExerciseSets = async () => {
       try {
@@ -22,7 +24,8 @@ function ExerciseSetTable() {
           limit: pagination.pageSize,
           type: "System",
           sort_by: "created_at",
-          order_by: "desc",
+          order_by: "DESC",
+          search: globalFilter,
         });
         if (response.data) {
           setExerciseSets(response.data.result.sets);
@@ -35,7 +38,7 @@ function ExerciseSetTable() {
       }
     };
     fetchExerciseSets();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
@@ -75,7 +78,8 @@ function ExerciseSetTable() {
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading }}
+      state={{ pagination, isLoading, globalFilter }}
+      onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-exercises/exercise-sets/${row.original._id}`);

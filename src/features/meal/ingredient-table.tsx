@@ -13,6 +13,8 @@ function IngredientTable() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [globalFilter, setGlobalFilter] = useState("");
+
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
@@ -21,7 +23,8 @@ function IngredientTable() {
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize,
           sort_by: "created_at",
-          order_by: "desc",
+          order_by: "DESC",
+          search: globalFilter,
         });
         if (response.data) {
           setIngredients(response.data.result.ingredients);
@@ -34,7 +37,7 @@ function IngredientTable() {
       }
     };
     fetchIngredients();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
       {
@@ -73,11 +76,12 @@ function IngredientTable() {
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading }}
+      state={{ pagination, isLoading, globalFilter }}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-meals/ingredients/${row.original._id}`);
       }}
+      onGlobalFilterChange={setGlobalFilter}
     />
   );
 }

@@ -13,6 +13,7 @@ function MealTable() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [globalFilter, setGlobalFilter] = useState("");
   useEffect(() => {
     const fetchMeals = async () => {
       try {
@@ -23,7 +24,8 @@ function MealTable() {
           type: "System",
           meal_type: "All",
           sort_by: "created_at",
-          order_by: "desc",
+          order_by: "DESC",
+          search: globalFilter,
         });
         if (response.data) {
           setMeals(response.data.result.meals);
@@ -36,7 +38,7 @@ function MealTable() {
       }
     };
     fetchMeals();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
@@ -76,11 +78,12 @@ function MealTable() {
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading }}
+      state={{ pagination, isLoading, globalFilter }}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-meals/meals/${row.original._id}`);
       }}
+      onGlobalFilterChange={setGlobalFilter}
     />
   );
 }

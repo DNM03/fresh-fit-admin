@@ -13,6 +13,8 @@ function SpecialistTable() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [globalFilter, setGlobalFilter] = useState("");
+
   useEffect(() => {
     const fetchSpecialists = async () => {
       try {
@@ -22,6 +24,7 @@ function SpecialistTable() {
           limit: pagination.pageSize,
           sort_by: "createdAt",
           order_by: "DESC",
+          search: globalFilter,
         });
         if (response.data) {
           setSpecialists(response.data.data.experts);
@@ -34,7 +37,7 @@ function SpecialistTable() {
       }
     };
     fetchSpecialists();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, globalFilter]);
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
     () => [
@@ -84,7 +87,8 @@ function SpecialistTable() {
       enableRowSelection={false}
       onPaginationChange={setPagination}
       manualPagination
-      state={{ pagination, isLoading }}
+      state={{ pagination, isLoading, globalFilter }}
+      onGlobalFilterChange={setGlobalFilter}
       enableRowActions={true}
       onActionClick={(row) => {
         navigate(`/manage-specialists/${row.original.userId}`);
