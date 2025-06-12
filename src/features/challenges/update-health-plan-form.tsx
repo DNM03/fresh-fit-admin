@@ -8,7 +8,8 @@ import { Form } from "@/components/ui/form";
 import InputWithLabel from "@/components/inputs/input-with-label";
 import SelectWithLabel from "@/components/inputs/select-with-label";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
-import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
+// Remove DatePicker import since we won't use it anymore
+// import DatePickerWithLabel from "@/components/inputs/date-picker-with-label";
 import {
   Dialog,
   DialogClose,
@@ -44,8 +45,6 @@ interface HealthPlanFormData {
   estimated_calories_intake: number;
   status: "Done" | "Undone";
   level: "Beginner" | "Intermediate" | "Advanced";
-  start_date: Date;
-  end_date: Date;
   number_of_weeks: number;
 }
 
@@ -75,7 +74,8 @@ function UpdateHealthPlanForm({
   onSuccess,
 }: UpdateHealthPlanFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [startDate, setStartDate] = useState<Date>(
+  // We'll still track start and end dates internally, but not show them in the UI
+  const [startDate] = useState<Date>(
     healthPlan?.start_date ? new Date(healthPlan.start_date) : new Date()
   );
   const [endDate, setEndDate] = useState<Date>(
@@ -89,6 +89,7 @@ function UpdateHealthPlanForm({
   const [isAddingDay, setIsAddingDay] = useState(false);
   const [isDeletingDay, setIsDeletingDay] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [isAddNewDayOpen, setIsAddNewDayOpen] = useState(false);
 
   // New day form state
   const [newDay, setNewDay] = useState({
@@ -103,6 +104,16 @@ function UpdateHealthPlanForm({
   const [selectedSets, setSelectedSets] = useState<any[]>([]);
   const [selectedMeals, setSelectedMeals] = useState<any[]>([]);
 
+  // Calculate weeks from start and end date
+  const calculateInitialWeeks = () => {
+    if (healthPlan?.number_of_weeks) {
+      return healthPlan.number_of_weeks;
+    } else if (startDate && endDate) {
+      return calculateWeeksBetween(startDate, endDate);
+    }
+    return 1;
+  };
+
   const defaultValues: HealthPlanFormData = {
     name: healthPlan?.name || "",
     description: healthPlan?.description || "",
@@ -110,14 +121,31 @@ function UpdateHealthPlanForm({
     estimated_calories_intake: healthPlan?.estimated_calories_intake || 0,
     status: healthPlan?.status || "Undone",
     level: healthPlan?.level || "Beginner",
-    start_date: startDate,
-    end_date: endDate,
-    number_of_weeks: healthPlan?.number_of_weeks || 1,
+    number_of_weeks: calculateInitialWeeks(),
   };
 
   const form = useForm<HealthPlanFormData>({
     defaultValues,
   });
+
+  // Function to update end date based on weeks
+  const updateDatesFromWeeks = (weeks: number) => {
+    // For update, we keep the original start date
+    const newStartDate = startDate;
+    const newEndDate = new Date(newStartDate);
+    newEndDate.setDate(newStartDate.getDate() + weeks * 7);
+
+    setEndDate(newEndDate);
+    // We also update the form value
+    form.setValue("number_of_weeks", weeks);
+  };
+
+  // Handle weeks change
+  const handleWeeksChange = (weeks: number) => {
+    if (weeks >= 1 && weeks <= 52) {
+      updateDatesFromWeeks(weeks);
+    }
+  };
 
   // Load health plan days from API
   useEffect(() => {
@@ -250,32 +278,16 @@ function UpdateHealthPlanForm({
     return diffWeeks;
   };
 
-  useEffect(() => {
-    if (startDate && endDate && endDate > startDate) {
-      const weeks = calculateWeeksBetween(startDate, endDate);
-      form.setValue("number_of_weeks", weeks);
-    }
-  }, [startDate, endDate, form]);
-
-  useEffect(() => {
-    const subscription = form.watch((values, { name }) => {
-      if (name === "start_date" && values.start_date) {
-        const newStartDate = values.start_date as Date;
-        setStartDate(newStartDate);
-      } else if (name === "end_date" && values.end_date) {
-        const newEndDate = values.end_date as Date;
-        setEndDate(newEndDate);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form]);
-
   const saveGeneralInfo = async (data: HealthPlanFormData) => {
     if (!healthPlan?._id) return;
 
     setIsSavingGeneralInfo(true);
     try {
+      // Calculate end date based on weeks
+      const newEndDate = new Date(startDate);
+      newEndDate.setDate(startDate.getDate() + data.number_of_weeks * 7);
+      setEndDate(newEndDate);
+
       // Only send fields that can be updated in general info
       const updateData = {
         name: data.name,
@@ -285,7 +297,7 @@ function UpdateHealthPlanForm({
         status: data.status,
         level: data.level,
         start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
+        end_date: newEndDate.toISOString(),
         number_of_weeks: data.number_of_weeks,
       };
 
@@ -312,6 +324,30 @@ function UpdateHealthPlanForm({
 
   const addNewDay = async () => {
     if (!healthPlan?._id) return;
+
+    // Validate day and week values before proceeding
+    const maxWeeks = form.getValues().number_of_weeks || 12;
+    if (newDay.day < 1 || newDay.day > 7 || newDay.week < 1 || newDay.week > maxWeeks) {
+      toast.error("Invalid day or week value. Days must be 1-7 and weeks must not exceed plan length.", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
+      return;
+    }
+
+    // Check if a day with the same day and week already exists
+    const dayExists = dayPlans.some(day => day.day === newDay.day && day.week === newDay.week);
+    if (dayExists) {
+      toast.error(`Day ${newDay.day} Week ${newDay.week} already exists in the plan.`, {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
+      return;
+    }
 
     setIsAddingDay(true);
     try {
@@ -344,6 +380,7 @@ function UpdateHealthPlanForm({
         estimated_calories_burned: estimatedCaloriesBurned,
         estimated_calories_intake: estimatedCaloriesIntake,
       };
+      console.log("Adding new day with data:", newDayData);
 
       // Call API to add new day
       const response = await healthPlanService.addNewHealthPlanDetails(
@@ -351,14 +388,14 @@ function UpdateHealthPlanForm({
         newDayData
       );
 
-      if (response.data?.healthPlanDetail) {
+      if (response.data?.health_plan_detail) {
         // Add the new day to the state
-        const addedDay = response.data.healthPlanDetail;
+        const addedDay = response.data.health_plan_detail;
 
         const formattedDay = {
           _id: addedDay._id,
           id: `week-${addedDay.week}-day-${addedDay.day}`,
-          name: addedDay.name,
+          name: `Day ${addedDay.day} Week ${addedDay.week}`,
           day: addedDay.day,
           week: addedDay.week,
           workout_details: workoutDetails.map((workout, i) => ({
@@ -398,6 +435,24 @@ function UpdateHealthPlanForm({
         setSelectedSets([]);
         setSelectedMeals([]);
         setIsAddingDay(false);
+        setDayPlans((prev) =>
+          prev.map((day) => {
+            if (day._id === addedDay._id) {
+              return {
+                ...day,
+                name: formattedDay.name,
+                workout_details: formattedDay.workout_details,
+                nutrition_details: formattedDay.nutrition_details,
+                estimated_calories_burned:
+                  formattedDay.estimated_calories_burned,
+                estimated_calories_intake:
+                  formattedDay.estimated_calories_intake,
+              };
+            }
+            return day;
+          })
+        );
+        setIsAddNewDayOpen(false);
       }
     } catch (error) {
       console.error("Error adding new day:", error);
@@ -548,21 +603,8 @@ function UpdateHealthPlanForm({
               required
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DatePickerWithLabel
-                fieldTitle="Start Date"
-                nameInSchema="start_date"
-                required
-              />
-
-              <DatePickerWithLabel
-                fieldTitle="End Date"
-                nameInSchema="end_date"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+              {/* Replace date pickers with number of weeks input */}
               <div className="space-y-2">
                 <InputWithLabel
                   fieldTitle="Number of Weeks"
@@ -570,17 +612,20 @@ function UpdateHealthPlanForm({
                   type="number"
                   min={1}
                   max={52}
+                  onChange={(e) =>
+                    handleWeeksChange(parseInt(e.target.value) || 1)
+                  }
                   placeholder="E.g., 12"
                   className="w-full"
                   required
-                  disabled={true}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Calculated automatically from start and end dates
+                  Plan will start from original start date and end after the
+                  specified number of weeks
                 </p>
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <SelectWithLabel
                   fieldTitle="Status"
                   nameInSchema="status"
@@ -590,7 +635,7 @@ function UpdateHealthPlanForm({
                   ]}
                   className="w-full"
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         );
@@ -608,7 +653,7 @@ function UpdateHealthPlanForm({
                 </p>
               </div>
 
-              <Dialog>
+              <Dialog open={isAddNewDayOpen} onOpenChange={setIsAddNewDayOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-green-600 hover:bg-green-700">
                     <Plus className="h-4 w-4 mr-2" /> Add Day
@@ -624,7 +669,7 @@ function UpdateHealthPlanForm({
 
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      {/* <div>
                         <label className="block text-sm font-medium mb-1">
                           Name
                         </label>
@@ -637,7 +682,7 @@ function UpdateHealthPlanForm({
                             setNewDay({ ...newDay, name: e.target.value })
                           }
                         />
-                      </div>
+                      </div> */}
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -650,13 +695,22 @@ function UpdateHealthPlanForm({
                             max={7}
                             className="w-full border rounded-md p-2"
                             value={newDay.day}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              // Restrict day values to be between 1 and 7
+                              const dayValue = parseInt(e.target.value) || 1;
+                              const validDayValue = Math.min(
+                                Math.max(dayValue, 1),
+                                7
+                              );
                               setNewDay({
                                 ...newDay,
-                                day: parseInt(e.target.value) || 1,
-                              })
-                            }
+                                day: validDayValue,
+                              });
+                            }}
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Days must be between 1-7
+                          </p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-1">
@@ -668,13 +722,23 @@ function UpdateHealthPlanForm({
                             max={form.getValues().number_of_weeks || 12}
                             className="w-full border rounded-md p-2"
                             value={newDay.week}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              // Restrict week values to be between 1 and the number of weeks
+                              const weekValue = parseInt(e.target.value) || 1;
+                              const maxWeeks = form.getValues().number_of_weeks || 12;
+                              const validWeekValue = Math.min(
+                                Math.max(weekValue, 1),
+                                maxWeeks
+                              );
                               setNewDay({
                                 ...newDay,
-                                week: parseInt(e.target.value) || 1,
-                              })
-                            }
+                                week: validWeekValue,
+                              });
+                            }}
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Weeks must be between 1-{form.getValues().number_of_weeks || 12}
+                          </p>
                         </div>
                       </div>
                     </div>

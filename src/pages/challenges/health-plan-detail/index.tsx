@@ -20,7 +20,7 @@ import {
   HeartPulse,
   Dumbbell,
   Clock,
-  CalendarRange,
+  // CalendarRange,
   Loader2,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -249,16 +249,16 @@ function HealthPlanDetail() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Done":
-        return "bg-green-100 text-green-800";
-      case "Undone":
-        return "bg-amber-100 text-amber-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case "Done":
+  //       return "bg-green-100 text-green-800";
+  //     case "Undone":
+  //       return "bg-amber-100 text-amber-800";
+  //     default:
+  //       return "bg-gray-100 text-gray-800";
+  //   }
+  // };
 
   // Group days by week for easier UI rendering
   const daysByWeek =
@@ -424,9 +424,9 @@ function HealthPlanDetail() {
                 <Badge className={getLevelColor(healthPlan.level)}>
                   {healthPlan.level}
                 </Badge>
-                <Badge className={getStatusColor(healthPlan.status)}>
+                {/* <Badge className={getStatusColor(healthPlan.status)}>
                   {healthPlan.status}
-                </Badge>
+                </Badge> */}
               </div>
               <CardTitle className="text-2xl font-bold">
                 {healthPlan.name}
@@ -436,11 +436,11 @@ function HealthPlanDetail() {
               </CardDescription>
             </div>
             <div className="flex items-center">
-              <Badge variant="outline" className="flex items-center gap-1">
+              {/* <Badge variant="outline" className="flex items-center gap-1">
                 <CalendarRange className="h-3.5 w-3.5" />
                 {formatDate(healthPlan.start_date)} -{" "}
                 {formatDate(healthPlan.end_date)}
-              </Badge>
+              </Badge> */}
             </div>
           </div>
         </CardHeader>
@@ -504,9 +504,9 @@ function HealthPlanDetail() {
                         <CardHeader className="py-3 bg-gray-50">
                           <CardTitle className="text-lg flex justify-between items-center">
                             <span>{day.name}</span>
-                            <Badge className={getStatusColor(day.status)}>
+                            {/* <Badge className={getStatusColor(day.status)}>
                               {day.status}
-                            </Badge>
+                            </Badge> */}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-4">

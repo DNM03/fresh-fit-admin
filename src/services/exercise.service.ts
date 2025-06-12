@@ -39,7 +39,7 @@ class ExerciseService {
     id: string,
     data: AddUpdateExerciseData
   ): Promise<AxiosResponse<any>> {
-    return apiService.put<any>(`/exercises/${id}`, data);
+    return apiService.patch<any>(`/exercises/${id}`, data);
   }
   deleteExercise(id: string): Promise<AxiosResponse<any>> {
     return apiService.delete<any>(`/exercises/${id}`);

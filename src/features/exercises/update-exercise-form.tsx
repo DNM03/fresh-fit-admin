@@ -11,7 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
 import VideoDropzone, { VideoFile } from "@/components/ui/video-dropzone";
-import { ExerciseType } from "@/constants/types";
+import { ExerciseType, MUSCLE_GROUP } from "@/constants/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import mediaService from "@/services/media.service";
@@ -27,12 +34,6 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
   const [activeTab, setActiveTab] = React.useState("details");
   const [imageFiles, setImageFiles] = React.useState<ImageFile[]>([]);
   const [videoFile, setVideoFile] = React.useState<VideoFile | null>(null);
-  const [targetMuscleImage, setTargetMuscleImage] = React.useState<ImageFile[]>(
-    []
-  );
-  const [secondaryMuscleImage, setSecondaryMuscleImage] = React.useState<
-    ImageFile[]
-  >([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const defaultValues: ExerciseType = {
@@ -153,8 +154,8 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
     try {
       let imageRes;
       let videoRes;
-      let targetMuscleImageRes;
-      let secondaryMuscleImageRes;
+      // let targetMuscleImageRes;
+      // let secondaryMuscleImageRes;
 
       // Only upload new media if files are selected
       if (imageFiles[0]?.file) {
@@ -163,16 +164,16 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
       if (videoFile?.file) {
         videoRes = await mediaService.backupUploadVideo(videoFile.file);
       }
-      if (targetMuscleImage[0]?.file) {
-        targetMuscleImageRes = await mediaService.backupUploadImage(
-          targetMuscleImage[0].file
-        );
-      }
-      if (secondaryMuscleImage[0]?.file) {
-        secondaryMuscleImageRes = await mediaService.backupUploadImage(
-          secondaryMuscleImage[0].file
-        );
-      }
+      // if (targetMuscleImage[0]?.file) {
+      //   targetMuscleImageRes = await mediaService.backupUploadImage(
+      //     targetMuscleImage[0].file
+      //   );
+      // }
+      // if (secondaryMuscleImage[0]?.file) {
+      //   secondaryMuscleImageRes = await mediaService.backupUploadImage(
+      //     secondaryMuscleImage[0].file
+      //   );
+      // }
 
       const response = await exerciseService.updateExercise(exercise._id, {
         name: data.name,
@@ -183,10 +184,7 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
         video: videoRes?.result?.url || data.video,
         target_muscle: {
           name: data.target_muscle?.name || "",
-          image:
-            targetMuscleImageRes?.result?.url ||
-            data.target_muscle?.image ||
-            "",
+          image: data.target_muscle?.image || "",
         },
         type: data.type,
         equipment: data.equipment,
@@ -195,10 +193,7 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
         experience_level: data.experience_level,
         secondary_muscle: {
           name: data.secondary_muscle?.name || "",
-          image:
-            secondaryMuscleImageRes?.result?.url ||
-            data.secondary_muscle?.image ||
-            "",
+          image: data.secondary_muscle?.image || "",
         },
         instructions: data.instructions,
         tips: data.tips,
@@ -421,73 +416,131 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
               <TabsContent value="media" className="mt-0 space-y-6">
                 <div className="space-y-2 grid grid-cols-2 gap-4">
                   <div>
-                    <InputWithLabel<ExerciseType>
-                      fieldTitle="Target Muscle Name"
-                      nameInSchema="target_muscle.name"
-                      placeholder="E.g., Pectoralis Major (Chest)"
-                      className="w-full"
-                    />
+                    <label className="text-base font-semibold block mb-2">
+                      Target Muscle
+                    </label>
+                    <Select
+                      onValueChange={(value) => {
+                        const selectedMuscle = MUSCLE_GROUP.find(
+                          (m) => m.name === value
+                        );
+                        if (selectedMuscle) {
+                          form.setValue("target_muscle", {
+                            name: selectedMuscle.name,
+                            image: selectedMuscle.image,
+                          });
+                          // Trigger validation if needed
+                          form.trigger("target_muscle");
+                        }
+                      }}
+                      value={form.watch("target_muscle.name")}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a muscle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUSCLE_GROUP.map((muscle) => (
+                          <SelectItem key={muscle.name} value={muscle.name}>
+                            {muscle.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <div className="mt-2">
                       <p className="text-base font-semibold">
                         Target Muscle Image
                       </p>
                       <p className="text-sm text-gray-500 mb-2">
-                        Upload a clear image showing the muscle (max 20MB)
+                        Muscle image will be displayed based on selection
                       </p>
-                      {exercise.target_muscle?.image && (
-                        <div className="mb-2">
-                          <p className="text-sm text-gray-500">
-                            Current image:
-                          </p>
+                      {form.watch("target_muscle.name") ? (
+                        <div className="border rounded-md p-2 bg-gray-50">
                           <img
-                            src={exercise.target_muscle.image}
-                            alt="Current target muscle"
-                            className="w-32 h-32 object-cover rounded-md border"
+                            src={
+                              MUSCLE_GROUP.find(
+                                (m) =>
+                                  m.name === form.watch("target_muscle.name")
+                              )?.image ||
+                              exercise.target_muscle?.image ||
+                              ""
+                            }
+                            alt={`${form.watch("target_muscle.name")} muscle`}
+                            className="w-full h-auto max-h-40 object-contain"
                           />
+                          <p className="text-xs text-center mt-2 text-gray-600">
+                            {form.watch("target_muscle.name")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="border rounded-md p-4 bg-gray-50 flex items-center justify-center h-40">
+                          <p className="text-gray-400">No muscle selected</p>
                         </div>
                       )}
-                      <ImageDropzone
-                        maxImages={1}
-                        maxSizeInMB={20}
-                        onImagesChange={(value) => {
-                          setTargetMuscleImage(value);
-                        }}
-                      />
                     </div>
                   </div>
                   <div>
-                    <InputWithLabel<ExerciseType>
-                      fieldTitle="Secondary Muscle Name"
-                      nameInSchema="secondary_muscle.name"
-                      placeholder="E.g., Triceps Brachii"
-                      className="w-full"
-                    />
+                    <label className="text-base font-semibold block mb-2">
+                      Secondary Muscle
+                    </label>
+                    <Select
+                      onValueChange={(value) => {
+                        const selectedMuscle = MUSCLE_GROUP.find(
+                          (m) => m.name === value
+                        );
+                        if (selectedMuscle) {
+                          form.setValue("secondary_muscle", {
+                            name: selectedMuscle.name,
+                            image: selectedMuscle.image,
+                          });
+                          // Trigger validation if needed
+                          form.trigger("secondary_muscle");
+                        }
+                      }}
+                      value={form.watch("secondary_muscle.name")}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a muscle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUSCLE_GROUP.map((muscle) => (
+                          <SelectItem key={muscle.name} value={muscle.name}>
+                            {muscle.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <div className="mt-2">
                       <p className="text-base font-semibold">
                         Secondary Muscle Image
                       </p>
                       <p className="text-sm text-gray-500 mb-2">
-                        Upload a clear image showing the muscle (max 20MB)
+                        Muscle image will be displayed based on selection
                       </p>
-                      {exercise.secondary_muscle?.image && (
-                        <div className="mb-2">
-                          <p className="text-sm text-gray-500">
-                            Current image:
-                          </p>
+                      {form.watch("secondary_muscle.name") ? (
+                        <div className="border rounded-md p-2 bg-gray-50">
                           <img
-                            src={exercise.secondary_muscle.image}
-                            alt="Current secondary muscle"
-                            className="w-32 h-32 object-cover rounded-md border"
+                            src={
+                              MUSCLE_GROUP.find(
+                                (m) =>
+                                  m.name === form.watch("secondary_muscle.name")
+                              )?.image ||
+                              exercise.secondary_muscle?.image ||
+                              ""
+                            }
+                            alt={`${form.watch(
+                              "secondary_muscle.name"
+                            )} muscle`}
+                            className="w-full h-auto max-h-40 object-contain"
                           />
+                          <p className="text-xs text-center mt-2 text-gray-600">
+                            {form.watch("secondary_muscle.name")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="border rounded-md p-4 bg-gray-50 flex items-center justify-center h-40">
+                          <p className="text-gray-400">No muscle selected</p>
                         </div>
                       )}
-                      <ImageDropzone
-                        maxImages={1}
-                        maxSizeInMB={20}
-                        onImagesChange={(value) => {
-                          setSecondaryMuscleImage(value);
-                        }}
-                      />
                     </div>
                   </div>
                 </div>
