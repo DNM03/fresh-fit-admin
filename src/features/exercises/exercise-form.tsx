@@ -296,7 +296,7 @@ function ExerciseForm() {
 
             <CardContent className="px-6 pb-4">
               <TabsContent value="details" className="mt-0 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <InputWithLabel<ExerciseType>
                     fieldTitle="Exercise Name"
                     nameInSchema="name"
@@ -304,7 +304,7 @@ function ExerciseForm() {
                     className="w-full"
                     required
                   />
-                  <SelectWithLabel<ExerciseType>
+                  {/* <SelectWithLabel<ExerciseType>
                     fieldTitle="Category"
                     nameInSchema="category"
                     className="w-full"
@@ -313,7 +313,7 @@ function ExerciseForm() {
                       { description: "Cardio", id: "Cardio" },
                       { description: "Strength", id: "Strength" },
                     ]}
-                  />
+                  /> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

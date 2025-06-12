@@ -268,7 +268,7 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
 
             <CardContent className="pb-4">
               <TabsContent value="details" className="mt-0 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <InputWithLabel<ExerciseType>
                     fieldTitle="Exercise Name"
                     nameInSchema="name"
@@ -276,7 +276,7 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
                     className="w-full"
                     required
                   />
-                  <SelectWithLabel<ExerciseType>
+                  {/* <SelectWithLabel<ExerciseType>
                     fieldTitle="Category"
                     nameInSchema="category"
                     className="w-full"
@@ -285,7 +285,7 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
                       { description: "Cardio", id: "Cardio" },
                       { description: "Strength", id: "Strength" },
                     ]}
-                  />
+                  /> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -581,12 +581,14 @@ function UpdateExerciseForm({ exercise, onSuccess }: UpdateExerciseFormProps) {
                       <div className="mb-2">
                         <p className="text-sm text-gray-500">Current video:</p>
                         <div className="aspect-video w-32 h-32 relative">
-                          <iframe
+                          <video
                             src={exercise.video}
                             title="Current exercise video"
                             className="absolute inset-0 w-full h-full rounded-md border"
-                            allowFullScreen
-                          ></iframe>
+                            controls
+                            controlsList="nodownload"
+                            preload="metadata"
+                          ></video>
                         </div>
                       </div>
                     )}

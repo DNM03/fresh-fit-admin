@@ -220,9 +220,9 @@ function ExerciseDetail() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold">{exercise.name}</CardTitle>
           <div className="flex items-center text-sm text-muted-foreground">
-            <span className="bg-primary/10 text-primary px-2 py-1 rounded-md mr-2">
+            {/* <span className="bg-primary/10 text-primary px-2 py-1 rounded-md mr-2">
               {exercise.category}
-            </span>
+            </span> */}
             <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md">
               {exercise.experience_level}
             </span>
