@@ -291,7 +291,7 @@ function UpdateMealForm({ meal, onSuccess }: UpdateMealFormProps) {
                       id="calories"
                       readOnly
                       className="bg-gray-50"
-                      value={form.watch("calories")}
+                      value={form.watch("calories").toFixed(2)}
                     />
                   </div>
                   <div className="space-y-2">

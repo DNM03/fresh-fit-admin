@@ -16,6 +16,8 @@ import {
   Trash2,
   MoveUp,
   MoveDown,
+  Clock,
+  Dumbbell,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ImageDropzone, { ImageFile } from "@/components/ui/image-dropzone";
@@ -26,6 +28,8 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import OptimizedSelect from "@/components/ui/optimized-select";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface Exercise {
   _id: string;
@@ -103,6 +107,18 @@ function UpdateExerciseSetForm({
     status: "Undone",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isYoutubeWorkout, setIsYoutubeWorkout] = useState<boolean>(
+    exerciseSet?.is_youtube_workout || false
+  );
+  const [youtubeId, setYoutubeId] = useState<string>(
+    exerciseSet?.youtube_id || ""
+  );
+  const [youtubeTime, setYoutubeTime] = useState<number>(
+    exerciseSet?.time ? parseInt(exerciseSet.time) : 20
+  );
+  const [youtubeCalories, setYoutubeCalories] = useState<number>(
+    exerciseSet?.total_calories || 400
+  );
 
   const [exercisePagination, setExercisePagination] = useState({
     currentPage: 1,
@@ -280,7 +296,7 @@ function UpdateExerciseSetForm({
     numberOfExercises: z.coerce
       .number()
       .int("Must be a whole number")
-      .positive("Must be greater than 0"),
+      .nonnegative("Must be 0 or greater"), // Changed from 'positive' to 'nonnegative'
     is_youtube_workout: z.boolean().optional().default(false),
     youtube_id: z.string().optional(),
   });
@@ -292,7 +308,7 @@ function UpdateExerciseSetForm({
   });
 
   const { formState } = form;
-  const { errors, isValid } = formState;
+  const { errors } = formState;
 
   const hasDetailsErrors = !!(
     errors.name ||
@@ -479,7 +495,8 @@ function UpdateExerciseSetForm({
   };
 
   const submitForm = async (data: any) => {
-    if (exercisesList.length === 0) {
+    // For YouTube workouts, skip exercise validation
+    if (!isYoutubeWorkout && exercisesList.length === 0) {
       toast.error("Please add at least one exercise to the set", {
         style: {
           background: "#cc3131",
@@ -488,6 +505,7 @@ function UpdateExerciseSetForm({
       });
       return;
     }
+    console.log("Submitting form with data:", data);
 
     setIsSubmitting(true);
 
@@ -499,34 +517,46 @@ function UpdateExerciseSetForm({
         );
       }
 
-      const exercisesToSubmit = exercisesList.map((ex, index) => ({
-        _id: ex._id.startsWith("temp-") ? undefined : ex._id,
-        exercise_id: ex.exercise_id,
-        duration: ex.duration,
-        reps: ex.reps,
-        round: ex.round,
-        rest_per_round: ex.rest_per_round,
-        timePerRound: ex.timePerRound,
-        estimated_calories_burned: ex.estimated_calories_burned,
-        status: ex.status,
-        orderNumber: index,
-      }));
+      // For YouTube workouts, use different parameters
+      const updateData = isYoutubeWorkout
+        ? {
+            name: data.name,
+            type: data.type,
+            description: data.description,
+            number_of_exercises: 0, // No exercises for YouTube workout
+            set_exercises: [], // Empty array for YouTube workout
+            time: `${youtubeTime} minutes`,
+            image: imageRes?.result?.url || exerciseSet.image,
+            total_calories: youtubeCalories,
+            is_youtube_workout: true,
+            youtube_id: youtubeId,
+          }
+        : {
+            name: data.name,
+            type: data.type,
+            description: data.description,
+            number_of_exercises: exercisesList.length,
+            set_exercises: exercisesList.map((ex, index) => ({
+              _id: ex._id.startsWith("temp-") ? undefined : ex._id,
+              exercise_id: ex.exercise_id,
+              duration: ex.duration,
+              reps: ex.reps,
+              round: ex.round,
+              rest_per_round: ex.rest_per_round,
+              timePerRound: ex.timePerRound,
+              estimated_calories_burned: ex.estimated_calories_burned,
+              status: ex.status,
+              orderNumber: index,
+            })),
+            time: formatTime(calculateTotalDuration()),
+            image: imageRes?.result?.url || exerciseSet.image,
+            total_calories: calculateTotalCalories(),
+            is_youtube_workout: false,
+            youtube_id: null,
+          };
 
-      const totalDuration = calculateTotalDuration();
-      const totalCalories = calculateTotalCalories();
-
-      const response = await setService.updateSet(exerciseSet._id, {
-        name: data.name,
-        type: data.type,
-        description: data.description,
-        number_of_exercises: exercisesList.length,
-        set_exercises: exercisesToSubmit,
-        time: formatTime(totalDuration),
-        image: imageRes?.result?.url || exerciseSet.image,
-        total_calories: totalCalories,
-        is_youtube_workout: data.is_youtube_workout,
-        youtube_id: data.is_youtube_workout ? data.youtube_id : null,
-      });
+      console.log("ehehe");
+      const response = await setService.updateSet(exerciseSet._id, updateData);
 
       console.log("Exercise set updated successfully:", response);
       toast.success("Exercise set updated successfully!", {
@@ -549,7 +579,6 @@ function UpdateExerciseSetForm({
     }
   };
 
-  // Update the onChange handler for exerciseFormData to make reps and timePerRound mutually exclusive
   const handleExerciseFormChange = (field: string, value: any) => {
     if (field === "reps" && Number(value) > 0) {
       // If reps is set, clear timePerRound
@@ -573,6 +602,16 @@ function UpdateExerciseSetForm({
       }));
     }
   };
+
+  // Sync the exercise count with form value any time exercisesList changes
+  useEffect(() => {
+    const exerciseCount = exercisesList.length;
+    form.setValue("numberOfExercises", exerciseCount);
+    // If the form was previously invalid due to this field, trigger validation
+    if (errors.numberOfExercises) {
+      form.trigger("numberOfExercises");
+    }
+  }, [exercisesList.length]);
 
   return (
     <div className="w-full mx-auto">
@@ -645,6 +684,42 @@ function UpdateExerciseSetForm({
                   className="w-full min-h-32"
                 />
 
+                {/* Display estimated totals */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-end">
+                    <div className="text-sm text-gray-500">
+                      <span className="font-medium">Estimated total:</span>
+                      <div className="mt-1 flex space-x-4">
+                        {isYoutubeWorkout ? (
+                          <>
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                              <span>{youtubeTime} minutes</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Dumbbell className="h-4 w-4 mr-1 text-gray-400" />
+                              <span>{youtubeCalories} calories</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                              <span>
+                                {formatTime(calculateTotalDuration())}
+                              </span>
+                            </div>
+                            <div className="flex items-center">
+                              <Dumbbell className="h-4 w-4 mr-1 text-gray-400" />
+                              <span>{calculateTotalCalories()} calories</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <p className="text-base font-semibold">
                     Set Background Image
@@ -669,436 +744,591 @@ function UpdateExerciseSetForm({
                   />
                 </div>
 
-                <div className="border-t pt-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <input
-                      type="checkbox"
-                      id="is_youtube_workout"
-                      {...form.register("is_youtube_workout")}
-                      className="h-4 w-4 rounded border-gray-300"
+                {/* Add YouTube workout toggle with Switch component */}
+                <div className="flex flex-col space-y-2 border-t border-b py-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="youtube-workout"
+                      checked={isYoutubeWorkout}
+                      onCheckedChange={(checked) => {
+                        setIsYoutubeWorkout(checked);
+                        form.setValue("is_youtube_workout", checked);
+                      }}
                     />
-                    <label htmlFor="is_youtube_workout" className="text-sm">
+                    <Label htmlFor="youtube-workout" className="font-medium">
                       This is a YouTube workout
-                    </label>
+                    </Label>
                   </div>
-
-                  {form.watch("is_youtube_workout") && (
-                    <InputWithLabel
-                      fieldTitle="YouTube Video ID"
-                      nameInSchema="youtube_id"
-                      placeholder="E.g., dQw4w9WgXcQ"
-                      className="w-full md:w-1/2"
-                    />
-                  )}
+                  <p className="text-sm text-gray-500 ml-9">
+                    Use a YouTube video instead of adding individual exercises
+                  </p>
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <Button
-                    type="button"
-                    onClick={() => setActiveTab("exercises")}
-                    disabled={hasDetailsErrors}
-                  >
-                    Continue to Exercises
-                  </Button>
-                </div>
-              </TabsContent>
+                {/* Show YouTube fields when toggle is on */}
+                {isYoutubeWorkout && (
+                  <div className="space-y-4 border rounded-md p-4 bg-slate-50">
+                    <h3 className="font-medium">YouTube Video Details</h3>
 
-              <TabsContent value="exercises" className="mt-0 space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-medium">Exercises in Set</h3>
-                    <p className="text-sm text-gray-500">
-                      {exercisesList.length} exercise
-                      {exercisesList.length !== 1 ? "s" : ""} added
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={handleAddExercise}
-                    type="button"
-                    className="flex items-center"
-                    disabled={isAddingExercise}
-                  >
-                    <Plus size={16} className="mr-1" /> Add Exercise
-                  </Button>
-                </div>
-
-                {isAddingExercise ? (
-                  <Card className="p-5 border-2 border-green-200">
-                    <CardHeader className="flex flex-row items-center justify-between p-4">
-                      <h4 className="text-lg font-medium">
-                        {editingExerciseIndex !== null
-                          ? "Edit Exercise"
-                          : "Add New Exercise"}
-                      </h4>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsAddingExercise(false)}
-                        type="button"
-                      >
-                        Cancel
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                          <label className="block text-sm font-medium mb-1">
-                            Select Exercise
-                          </label>
-                          <OptimizedSelect
-                            value={selectedExercise}
-                            onValueChange={(value) =>
-                              setSelectedExercise(value)
-                            }
-                            options={exerciseOptions}
-                            placeholder="Search and select an exercise..."
-                            useServerPagination={true}
-                            currentPage={exercisePagination.currentPage}
-                            totalItems={exercisePagination.totalItems}
-                            totalPages={exercisePagination.totalPages}
-                            isLoading={isLoadingExercises}
-                            onPageChange={handleExercisePageChange}
-                            onSearch={handleExerciseSearch}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Duration (seconds)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            className="w-full rounded-md border border-gray-300 py-2 px-3"
-                            value={exerciseFormData.duration}
-                            onChange={(e) =>
-                              setExerciseFormData({
-                                ...exerciseFormData,
-                                duration: parseInt(e.target.value) || 0,
-                              })
-                            }
-                            placeholder="E.g., 60"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Reps
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            className={`w-full rounded-md border border-gray-300 py-2 px-3 ${
-                              (exerciseFormData.timePerRound ?? 0) > 0
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
-                            }`}
-                            value={exerciseFormData.reps}
-                            disabled={(exerciseFormData.timePerRound ?? 0) > 0}
-                            onChange={(e) =>
-                              handleExerciseFormChange("reps", e.target.value)
-                            }
-                            placeholder="E.g., 10"
-                          />
-                          {(exerciseFormData.timePerRound ?? 0) > 0 && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Cannot set reps when time per round is set
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Rounds
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            className="w-full rounded-md border border-gray-300 py-2 px-3"
-                            value={exerciseFormData.round}
-                            onChange={(e) =>
-                              setExerciseFormData({
-                                ...exerciseFormData,
-                                round: parseInt(e.target.value) || 1,
-                              })
-                            }
-                            placeholder="E.g., 3"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Rest per Round (seconds)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            className="w-full rounded-md border border-gray-300 py-2 px-3"
-                            value={exerciseFormData.rest_per_round}
-                            onChange={(e) =>
-                              setExerciseFormData({
-                                ...exerciseFormData,
-                                rest_per_round: parseInt(e.target.value) || 0,
-                              })
-                            }
-                            placeholder="E.g., 30"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Time per Round (seconds)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            className={`w-full rounded-md border border-gray-300 py-2 px-3 ${
-                              (exerciseFormData.reps ?? 0) > 0
-                                ? "bg-gray-100 cursor-not-allowed"
-                                : ""
-                            }`}
-                            value={exerciseFormData.timePerRound}
-                            disabled={(exerciseFormData.reps ?? 0) > 0}
-                            onChange={(e) =>
-                              handleExerciseFormChange(
-                                "timePerRound",
-                                e.target.value
-                              )
-                            }
-                            placeholder="E.g., 20"
-                          />
-                          {(exerciseFormData.reps ?? 0) > 0 && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Cannot set time per round when reps is set
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Estimated Calories Burned
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            className="w-full rounded-md border border-gray-300 py-2 px-3"
-                            value={exerciseFormData.estimated_calories_burned}
-                            onChange={(e) =>
-                              setExerciseFormData({
-                                ...exerciseFormData,
-                                estimated_calories_burned:
-                                  parseInt(e.target.value) || 0,
-                              })
-                            }
-                            placeholder="E.g., 100"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-6 flex justify-end">
-                        <Button
-                          type="button"
-                          onClick={handleSaveExercise}
-                          disabled={!selectedExercise}
-                        >
-                          {editingExerciseIndex !== null
-                            ? "Update Exercise"
-                            : "Add to Set"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {exercisesList.length > 0 ? (
-                      exercisesList.map((exercise, index) => {
-                        const exerciseDetails = allExercises.find(
-                          (e) => e._id === exercise.exercise_id
-                        );
-
-                        return (
-                          <Card key={index} className="overflow-hidden">
-                            <div className="flex flex-col md:flex-row">
-                              {(exercise?.image || exerciseDetails?.image) && (
-                                <div className="w-full md:w-1/4">
-                                  <img
-                                    src={
-                                      exercise.image ||
-                                      exerciseDetails?.image ||
-                                      ""
-                                    }
-                                    alt={exercise.name || "Exercise"}
-                                    className="h-full w-full object-cover"
-                                  />
-                                </div>
-                              )}
-
-                              <div className="flex-grow p-4">
-                                <div className="flex justify-between">
-                                  <div>
-                                    <h4 className="font-medium text-lg mb-1">
-                                      {index + 1}.{" "}
-                                      {exercise.name ||
-                                        exerciseDetails?.name ||
-                                        "Unknown Exercise"}
-                                    </h4>
-                                    {exerciseDetails?.category && (
-                                      <Badge variant="outline" className="mb-2">
-                                        {exerciseDetails.category}
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  <div className="flex space-x-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleMoveExercise(index, "up")
-                                      }
-                                      disabled={index === 0}
-                                      type="button"
-                                    >
-                                      <MoveUp size={18} />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleMoveExercise(index, "down")
-                                      }
-                                      disabled={
-                                        index === exercisesList.length - 1
-                                      }
-                                      type="button"
-                                    >
-                                      <MoveDown size={18} />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleEditExercise(index)}
-                                      type="button"
-                                    >
-                                      <Edit size={18} />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-500 hover:text-red-700"
-                                      onClick={() =>
-                                        handleDeleteExercise(index)
-                                      }
-                                      type="button"
-                                    >
-                                      <Trash2 size={18} />
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
-                                  <div className="bg-gray-50 p-2 rounded">
-                                    <p className="text-xs text-gray-500">
-                                      Duration
-                                    </p>
-                                    <p className="font-medium">
-                                      {exercise.duration}s
-                                    </p>
-                                  </div>
-                                  <div className="bg-gray-50 p-2 rounded">
-                                    <p className="text-xs text-gray-500">
-                                      Reps
-                                    </p>
-                                    <p className="font-medium">
-                                      {exercise.reps || "0"}
-                                    </p>
-                                  </div>
-                                  <div className="bg-gray-50 p-2 rounded">
-                                    <p className="text-xs text-gray-500">
-                                      Rounds
-                                    </p>
-                                    <p className="font-medium">
-                                      {exercise.round || "0"}
-                                    </p>
-                                  </div>
-                                  <div className="bg-gray-50 p-2 rounded">
-                                    <p className="text-xs text-gray-500">
-                                      Calories
-                                    </p>
-                                    <p className="font-medium">
-                                      {exercise.estimated_calories_burned}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="mt-2 text-sm">
-                                  <span className="text-gray-500">
-                                    Rest per round:
-                                  </span>{" "}
-                                  {exercise.rest_per_round}s
-                                </div>
-                              </div>
-                            </div>
-                          </Card>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-10 border rounded-lg bg-gray-50">
-                        <p className="text-gray-600">
-                          No exercises added to this set yet.
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          YouTube Video ID{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full border rounded-md p-2"
+                          value={youtubeId}
+                          onChange={(e) => {
+                            setYoutubeId(e.target.value);
+                            form.setValue("youtube_id", e.target.value);
+                          }}
+                          placeholder="e.g. fqCeYdMCnFs"
+                          required={isYoutubeWorkout}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          The part after "v=" in YouTube URLs
                         </p>
-                        <Button
-                          variant="outline"
-                          className="mt-2"
-                          onClick={handleAddExercise}
-                          type="button"
-                        >
-                          Add First Exercise
-                        </Button>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Video Duration (minutes)
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full border rounded-md p-2"
+                          min={1}
+                          value={youtubeTime}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 20;
+                            setYoutubeTime(value);
+                          }}
+                          placeholder="e.g. 20"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Estimated Calories
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full border rounded-md p-2"
+                        min={1}
+                        value={youtubeCalories}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 400;
+                          setYoutubeCalories(value);
+                        }}
+                        placeholder="e.g. 400"
+                      />
+                    </div>
+
+                    {youtubeId && (
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium mb-2">Preview</h4>
+                        <div className="aspect-video bg-black rounded-md overflow-hidden">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={`https://www.youtube.com/embed/${youtubeId}`}
+                            title="YouTube video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {exercisesList.length > 0 && !isAddingExercise && (
-                  <div className="border-t pt-4 mt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        <h4 className="font-medium mb-1">Total Exercises</h4>
-                        <p className="text-2xl font-bold">
-                          {exercisesList.length}
+                <div className="flex justify-end pt-2">
+                  {/* Only show "Continue to Exercises" if not a YouTube workout */}
+                  {isYoutubeWorkout ? (
+                    <Button
+                      type="submit"
+                      disabled={!youtubeId || hasDetailsErrors || isSubmitting}
+                      className="bg-primary hover:opacity-80"
+                      onClick={(e) => {
+                        // Prevent default to handle submission manually
+                        e.preventDefault();
+
+                        // Validate required fields
+                        if (!youtubeId) {
+                          toast.error("YouTube video ID is required", {
+                            style: {
+                              background: "#cc3131",
+                              color: "#fff",
+                            },
+                          });
+                          return;
+                        }
+
+                        // Get form data and submit
+                        const data = form.getValues();
+                        submitForm(data);
+                      }}
+                    >
+                      {isSubmitting
+                        ? "Updating..."
+                        : "Update YouTube Exercise Set"}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => setActiveTab("exercises")}
+                      disabled={hasDetailsErrors}
+                    >
+                      Continue to Exercises
+                    </Button>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* The exercises TabsContent should only be accessible if not a YouTube workout */}
+              <TabsContent value="exercises" className="mt-0 space-y-4">
+                {/* Show message when YouTube workout is enabled */}
+                {isYoutubeWorkout ? (
+                  <div className="text-center py-12 border rounded-lg">
+                    <div className="text-amber-500 mb-4">
+                      <AlertCircle className="h-16 w-16 mx-auto" />
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">
+                      YouTube Workout Mode Enabled
+                    </h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                      Individual exercises are not required when using a YouTube
+                      workout. Please return to the details tab to configure
+                      your YouTube workout.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("details")}
+                    >
+                      Return to Details
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    {/* Your existing exercise list content */}
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-lg font-medium">
+                          Exercises in Set
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {exercisesList.length} exercise
+                          {exercisesList.length !== 1 ? "s" : ""} added
                         </p>
                       </div>
 
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        <h4 className="font-medium mb-1">Estimated Time</h4>
-                        <p className="text-xl font-bold">
-                          {formatTime(calculateTotalDuration())}
-                        </p>
-                      </div>
+                      <Button
+                        onClick={handleAddExercise}
+                        type="button"
+                        className="flex items-center"
+                        disabled={isAddingExercise}
+                      >
+                        <Plus size={16} className="mr-1" /> Add Exercise
+                      </Button>
+                    </div>
 
-                      <div className="bg-gray-50 p-4 rounded-md">
-                        <h4 className="font-medium mb-1">
-                          Total Calories Burned
-                        </h4>
-                        <p className="text-2xl font-bold">
-                          {calculateTotalCalories()}
-                        </p>
+                    {isAddingExercise ? (
+                      <Card className="p-5 border-2 border-green-200">
+                        <CardHeader className="flex flex-row items-center justify-between p-4">
+                          <h4 className="text-lg font-medium">
+                            {editingExerciseIndex !== null
+                              ? "Edit Exercise"
+                              : "Add New Exercise"}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsAddingExercise(false)}
+                            type="button"
+                          >
+                            Cancel
+                          </Button>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                              <label className="block text-sm font-medium mb-1">
+                                Select Exercise
+                              </label>
+                              <OptimizedSelect
+                                value={selectedExercise}
+                                onValueChange={(value) =>
+                                  setSelectedExercise(value)
+                                }
+                                options={exerciseOptions}
+                                placeholder="Search and select an exercise..."
+                                useServerPagination={true}
+                                currentPage={exercisePagination.currentPage}
+                                totalItems={exercisePagination.totalItems}
+                                totalPages={exercisePagination.totalPages}
+                                isLoading={isLoadingExercises}
+                                onPageChange={handleExercisePageChange}
+                                onSearch={handleExerciseSearch}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                Duration (seconds)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                className="w-full rounded-md border border-gray-300 py-2 px-3"
+                                value={exerciseFormData.duration}
+                                onChange={(e) =>
+                                  setExerciseFormData({
+                                    ...exerciseFormData,
+                                    duration: parseInt(e.target.value) || 0,
+                                  })
+                                }
+                                placeholder="E.g., 60"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                Reps
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                className={`w-full rounded-md border border-gray-300 py-2 px-3 ${
+                                  (exerciseFormData.timePerRound ?? 0) > 0
+                                    ? "bg-gray-100 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                value={exerciseFormData.reps}
+                                disabled={
+                                  (exerciseFormData.timePerRound ?? 0) > 0
+                                }
+                                onChange={(e) =>
+                                  handleExerciseFormChange(
+                                    "reps",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="E.g., 10"
+                              />
+                              {(exerciseFormData.timePerRound ?? 0) > 0 && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Cannot set reps when time per round is set
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                Rounds
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                className="w-full rounded-md border border-gray-300 py-2 px-3"
+                                value={exerciseFormData.round}
+                                onChange={(e) =>
+                                  setExerciseFormData({
+                                    ...exerciseFormData,
+                                    round: parseInt(e.target.value) || 1,
+                                  })
+                                }
+                                placeholder="E.g., 3"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                Rest per Round (seconds)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                className="w-full rounded-md border border-gray-300 py-2 px-3"
+                                value={exerciseFormData.rest_per_round}
+                                onChange={(e) =>
+                                  setExerciseFormData({
+                                    ...exerciseFormData,
+                                    rest_per_round:
+                                      parseInt(e.target.value) || 0,
+                                  })
+                                }
+                                placeholder="E.g., 30"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                Time per Round (seconds)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                className={`w-full rounded-md border border-gray-300 py-2 px-3 ${
+                                  (exerciseFormData.reps ?? 0) > 0
+                                    ? "bg-gray-100 cursor-not-allowed"
+                                    : ""
+                                }`}
+                                value={exerciseFormData.timePerRound}
+                                disabled={(exerciseFormData.reps ?? 0) > 0}
+                                onChange={(e) =>
+                                  handleExerciseFormChange(
+                                    "timePerRound",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="E.g., 20"
+                              />
+                              {(exerciseFormData.reps ?? 0) > 0 && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Cannot set time per round when reps is set
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-1">
+                                Estimated Calories Burned
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                className="w-full rounded-md border border-gray-300 py-2 px-3"
+                                value={
+                                  exerciseFormData.estimated_calories_burned
+                                }
+                                onChange={(e) =>
+                                  setExerciseFormData({
+                                    ...exerciseFormData,
+                                    estimated_calories_burned:
+                                      parseInt(e.target.value) || 0,
+                                  })
+                                }
+                                placeholder="E.g., 100"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-6 flex justify-end">
+                            <Button
+                              type="button"
+                              onClick={handleSaveExercise}
+                              disabled={!selectedExercise}
+                            >
+                              {editingExerciseIndex !== null
+                                ? "Update Exercise"
+                                : "Add to Set"}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-4">
+                        {exercisesList.length > 0 ? (
+                          exercisesList.map((exercise, index) => {
+                            const exerciseDetails = allExercises.find(
+                              (e) => e._id === exercise.exercise_id
+                            );
+
+                            return (
+                              <Card key={index} className="overflow-hidden">
+                                <div className="flex flex-col md:flex-row">
+                                  {(exercise?.image ||
+                                    exerciseDetails?.image) && (
+                                    <div className="w-full md:w-1/4">
+                                      <img
+                                        src={
+                                          exercise.image ||
+                                          exerciseDetails?.image ||
+                                          ""
+                                        }
+                                        alt={exercise.name || "Exercise"}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                  )}
+
+                                  <div className="flex-grow p-4">
+                                    <div className="flex justify-between">
+                                      <div>
+                                        <h4 className="font-medium text-lg mb-1">
+                                          {index + 1}.{" "}
+                                          {exercise.name ||
+                                            exerciseDetails?.name ||
+                                            "Unknown Exercise"}
+                                        </h4>
+                                        {exerciseDetails?.category && (
+                                          <Badge
+                                            variant="outline"
+                                            className="mb-2"
+                                          >
+                                            {exerciseDetails.category}
+                                          </Badge>
+                                        )}
+                                      </div>
+
+                                      <div className="flex space-x-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleMoveExercise(index, "up")
+                                          }
+                                          disabled={index === 0}
+                                          type="button"
+                                        >
+                                          <MoveUp size={18} />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleMoveExercise(index, "down")
+                                          }
+                                          disabled={
+                                            index === exercisesList.length - 1
+                                          }
+                                          type="button"
+                                        >
+                                          <MoveDown size={18} />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleEditExercise(index)
+                                          }
+                                          type="button"
+                                        >
+                                          <Edit size={18} />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-red-500 hover:text-red-700"
+                                          onClick={() =>
+                                            handleDeleteExercise(index)
+                                          }
+                                          type="button"
+                                        >
+                                          <Trash2 size={18} />
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="text-xs text-gray-500">
+                                          Duration
+                                        </p>
+                                        <p className="font-medium">
+                                          {exercise.duration}s
+                                        </p>
+                                      </div>
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="text-xs text-gray-500">
+                                          Reps
+                                        </p>
+                                        <p className="font-medium">
+                                          {exercise.reps || "0"}
+                                        </p>
+                                      </div>
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="text-xs text-gray-500">
+                                          Rounds
+                                        </p>
+                                        <p className="font-medium">
+                                          {exercise.round || "0"}
+                                        </p>
+                                      </div>
+                                      <div className="bg-gray-50 p-2 rounded">
+                                        <p className="text-xs text-gray-500">
+                                          Calories
+                                        </p>
+                                        <p className="font-medium">
+                                          {exercise.estimated_calories_burned}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="mt-2 text-sm">
+                                      <span className="text-gray-500">
+                                        Rest per round:
+                                      </span>{" "}
+                                      {exercise.rest_per_round}s
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-10 border rounded-lg bg-gray-50">
+                            <p className="text-gray-600">
+                              No exercises added to this set yet.
+                            </p>
+                            <Button
+                              variant="outline"
+                              className="mt-2"
+                              onClick={handleAddExercise}
+                              type="button"
+                            >
+                              Add First Exercise
+                            </Button>
+                          </div>
+                        )}
                       </div>
+                    )}
+
+                    {exercisesList.length > 0 && !isAddingExercise && (
+                      <div className="border-t pt-4 mt-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-gray-50 p-4 rounded-md">
+                            <h4 className="font-medium mb-1">
+                              Total Exercises
+                            </h4>
+                            <p className="text-2xl font-bold">
+                              {exercisesList.length}
+                            </p>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-md">
+                            <h4 className="font-medium mb-1">Estimated Time</h4>
+                            <p className="text-xl font-bold">
+                              {formatTime(calculateTotalDuration())}
+                            </p>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-md">
+                            <h4 className="font-medium mb-1">
+                              Total Calories Burned
+                            </h4>
+                            <p className="text-2xl font-bold">
+                              {calculateTotalCalories()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setActiveTab("details")}
+                      >
+                        Back to Details
+                      </Button>
                     </div>
                   </div>
                 )}
-
-                <div className="flex justify-between pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setActiveTab("details")}
-                  >
-                    Back to Details
-                  </Button>
-                </div>
               </TabsContent>
             </CardContent>
 
@@ -1107,11 +1337,43 @@ function UpdateExerciseSetForm({
                 Cancel
               </Button>
               <Button
-                type="submit"
+                type="button" // Changed from submit to button to handle it manually
                 disabled={
-                  !isValid || isSubmitting || exercisesList.length === 0
+                  isSubmitting || isYoutubeWorkout || exercisesList.length === 0
                 }
                 className="px-6"
+                onClick={() => {
+                  if (isYoutubeWorkout) {
+                    // For YouTube workout, validate YouTube ID
+                    if (!youtubeId) {
+                      toast.error("YouTube video ID is required", {
+                        style: {
+                          background: "#cc3131",
+                          color: "#fff",
+                        },
+                      });
+                      return;
+                    }
+                  } else {
+                    // For standard workout, validate exercises
+                    if (exercisesList.length === 0) {
+                      toast.error(
+                        "Please add at least one exercise to the set",
+                        {
+                          style: {
+                            background: "#cc3131",
+                            color: "#fff",
+                          },
+                        }
+                      );
+                      return;
+                    }
+                  }
+
+                  // Get form data and manually submit
+                  const data = form.getValues();
+                  submitForm(data);
+                }}
               >
                 {isSubmitting ? "Updating..." : "Update Exercise Set"}
               </Button>

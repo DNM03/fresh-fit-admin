@@ -350,7 +350,7 @@ export default function MealForm() {
                 <div className="space-y-2">
                   <Label>Calories (auto-calculated)</Label>
                   <Input
-                    value={form.getValues().calories}
+                    value={form.getValues().calories.toFixed(2)}
                     readOnly
                     className="bg-gray-50"
                   />

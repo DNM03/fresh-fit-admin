@@ -30,6 +30,8 @@ import mediaService from "@/services/media.service";
 import exerciseService from "@/services/exercise.service";
 import setService from "@/services/set.service";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 function ExerciseSetForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +56,10 @@ function ExerciseSetForm() {
   });
   const [isLoadingExercises, setIsLoadingExercises] = useState<boolean>(false);
   const [searchExerciseQuery, setSearchExerciseQuery] = useState<string>("");
+  const [isYoutubeWorkout, setIsYoutubeWorkout] = useState<boolean>(false);
+  const [youtubeId, setYoutubeId] = useState<string>("");
+  const [youtubeTime, setYoutubeTime] = useState<number>(20);
+  const [youtubeCalories, setYoutubeCalories] = useState<number>(400);
 
   useEffect(() => {
     fetchExercises(1);
@@ -107,6 +113,8 @@ function ExerciseSetForm() {
     name: "",
     numberOfExercises: 1,
     type: "Intermediate",
+    is_youtube_workout: false,
+    youtube_id: "",
   };
 
   const form = useForm<CreateExerciseSetType>({
@@ -118,6 +126,8 @@ function ExerciseSetForm() {
         type: z.enum(["Beginner", "Intermediate", "Advanced"]),
         description: z.string().nonempty(),
         numberOfExercises: z.number().int().positive(),
+        is_youtube_workout: z.boolean(),
+        youtube_id: z.string().optional(),
       })
     ),
   });
@@ -163,26 +173,34 @@ function ExerciseSetForm() {
           backgroundImage[0].file
         );
       }
+
+      // Prepare the final data object based on whether it's a YouTube workout
       const finalData = {
         name: data.name,
         description: data.description,
         type: data.type,
-        number_of_exercises: exercisesList.length,
-        set_exercises: exercisesList.map((exercise, index) => ({
-          exercise_id: exercise.exercise_id,
-          duration: exercise.duration,
-          reps: exercise.reps,
-          round: exercise.rounds,
-          timePerRound: exercise.timePerRound,
-          rest_per_round: exercise.rest_per_round,
-          estimated_calories_burned: exercise.estimated_calories_burned,
-          orderNumber: index,
-        })),
-        time: secondsToTimeWords(calculateTotalDuration()),
+        number_of_exercises: isYoutubeWorkout ? 0 : exercisesList.length,
+        set_exercises: isYoutubeWorkout
+          ? []
+          : exercisesList.map((exercise, index) => ({
+              exercise_id: exercise.exercise_id,
+              duration: exercise.duration,
+              reps: exercise.reps,
+              round: exercise.rounds,
+              timePerRound: exercise.timePerRound,
+              rest_per_round: exercise.rest_per_round,
+              estimated_calories_burned: exercise.estimated_calories_burned,
+              orderNumber: index,
+            })),
+        time: isYoutubeWorkout
+          ? `${youtubeTime} minutes`
+          : secondsToTimeWords(calculateTotalDuration()),
         image: imageRes?.result?.url || "",
-        total_calories: calculateTotalCalories(),
-        is_youtube_workout: false,
-        youtube_id: null,
+        total_calories: isYoutubeWorkout
+          ? youtubeCalories
+          : calculateTotalCalories(),
+        is_youtube_workout: isYoutubeWorkout,
+        youtube_id: isYoutubeWorkout ? youtubeId : null,
       };
 
       const response = await setService.addSet(finalData);
@@ -195,8 +213,6 @@ function ExerciseSetForm() {
         },
       });
       setFormSubmitted(true);
-      // form.reset(defaultValues);
-      // setExercisesList([]);
       setBackgroundImage([]);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -256,9 +272,19 @@ function ExerciseSetForm() {
               {form.getValues().description}
             </p>
             <div className="flex justify-between text-sm">
-              <span>{exercisesList.length} exercises</span>
-              <span>{formatTime(calculateTotalDuration())}</span>
-              <span>{calculateTotalCalories()} cal</span>
+              {isYoutubeWorkout ? (
+                <>
+                  <span>YouTube Workout</span>
+                  <span>{youtubeTime} minutes</span>
+                  <span>{youtubeCalories} calories</span>
+                </>
+              ) : (
+                <>
+                  <span>{exercisesList.length} exercises</span>
+                  <span>{formatTime(calculateTotalDuration())}</span>
+                  <span>{calculateTotalCalories()} cal</span>
+                </>
+              )}
             </div>
           </div>
           <Button
@@ -316,14 +342,29 @@ function ExerciseSetForm() {
                   <div className="text-sm text-gray-500">
                     <span className="font-medium">Estimated total:</span>
                     <div className="mt-1 flex space-x-4">
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1 text-gray-400" />
-                        <span>{formatTime(calculateTotalDuration())}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Dumbbell className="h-4 w-4 mr-1 text-gray-400" />
-                        <span>{calculateTotalCalories()} calories</span>
-                      </div>
+                      {isYoutubeWorkout ? (
+                        <>
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                            <span>{youtubeTime} minutes</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Dumbbell className="h-4 w-4 mr-1 text-gray-400" />
+                            <span>{youtubeCalories} calories</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                            <span>{formatTime(calculateTotalDuration())}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Dumbbell className="h-4 w-4 mr-1 text-gray-400" />
+                            <span>{calculateTotalCalories()} calories</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -336,6 +377,105 @@ function ExerciseSetForm() {
                 className="w-full h-24"
                 required
               />
+
+              {/* Add YouTube workout toggle */}
+              <div className="flex flex-col space-y-2 border-t border-b py-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="youtube-workout"
+                    checked={isYoutubeWorkout}
+                    onCheckedChange={(checked) => {
+                      setIsYoutubeWorkout(checked);
+                      form.setValue("is_youtube_workout", checked);
+                    }}
+                  />
+                  <Label htmlFor="youtube-workout" className="font-medium">
+                    This is a YouTube workout
+                  </Label>
+                </div>
+                <p className="text-sm text-gray-500 ml-9">
+                  Use a YouTube video instead of adding individual exercises
+                </p>
+              </div>
+
+              {/* Show YouTube fields when toggle is on */}
+              {isYoutubeWorkout && (
+                <div className="space-y-4 border rounded-md p-4 bg-slate-50">
+                  <h3 className="font-medium">YouTube Video Details</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        YouTube Video ID <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border rounded-md p-2"
+                        value={youtubeId}
+                        onChange={(e) => {
+                          setYoutubeId(e.target.value);
+                        }}
+                        placeholder="e.g. fqCeYdMCnFs"
+                        required={isYoutubeWorkout}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        The part after "v=" in YouTube URLs
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Video Duration (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full border rounded-md p-2"
+                        min={1}
+                        value={youtubeTime}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 20;
+                          setYoutubeTime(value);
+                        }}
+                        placeholder="e.g. 20"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Estimated Calories
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full border rounded-md p-2"
+                      min={1}
+                      value={youtubeCalories}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 400;
+                        setYoutubeCalories(value);
+                      }}
+                      placeholder="e.g. 400"
+                    />
+                  </div>
+
+                  {youtubeId && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium mb-2">Preview</h4>
+                      <div className="aspect-video bg-black rounded-md overflow-hidden">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${youtubeId}`}
+                          title="YouTube video player"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <p className="text-base font-semibold">Background Image</p>
                 <p className="text-sm text-gray-500 mb-2">
@@ -352,19 +492,36 @@ function ExerciseSetForm() {
             </div>
 
             <div className="flex justify-end mt-8">
-              <Button
-                type="button"
-                onClick={() => handleStepChange(2)}
-                className="bg-primary hover:opacity-80"
-              >
-                Continue to Add Exercises
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
+              {isYoutubeWorkout ? (
+                <Button
+                  type="submit"
+                  className="bg-primary hover:opacity-80"
+                  disabled={!youtubeId}
+                >
+                  {isLoading ? "Saving..." : "Create YouTube Exercise Set"}
+                  {!isLoading && <ArrowRight className="ml-1 h-4 w-4" />}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={() => handleStepChange(2)}
+                  className="bg-primary hover:opacity-80"
+                >
+                  Continue to Add Exercises
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              )}
             </div>
           </>
         );
 
       case 2:
+        // Only show case 2 if not a YouTube workout
+        if (isYoutubeWorkout) {
+          setCurrentStep(1);
+          return null;
+        }
+
         return (
           <>
             <div className="bg-green-50 p-4 rounded-lg mb-6">
@@ -522,20 +679,38 @@ function ExerciseSetForm() {
 
       if (currentStep === 1) {
         fieldsToValidate.push("name", "description", "type");
+
+        // Add YouTube validation if it's a YouTube workout
+        if (isYoutubeWorkout) {
+          fieldsToValidate.push("youtube_id");
+
+          // Extra validation for YouTube ID
+          if (!youtubeId) {
+            toast.error("Please enter a YouTube video ID", {
+              style: {
+                background: "#cc3131",
+                color: "#fff",
+              },
+            });
+            return;
+          }
+        }
       }
 
       const isValid = await form.trigger(fieldsToValidate);
 
       if (!isValid) {
-        // toast.error("Please fill in all required fields correctly", {
-        //   style: {
-        //     background: "#cc3131",
-        //     color: "#fff",
-        //   },
-        // });
         return;
       }
 
+      // Skip step 2 for YouTube workouts
+      if (currentStep === 1 && step === 2 && isYoutubeWorkout) {
+        // If it's a YouTube workout, submit the form directly
+        form.handleSubmit(submitForm)();
+        return;
+      }
+
+      // Regular image warning remains the same
       if (currentStep === 1 && step === 2) {
         if (backgroundImage.length === 0) {
           toast.warning(
@@ -590,37 +765,32 @@ function ExerciseSetForm() {
                     currentStep >= 2 ? "bg-primary" : "bg-gray-200"
                   } mx-2`}
                 ></div>
-                {/* Step 2 button */}
+                {/* Step 2 button - hide or disable for YouTube workouts */}
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                    currentStep >= 2 ? "bg-primary text-white" : "bg-gray-200"
-                  } mr-2 cursor-pointer`}
-                  onClick={() => handleStepChange(2)}
+                    isYoutubeWorkout
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : currentStep >= 2
+                      ? "bg-primary text-white cursor-pointer"
+                      : "bg-gray-200 cursor-pointer"
+                  } mr-2`}
+                  onClick={() => !isYoutubeWorkout && handleStepChange(2)}
                 >
                   2
                 </div>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Basic Information</span>
-                <span>Add Exercises</span>
+                <span className={isYoutubeWorkout ? "text-gray-400" : ""}>
+                  {isYoutubeWorkout
+                    ? "Not Required for YouTube"
+                    : "Add Exercises"}
+                </span>
               </div>
             </div>
           )}
 
           {renderStepContent()}
-
-          {/* {Object.keys(form.formState.errors).length > 0 && (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
-              <p className="font-medium">
-                Please correct the following errors:
-              </p>
-              <ul className="mt-2 list-disc list-inside">
-                {Object.entries(form.formState.errors).map(([field, error]) => (
-                  <li key={field}>{error.message as string}</li>
-                ))}
-              </ul>
-            </div>
-          )} */}
         </form>
       </Form>
     </div>
