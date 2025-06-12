@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InputWithLabel from "@/components/inputs/input-with-label";
+import { Input } from "@/components/ui/input";
 import TextAreaWithLabel from "@/components/inputs/text-area-with-label";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -84,6 +85,25 @@ function UpdateMealForm({ meal, onSuccess }: UpdateMealFormProps) {
     resolver: zodResolver(formSchema),
   });
 
+  // Calculate initial calories and prep time on component mount
+  useEffect(() => {
+    if (selectedDishes.length > 0) {
+      const totalCalories = selectedDishes.reduce(
+        (sum, d) => sum + d.calories * (d.quantity || 1),
+        0
+      );
+
+      const totalPrepTime = selectedDishes.reduce(
+        (sum, d) => sum + d.prep_time,
+        0
+      );
+
+      // Update form values
+      form.setValue("calories", totalCalories);
+      form.setValue("pre_time", totalPrepTime / 60); // Convert to minutes
+    }
+  }, []); // Empty dependency array ensures it only runs once on mount
+
   const { formState, watch, setValue } = form;
   const { errors, isValid } = formState;
   const watchMealType = watch("meal_type");
@@ -95,12 +115,54 @@ function UpdateMealForm({ meal, onSuccess }: UpdateMealFormProps) {
     errors.pre_time
   );
 
+  // Updated handleAddDish to calculate totals
   const handleAddDish = (dish: DishType & { quantity?: number }) => {
-    setSelectedDishes((prev) => [...prev, dish]);
+    setSelectedDishes((prev) => {
+      const updatedDishes = [...prev, dish];
+
+      // Calculate new totals
+      const totalCalories = updatedDishes.reduce(
+        (sum, d) => sum + d.calories * (d.quantity || 1),
+        0
+      );
+
+      const totalPrepTime = updatedDishes.reduce(
+        (sum, d) => sum + d.prep_time,
+        0
+      );
+
+      // Update form values
+      form.setValue("calories", totalCalories);
+      form.setValue("pre_time", totalPrepTime / 60);
+
+      return updatedDishes;
+    });
   };
 
+  // Updated handleRemoveDish to recalculate totals
   const handleRemoveDish = (dishId: string) => {
-    setSelectedDishes((prev) => prev.filter((dish) => dish._id !== dishId));
+    setSelectedDishes((prev) => {
+      const filteredDishes = prev.filter((dish) => dish._id !== dishId);
+
+      // Calculate new totals for remaining dishes
+      const totalCalories = filteredDishes.reduce(
+        (sum, d) => sum + d.calories * (d.quantity || 1),
+        0
+      );
+      form.setValue("calories", totalCalories);
+
+      if (filteredDishes.length > 0) {
+        const totalPrepTime = filteredDishes.reduce(
+          (sum, d) => sum + d.prep_time,
+          0
+        );
+        form.setValue("pre_time", totalPrepTime / 60);
+      } else {
+        form.setValue("pre_time", 0);
+      }
+
+      return filteredDishes;
+    });
   };
 
   async function submitForm(data: any) {
@@ -223,20 +285,26 @@ function UpdateMealForm({ meal, onSuccess }: UpdateMealFormProps) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputWithLabel
-                    fieldTitle="Calories"
-                    nameInSchema="calories"
-                    placeholder="E.g., 500"
-                    className="w-full"
-                    type="number"
-                  />
-                  <InputWithLabel
-                    fieldTitle="Preparation Time (minutes)"
-                    nameInSchema="pre_time"
-                    placeholder="E.g., 20"
-                    className="w-full"
-                    type="number"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="calories">Calories (auto-calculated)</Label>
+                    <Input
+                      id="calories"
+                      readOnly
+                      className="bg-gray-50"
+                      value={form.watch("calories")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pre_time">
+                      Preparation Time (minutes, auto-calculated)
+                    </Label>
+                    <Input
+                      id="pre_time"
+                      readOnly
+                      className="bg-gray-50"
+                      value={form.watch("pre_time")}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
