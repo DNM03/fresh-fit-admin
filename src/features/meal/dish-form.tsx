@@ -184,7 +184,7 @@ export default function DishForm() {
       }
       let imageRes = null;
       if (imageFiles[0]?.file) {
-        imageRes = await mediaService.uploadImage(imageFiles[0].file);
+        imageRes = await mediaService.backupUploadImage(imageFiles[0].file);
       }
 
       const finalData = {

@@ -142,6 +142,16 @@ export type MealType = {
   date: Date;
 };
 
+export type AddMealType = {
+  name: string;
+  description: string;
+  image: string;
+  calories: number;
+  pre_time: number;
+  mealType: "Breakfast" | "Lunch" | "Dinner";
+  date: Date;
+};
+
 export type MealDishType = {
   mealId: string;
   dishId: string;

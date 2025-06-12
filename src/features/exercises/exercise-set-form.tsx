@@ -65,7 +65,7 @@ function ExerciseSetForm() {
       const response = await exerciseService.searchExercise({
         page,
         limit: 20,
-        search,
+        search: search.trim(),
       });
 
       if (response.data?.result) {
@@ -297,6 +297,7 @@ function ExerciseSetForm() {
                 nameInSchema="name"
                 placeholder="Eg, Top body workout"
                 className="w-full"
+                required
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -333,6 +334,7 @@ function ExerciseSetForm() {
                 nameInSchema="description"
                 placeholder="Eg, Help to build chest muscles"
                 className="w-full h-24"
+                required
               />
               <div>
                 <p className="text-base font-semibold">Background Image</p>
@@ -352,7 +354,7 @@ function ExerciseSetForm() {
             <div className="flex justify-end mt-8">
               <Button
                 type="button"
-                onClick={() => setCurrentStep(2)}
+                onClick={() => handleStepChange(2)}
                 className="bg-primary hover:opacity-80"
               >
                 Continue to Add Exercises
@@ -491,7 +493,7 @@ function ExerciseSetForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setCurrentStep(1)}
+                onClick={() => handleStepChange(1)}
               >
                 <ArrowLeft className="mr-1 h-4 w-4" />
                 Back to Details
@@ -514,6 +516,44 @@ function ExerciseSetForm() {
     }
   };
 
+  const handleStepChange = async (step: number) => {
+    if (step > currentStep) {
+      const fieldsToValidate: Array<keyof CreateExerciseSetType> = [];
+
+      if (currentStep === 1) {
+        fieldsToValidate.push("name", "description", "type");
+      }
+
+      const isValid = await form.trigger(fieldsToValidate);
+
+      if (!isValid) {
+        // toast.error("Please fill in all required fields correctly", {
+        //   style: {
+        //     background: "#cc3131",
+        //     color: "#fff",
+        //   },
+        // });
+        return;
+      }
+
+      if (currentStep === 1 && step === 2) {
+        if (backgroundImage.length === 0) {
+          toast.warning(
+            "No background image selected. You can add one later.",
+            {
+              style: {
+                background: "#f59e0b",
+                color: "#fff",
+              },
+            }
+          );
+        }
+      }
+    }
+
+    setCurrentStep(step);
+  };
+
   return (
     <div className="max-w-4xl mx-auto mt-8">
       <div className="mb-6">
@@ -524,14 +564,24 @@ function ExerciseSetForm() {
         </p>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(submitForm)} className="space-y-8">
+        <form
+          onSubmit={form.handleSubmit(submitForm)}
+          className="space-y-8"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+            }
+          }}
+        >
           {!formSubmitted && (
             <div className="mb-8">
               <div className="flex items-center mb-2">
+                {/* Step 1 button */}
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-full ${
                     currentStep >= 1 ? "bg-primary text-white" : "bg-gray-200"
-                  } mr-2`}
+                  } mr-2 cursor-pointer`}
+                  onClick={() => handleStepChange(1)}
                 >
                   1
                 </div>
@@ -540,10 +590,12 @@ function ExerciseSetForm() {
                     currentStep >= 2 ? "bg-primary" : "bg-gray-200"
                   } mx-2`}
                 ></div>
+                {/* Step 2 button */}
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-full ${
                     currentStep >= 2 ? "bg-primary text-white" : "bg-gray-200"
-                  } mr-2`}
+                  } mr-2 cursor-pointer`}
+                  onClick={() => handleStepChange(2)}
                 >
                   2
                 </div>
@@ -556,6 +608,19 @@ function ExerciseSetForm() {
           )}
 
           {renderStepContent()}
+
+          {/* {Object.keys(form.formState.errors).length > 0 && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+              <p className="font-medium">
+                Please correct the following errors:
+              </p>
+              <ul className="mt-2 list-disc list-inside">
+                {Object.entries(form.formState.errors).map(([field, error]) => (
+                  <li key={field}>{error.message as string}</li>
+                ))}
+              </ul>
+            </div>
+          )} */}
         </form>
       </Form>
     </div>

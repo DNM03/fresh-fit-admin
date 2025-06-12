@@ -138,30 +138,25 @@ function ExerciseInSetForm({
     }));
   };
 
-  // Update the handleInputChange function to make reps and timePerRound mutually exclusive
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     console.log("Input changed:", name, value);
 
-    // Special handling for reps and timePerRound fields
     if (name === "reps" && Number(value) > 0) {
-      // If user enters reps, set timePerRound to 0
       setFormState((prev) => ({
         ...prev,
         [name]: Number(value),
-        timePerRound: 0, // Reset timePerRound when reps is set
+        timePerRound: 0,
       }));
     } else if (name === "timePerRound" && Number(value) > 0) {
-      // If user enters timePerRound, set reps to 0
       setFormState((prev) => ({
         ...prev,
         [name]: Number(value),
-        reps: 0, // Reset reps when timePerRound is set
+        reps: 0,
       }));
     } else {
-      // Normal handling for other fields
       setFormState((prev) => ({
         ...prev,
         [name]: name === "exercise_id" ? value : Number(value),
@@ -182,7 +177,59 @@ function ExerciseInSetForm({
       return;
     }
 
-    // Check that either reps or timePerRound is set, but not both
+    const numericFields = [
+      "duration",
+      "reps",
+      "rounds",
+      "rest_per_round",
+      "estimated_calories_burned",
+      "timePerRound",
+    ];
+
+    const requiredFields = [
+      "duration",
+      "reps",
+      "rounds",
+      "rest_per_round",
+      "estimated_calories_burned",
+      "timePerRound",
+    ];
+    for (const field of requiredFields) {
+      const value = formState[field as keyof typeof formState];
+      if (value === undefined || value === null) {
+        toast.error(
+          `${field
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase())} is required`,
+          {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          }
+        );
+        return;
+      }
+    }
+
+    for (const field of numericFields) {
+      const value = formState[field as keyof typeof formState];
+      if (value !== undefined && value !== null && Number(value) < 0) {
+        toast.error(
+          `${field
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase())} cannot be negative`,
+          {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          }
+        );
+        return;
+      }
+    }
+
     if (
       (formState.reps === 0 || !formState.reps) &&
       (formState.timePerRound === 0 || !formState.timePerRound)
