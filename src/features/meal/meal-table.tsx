@@ -82,7 +82,7 @@ function MealTable({
         header: "Description",
         Cell: ({ row }) => (
           <p>
-            {row.original.description.length > 25
+            {row.original.description?.length > 25
               ? `${row.original.description.substring(0, 25)}...`
               : row.original.description}
           </p>
