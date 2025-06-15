@@ -163,7 +163,7 @@ function AddSpecialistForm() {
       specialization: "",
       experienceYears: undefined,
       bio: "",
-      consultationFee: undefined,
+      consultationFee: 200000,
       certifications: [
         {
           name: "",
@@ -577,7 +577,7 @@ function AddSpecialistForm() {
                   )}
                 />
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="consultationFee"
                   render={({ field }) => (
@@ -598,7 +598,7 @@ function AddSpecialistForm() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
               </div>
 
               <FormField

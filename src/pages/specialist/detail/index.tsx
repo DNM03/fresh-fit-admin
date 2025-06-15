@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns";
 import {
   Star,
   Languages,
-  DollarSign,
+  // DollarSign,
   Ban,
   Check,
   ArrowLeft,
@@ -208,14 +208,14 @@ export default function SpecialistDetailPage() {
   };
 
   // Format money helper
-  const formatMoney = (amount: string) => {
-    const numAmount = parseFloat(amount);
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "VND",
-      maximumFractionDigits: 0,
-    }).format(numAmount);
-  };
+  // const formatMoney = (amount: string) => {
+  //   const numAmount = parseFloat(amount);
+  //   return new Intl.NumberFormat("en-US", {
+  //     style: "currency",
+  //     currency: "VND",
+  //     maximumFractionDigits: 0,
+  //   }).format(numAmount);
+  // };
 
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -344,13 +344,13 @@ export default function SpecialistDetailPage() {
                     {specialist?.experience_years} years of experience
                   </span>
                 </div>
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
                   <span>
                     Fee: {formatMoney(specialist?.consultation_fee || "0")} per
                     session
                   </span>
-                </div>
+                </div> */}
                 <div className="flex items-start">
                   <Languages className="h-4 w-4 mr-2 text-muted-foreground mt-1" />
                   <div>

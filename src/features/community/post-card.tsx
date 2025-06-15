@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Card,
@@ -31,8 +32,20 @@ export default function PostCard({
   onVerify,
   onReject,
 }: PostCardProps) {
+  const [showFullContent, setShowFullContent] = useState(false);
+
   const userName = post?.user?.fullName || "Unknown User";
   const userAvatar = post?.user?.avatar;
+
+  const contentMaxLength = 300;
+  const content = post?.content || "";
+  const isContentLong = content.length > contentMaxLength;
+
+  const displayContent = showFullContent
+    ? content
+    : isContentLong
+    ? content.substring(0, contentMaxLength) + "..."
+    : content;
 
   const getInitials = (name: string) => {
     return name
@@ -81,19 +94,51 @@ export default function PostCard({
             )}
           </div>
         </div>
-        {post.status === "Rejected" &&
+        {(post.status === "Rejected" || post.status === "Pending") &&
           post.postFeedBacks &&
           post.postFeedBacks.length > 0 && (
             <div className="mt-2 mb-2 p-3 bg-red-50 border border-red-200 rounded-md">
               <div className="flex items-start">
                 <XCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
+                <div className="w-full">
                   <h4 className="text-sm font-medium text-red-800">
-                    Not approved for the following reason:
+                    Not approved for the following{" "}
+                    {post.postFeedBacks.length > 1 ? "reasons" : "reason"}:
                   </h4>
-                  <p className="text-sm text-red-700 mt-1">
-                    {post.postFeedBacks[0].comment}
-                  </p>
+                  <div className="mt-1 space-y-2">
+                    {post.postFeedBacks.map((feedback: any, index: number) => (
+                      <div
+                        key={feedback._id || index}
+                        className="text-sm text-red-700"
+                      >
+                        {post.postFeedBacks.length > 1 && (
+                          <span className="font-medium">{index + 1}. </span>
+                        )}
+                        {feedback.comment}
+
+                        {/* Show who provided the feedback and when */}
+                        {feedback.admin && (
+                          <div className="text-xs text-red-600 mt-1">
+                            - {feedback.admin.fullName || "Admin"},
+                            {feedback.created_at && (
+                              <span>
+                                {" "}
+                                {formatDistanceToNow(
+                                  new Date(feedback.created_at),
+                                  { addSuffix: true }
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Add separator if not the last item */}
+                        {index < post.postFeedBacks.length - 1 && (
+                          <div className="border-b border-red-200 my-2"></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -104,7 +149,18 @@ export default function PostCard({
       </CardHeader>
 
       <CardContent className="p-4 pt-0 px-8">
-        <p className="whitespace-pre-line mb-4">{post?.content}</p>
+        <div className="whitespace-pre-line mb-4">
+          <p>{displayContent}</p>
+
+          {isContentLong && (
+            <button
+              onClick={() => setShowFullContent(!showFullContent)}
+              className="text-primary font-medium text-sm mt-2 hover:underline focus:outline-none"
+            >
+              {showFullContent ? "Read less" : "Read more"}
+            </button>
+          )}
+        </div>
         {post.medias && post.medias.length > 0 && (
           <div
             className={`mt-4 ${
