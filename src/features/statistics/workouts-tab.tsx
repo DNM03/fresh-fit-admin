@@ -22,7 +22,11 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
-
+import { TooltipProps } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 interface WorkoutsTabProps {
   timeRange: string;
 }
@@ -70,6 +74,29 @@ interface WeeklyCompletionRate {
   completionRate: number;
   dayName: string;
 }
+
+const CustomWorkoutTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<ValueType, NameType>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 border rounded-md shadow-md">
+        <p className="font-medium">Day {label + 1}</p>
+        <p className="text-sm">
+          <span className="font-medium">Completion Rate:</span>{" "}
+          {payload[0].value}%
+        </p>
+        <p className="text-sm">
+          <span className="font-medium">Completed:</span>{" "}
+          {payload[0].payload.completed} of {payload[0].payload.total}
+        </p>
+      </div>
+    );
+  }
+  return <div className="hidden" />;
+};
 
 export function WorkoutsTab({ timeRange }: WorkoutsTabProps) {
   const [loading, setLoading] = useState(true);
@@ -254,6 +281,7 @@ export function WorkoutsTab({ timeRange }: WorkoutsTabProps) {
                   data={exerciseTypeData}
                   dataKey="value"
                   nameKey="name"
+                  width={600}
                 />
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   {exerciseTypeData
@@ -325,6 +353,7 @@ export function WorkoutsTab({ timeRange }: WorkoutsTabProps) {
                   },
                 ]}
                 yAxisDomain={[0, 100]}
+                customTooltip={CustomWorkoutTooltip}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-[250px]">

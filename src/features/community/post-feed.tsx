@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react"; // Import Search icon
 import { Post } from "@/constants/types";
 import PostCard from "./post-card";
 import postService from "@/services/post.service";
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input"; // Import Input component
+import { Button } from "@/components/ui/button"; // Import Button component
 
 interface PostFeedProps {
   type: "published" | "pending" | "rejected";
@@ -31,10 +33,33 @@ export default function PostFeed({ type }: PostFeedProps) {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const observerTarget = useRef(null);
 
+  // Add search state variables
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounce search input to prevent excessive API calls
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timerId);
+  }, [searchTerm]);
+
+  // Reset everything when search term or type changes
+  useEffect(() => {
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    loadMorePosts();
+  }, [type, debouncedSearchTerm]);
+
   const loadMorePosts = async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
+    setIsSearching(!!debouncedSearchTerm);
 
     try {
       // Map our UI types to API status values
@@ -44,13 +69,14 @@ export default function PostFeed({ type }: PostFeedProps) {
         rejected: "Rejected",
       };
 
-      // Use the real API to fetch posts
+      // Use the real API to fetch posts with search term
       const response = await postService.searchPost({
         page,
         limit: 10,
         status: statusMap[type],
         sort_by: "created_at",
         order_by: "desc",
+        search: debouncedSearchTerm, // Add search keyword
       });
 
       const result = response.data as any;
@@ -83,7 +109,26 @@ export default function PostFeed({ type }: PostFeedProps) {
       setHasMore(false); // Prevent further attempts if there's an error
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Reset everything and force search
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    setDebouncedSearchTerm(searchTerm);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setDebouncedSearchTerm("");
   };
 
   useEffect(() => {
@@ -200,9 +245,69 @@ export default function PostFeed({ type }: PostFeedProps) {
 
   return (
     <div className="space-y-6">
+      {/* Add search bar */}
+      <div className="sticky top-0 bg-white z-10 py-4 border-b">
+        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search posts..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="pl-10 pr-10 w-full"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          <Button type="submit" className="px-4">
+            Search
+          </Button>
+        </form>
+      </div>
+
+      {/* Show search results information */}
+      {debouncedSearchTerm && (
+        <div className="text-sm text-gray-600 pt-2">
+          {isSearching ? (
+            <p>Searching for "{debouncedSearchTerm}"...</p>
+          ) : (
+            <div className="flex justify-between items-center">
+              <p>
+                {posts.length > 0
+                  ? `Found ${posts.length} ${
+                      posts.length === 1 ? "result" : "results"
+                    } for "${debouncedSearchTerm}"`
+                  : `No results found for "${debouncedSearchTerm}"`}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearSearch}
+                className="text-sm"
+              >
+                Clear search
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Show no posts message for initial state or no search results */}
       {posts.length === 0 && !loading ? (
         <div className="text-center py-10">
-          <p className="text-muted-foreground">No posts available</p>
+          {debouncedSearchTerm ? (
+            <p className="text-muted-foreground">No posts match your search</p>
+          ) : (
+            <p className="text-muted-foreground">No posts available</p>
+          )}
         </div>
       ) : (
         // Add index to ensure unique keys even if there are duplicate IDs
@@ -229,7 +334,11 @@ export default function PostFeed({ type }: PostFeedProps) {
 
       {!hasMore && posts.length > 0 && (
         <div className="text-center py-4">
-          <p className="text-muted-foreground">No more posts to load</p>
+          <p className="text-muted-foreground">
+            {debouncedSearchTerm
+              ? "No more matching posts"
+              : "No more posts to load"}
+          </p>
         </div>
       )}
 

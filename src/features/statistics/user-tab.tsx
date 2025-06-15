@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
+  // CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -150,7 +150,12 @@ export function UsersTab({ timeRange }: UsersTabProps) {
           <CardContent className="flex justify-center">
             {userLevels.length > 0 ? (
               <div className="w-full">
-                <PieChart data={userLevels} dataKey="value" nameKey="name" />
+                <PieChart
+                  data={userLevels}
+                  dataKey="value"
+                  nameKey="name"
+                  width={600}
+                />
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   {userLevels.map((level) => (
                     <Badge
@@ -184,6 +189,7 @@ export function UsersTab({ timeRange }: UsersTabProps) {
                   data={intensityLevels}
                   dataKey="value"
                   nameKey="name"
+                  width={600}
                 />
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   {intensityLevels.map((intensity) => (
@@ -264,14 +270,14 @@ export function UsersTab({ timeRange }: UsersTabProps) {
           )}
         </CardContent>
 
-        {userStats?.top_5_active_users &&
+        {/* {userStats?.top_5_active_users &&
           userStats.top_5_active_users.length > 0 && (
             <CardFooter>
               <Button variant="ghost" className="w-full">
                 View all users
               </Button>
             </CardFooter>
-          )}
+          )} */}
       </Card>
     </div>
   );

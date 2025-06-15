@@ -5,29 +5,38 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 
 interface BarChartProps {
   data: any[];
   height?: number;
   layout?: "horizontal" | "vertical";
-  yAxisDomain?: [number, number]; // Added y-axis domain prop
+  yAxisDomain?: [number, number];
   bars: {
     dataKey: string;
     name: string;
     color: string;
     yAxisId?: string;
   }[];
+  customTooltip?: (
+    props: TooltipProps<ValueType, NameType>
+  ) => React.JSX.Element;
 }
 
 export function BarChart({
   data,
   height = 300,
   layout = "horizontal",
-  yAxisDomain, // Accept the domain prop
+  yAxisDomain,
   bars,
+  customTooltip,
 }: BarChartProps) {
   return (
     <div style={{ height: height }}>
@@ -50,16 +59,15 @@ export function BarChart({
           {layout === "horizontal" ? (
             <>
               <XAxis dataKey="name" />
-              <YAxis domain={yAxisDomain} /> {/* Apply domain if provided */}
+              <YAxis domain={yAxisDomain} />
             </>
           ) : (
             <>
-              <XAxis type="number" domain={yAxisDomain} />{" "}
-              {/* Apply domain for vertical layout */}
+              <XAxis type="number" domain={yAxisDomain} />
               <YAxis dataKey="name" type="category" width={100} />
             </>
           )}
-          <Tooltip />
+          <Tooltip content={customTooltip} />
           <Legend />
           {bars.map((bar) => (
             <Bar

@@ -12,6 +12,12 @@ import { Utensils } from "lucide-react";
 import { BarChart } from "./bar-chart";
 import { PieChart } from "./pie-chart";
 import statisticService from "@/services/statistic.service";
+import { TooltipProps } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
+import { enrichItemsWithImages } from "@/lib/utils";
 
 interface NutritionTabProps {
   timeRange: string;
@@ -55,6 +61,31 @@ interface NutritionStats {
   top_5_highest_rating_dishes: TopRatedDish[];
   top_5_most_used_dishes: TopUsedDish[];
 }
+
+const CustomDishesTooltip = ({
+  active,
+  payload,
+}: // label,
+TooltipProps<ValueType, NameType>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 border rounded-md shadow-md">
+        <p className="text-sm">
+          <span className="font-medium">Calories Range:</span>{" "}
+          {payload[0].payload.name}
+        </p>
+        <p className="text-sm">
+          <span className="font-medium">Count:</span> {payload[0].value}
+        </p>
+        {/* <p className="text-sm">
+          <span className="font-medium">Completed:</span>{" "}
+          {payload[0].payload.completed} of {payload[0].payload.total}
+        </p> */}
+      </div>
+    );
+  }
+  return <div className="hidden" />;
+};
 
 export function NutritionTab({ timeRange }: NutritionTabProps) {
   const [loading, setLoading] = useState(true);
@@ -124,6 +155,16 @@ export function NutritionTab({ timeRange }: NutritionTabProps) {
       try {
         const response = await statisticService.getNutritionStats();
         if (response.data?.result) {
+          const enriched = await enrichItemsWithImages<any>(
+            response.data.result.top_5_highest_rating_dishes,
+            (item) => item.name
+          );
+          const topUsedEnriched = await enrichItemsWithImages<any>(
+            response.data.result.top_5_most_used_dishes,
+            (item) => item.name
+          );
+          response.data.result.top_5_highest_rating_dishes = enriched;
+          response.data.result.top_5_most_used_dishes = topUsedEnriched;
           setNutritionStats(response.data.result);
         }
       } catch (err) {
@@ -169,7 +210,7 @@ export function NutritionTab({ timeRange }: NutritionTabProps) {
             {calorieDistributionData.length > 0 ? (
               <BarChart
                 data={calorieDistributionData}
-                height={250}
+                height={300}
                 bars={[
                   {
                     dataKey: "count",
@@ -177,6 +218,7 @@ export function NutritionTab({ timeRange }: NutritionTabProps) {
                     color: "#FF6B6B",
                   },
                 ]}
+                customTooltip={CustomDishesTooltip}
               />
             ) : (
               <div className="flex items-center justify-center h-[250px] text-muted-foreground">
@@ -194,7 +236,12 @@ export function NutritionTab({ timeRange }: NutritionTabProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <PieChart data={macroData} dataKey="value" nameKey="name" />
+            <PieChart
+              data={macroData}
+              dataKey="value"
+              nameKey="name"
+              width={600}
+            />
           </CardContent>
           <CardFooter className="pt-0 border-t px-6 py-4">
             <div className="w-full text-center text-sm text-muted-foreground">
