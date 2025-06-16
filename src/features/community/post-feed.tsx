@@ -18,6 +18,7 @@ import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input"; // Import Input component
 import { Button } from "@/components/ui/button"; // Import Button component
+import { userService } from "@/services";
 
 interface PostFeedProps {
   type: "published" | "pending" | "rejected";
@@ -37,6 +38,22 @@ export default function PostFeed({ type }: PostFeedProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  const [myProfile, setMyProfile] = useState<any>(null);
+
+  const fetchMyProfile = async () => {
+    try {
+      const response = await userService.getCurrentUser();
+      if (response.data) {
+        setMyProfile(response.data.result);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+  useEffect(() => {
+    fetchMyProfile();
+  }, []);
 
   // Debounce search input to prevent excessive API calls
   useEffect(() => {
@@ -243,6 +260,58 @@ export default function PostFeed({ type }: PostFeedProps) {
     );
   };
 
+  const handleLikePost = async (postId: string, current_user_react: any) => {
+    try {
+      let res = null;
+      if (current_user_react === null)
+        res = await postService.reactPost(postId, myProfile?._id, "Like");
+      else
+        res = await postService.deletePostReaction(
+          postId,
+          current_user_react._id
+        );
+
+      setPosts((currentPosts) =>
+        currentPosts.map((post) => {
+          if (post._id === postId) {
+            if (post.reactions.current_user_react !== null) {
+              return {
+                ...post,
+                reactions: {
+                  ...post.reactions,
+                  current_user_react: null,
+                  Like: post.reactions.Like - 1,
+                },
+              };
+            } else {
+              return {
+                ...post,
+                reactions: {
+                  ...post.reactions,
+                  current_user_react: {
+                    user_id: myProfile?._id,
+                    reaction: "Like",
+                    _id: res.data.reaction._id,
+                  },
+                  Like: post.reactions.Like + 1,
+                },
+              };
+            }
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error("Error liking post:", error);
+      toast.error("Failed to like post", {
+        style: {
+          background: "#ff4d4f",
+          color: "#fff",
+        },
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Add search bar */}
@@ -320,6 +389,7 @@ export default function PostFeed({ type }: PostFeedProps) {
             onReject={handleOpenRejectDialog}
             onToggleLike={handleToggleLike}
             onToggleSave={handleToggleSave}
+            onLikePost={handleLikePost}
           />
         ))
       )}

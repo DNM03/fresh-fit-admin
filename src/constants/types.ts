@@ -101,6 +101,14 @@ export interface Post {
   isSaved: boolean;
   createdAt: string;
   status: "published" | "pending";
+  reactions: {
+    current_user_react: {
+      user_id: string;
+      reaction: string;
+      _id: string;
+    } | null;
+    Like: number;
+  };
 }
 
 export type DishType = {

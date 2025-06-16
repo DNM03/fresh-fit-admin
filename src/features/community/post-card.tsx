@@ -24,6 +24,7 @@ interface PostCardProps {
   onReject: (postId: string) => void;
   onToggleLike: (postId: string) => void;
   onToggleSave: (postId: string) => void;
+  onLikePost?: (postId: string, current_user_react: any) => void;
 }
 
 export default function PostCard({
@@ -31,6 +32,7 @@ export default function PostCard({
   isAdmin,
   onVerify,
   onReject,
+  onLikePost,
 }: PostCardProps) {
   const [showFullContent, setShowFullContent] = useState(false);
 
@@ -219,12 +221,24 @@ export default function PostCard({
 
       <CardFooter className="p-4 pt-0 flex flex-wrap gap-4 items-center px-8">
         <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-1 text-red-500`}>
-            <Heart className={`h-5 w-5 fill-red-500`} />
-            <span>
-              {post?.reactions?.Like > 0 ? post?.reactions?.Like : "0"}
-            </span>
-          </div>
+          <button
+            className={`flex items-center gap-1 hover:cursor-pointer ${
+              post.reactions.current_user_react ? "text-red-500" : ""
+            }`}
+            onClick={() => {
+              if (onLikePost) {
+                onLikePost(post._id, post.reactions.current_user_react);
+              }
+            }}
+            disabled={post.status !== "Published"}
+          >
+            <Heart
+              className={`h-4 w-4 ${
+                post.reactions.current_user_react ? "fill-current" : ""
+              }`}
+            />
+            <span>{post.reactions ? post.reactions.Like : ""}</span>
+          </button>
 
           {/* <Button
             variant="ghost"
