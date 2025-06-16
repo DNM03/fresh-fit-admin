@@ -79,6 +79,14 @@ class PostService {
   rejectPost(id: string, data: any): Promise<AxiosResponse> {
     return apiService.post<AxiosResponse>(`/posts/reject/${id}`, data);
   }
+  deletePostReaction(
+    postId: string,
+    reactionId: string
+  ): Promise<AxiosResponse> {
+    return apiService.delete<AxiosResponse>(
+      `/posts/${postId}/reactions/${reactionId}`
+    );
+  }
 }
 
 const postService = new PostService();
