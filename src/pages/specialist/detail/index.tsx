@@ -709,7 +709,7 @@ export default function SpecialistDetailPage() {
                                 </Avatar>
                                 <div>
                                   <p className="font-medium">
-                                    User {review.userId.substring(0, 8)}...
+                                    User {review.userId.substring(review.userId.length - 4)}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
                                     {formatDate(review.createdAt)}
