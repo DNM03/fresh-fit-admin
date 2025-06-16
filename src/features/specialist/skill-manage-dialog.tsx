@@ -129,7 +129,12 @@ export default function SkillManageDialog({
 
     try {
       await skillService.deleteSkill([skillToDelete.id]);
-      toast.success("Skill deleted successfully");
+      toast.success("Skill deleted successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       onSkillsChange();
 
       setDeleteConfirmOpen(false);
@@ -139,7 +144,32 @@ export default function SkillManageDialog({
       }, 100);
     } catch (error) {
       console.error("Error deleting skill:", error);
-      toast.error("Failed to delete skill");
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 400
+      ) {
+        toast.error(
+          "Failed to delete skill. This skill is being used by another specialist",
+          {
+            style: {
+              background: "#cc3131",
+              color: "#fff",
+            },
+          }
+        );
+      } else {
+        toast.error("Failed to delete skill", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -170,10 +200,20 @@ export default function SkillManageDialog({
     try {
       if (isCreating) {
         await skillService.addSkill(formName);
-        toast.success("Skill created successfully");
+        toast.success("Skill created successfully", {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        });
       } else if (isEditing && currentSkill) {
         await skillService.updateSkill(currentSkill.id, formName);
-        toast.success("Skill updated successfully");
+        toast.success("Skill updated successfully", {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        });
       }
 
       resetForm();
@@ -183,7 +223,37 @@ export default function SkillManageDialog({
       onSkillsChange();
     } catch (error) {
       console.error("Error saving skill:", error);
-      toast.error("Failed to save skill");
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 400 &&
+        "data" in error.response
+      ) {
+        const errorMessage =
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "message" in error.response.data &&
+          typeof error.response.data.message === "string"
+            ? error.response.data.message
+            : "Failed to save skill";
+        toast.error(errorMessage, {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+      } else {
+        toast.error("Failed to save skill", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
