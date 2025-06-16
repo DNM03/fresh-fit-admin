@@ -290,7 +290,8 @@ function DashboardPage() {
           <CardHeader>
             <CardTitle>Current Challenges</CardTitle>
             <CardDescription>
-              Active fitness challenges with participation
+              Active fitness challenges with participation and progress of
+              participants
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">

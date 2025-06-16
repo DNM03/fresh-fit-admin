@@ -113,6 +113,13 @@ interface SpecialistDetail {
     email?: string;
     date_of_birth?: string;
   };
+  reviews?: {
+    id: string;
+    userId: string;
+    content: string;
+    rating: number;
+    createdAt: string;
+  }[];
 }
 
 export default function SpecialistDetailPage() {
@@ -225,6 +232,18 @@ export default function SpecialistDetailPage() {
       .slice(0, 2)
       .join("")
       .toUpperCase();
+  };
+
+  const calculateRatingDistribution = (reviews: any[] = []) => {
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+    if (!reviews || reviews.length === 0) return distribution;
+
+    reviews.forEach((review) => {
+      distribution[review.rating as keyof typeof distribution] += 1;
+    });
+
+    return distribution;
   };
 
   // Render loading state
@@ -436,6 +455,9 @@ export default function SpecialistDetailPage() {
               <TabsTrigger value="skills" className="flex-1">
                 Skills
               </TabsTrigger>
+              <TabsTrigger value="reviews" className="flex-1">
+                Reviews
+              </TabsTrigger>
             </TabsList>
 
             {/* Experience Tab */}
@@ -605,6 +627,123 @@ export default function SpecialistDetailPage() {
                     </div>
                   </div>
                 </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="reviews" className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg">Client Reviews</CardTitle>
+                    <div className="flex items-center">
+                      <Star className="h-5 w-5 text-yellow-500 mr-1 fill-yellow-500" />
+                      <span className="font-medium">
+                        {specialist?.rating || 0}
+                      </span>
+                      <span className="text-muted-foreground ml-1">
+                        ({specialist?.total_reviews || 0} reviews)
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {!specialist?.reviews || specialist.reviews.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No reviews yet.
+                    </div>
+                  ) : (
+                    <>
+                      {/* Rating Breakdown */}
+                      <div className="mb-6 bg-gray-50 p-4 rounded-md">
+                        <h3 className="text-sm font-medium mb-3">
+                          Rating Breakdown
+                        </h3>
+                        {Object.entries(
+                          calculateRatingDistribution(specialist.reviews)
+                        )
+                          .reverse()
+                          .map(([rating, count]) => {
+                            const percentage =
+                              specialist?.reviews &&
+                              specialist.reviews.length > 0
+                                ? (count / specialist.reviews.length) * 100
+                                : 0;
+
+                            return (
+                              <div
+                                key={rating}
+                                className="flex items-center mb-2 last:mb-0"
+                              >
+                                <div className="w-8 text-sm">{rating} ★</div>
+                                <div className="flex-1 mx-2">
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-yellow-500 h-2 rounded-full"
+                                      style={{ width: `${percentage}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-muted-foreground w-8">
+                                  {count}
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+
+                      {/* Reviews List */}
+                      <div className="space-y-6">
+                        {specialist.reviews.map((review) => (
+                          <div
+                            key={review.id}
+                            className="border-b pb-4 last:border-0 last:pb-0"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center">
+                                <Avatar className="h-8 w-8 mr-2">
+                                  <AvatarFallback>
+                                    {review.userId
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">
+                                    User {review.userId.substring(0, 8)}...
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatDate(review.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${
+                                      i < review.rating
+                                        ? "text-yellow-500 fill-yellow-500"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm">{review.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+                {specialist?.reviews && specialist.reviews.length > 0 && (
+                  <CardFooter className="border-t pt-4 flex justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {specialist.reviews.length} of{" "}
+                      {specialist.total_reviews} reviews
+                    </div>
+                  </CardFooter>
+                )}
               </Card>
             </TabsContent>
           </Tabs>

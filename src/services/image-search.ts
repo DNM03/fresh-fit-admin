@@ -6,7 +6,7 @@ export const getImageThumbnailLink = async (
 ): Promise<string> => {
   try {
     const header = {
-      "X-API-KEY": process.env.EXPO_PUBLIC_SERPER_API_KEY,
+      "X-API-KEY": import.meta.env.VITE_SERPER_API_KEY,
     };
     const searchQuery = {
       q: searchTerm, // image name
