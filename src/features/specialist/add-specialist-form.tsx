@@ -42,6 +42,7 @@ import specialistService from "@/services/specialist.service";
 import mediaService from "@/services/media.service";
 import { toast } from "sonner";
 import SkillManageDialog from "./skill-manage-dialog";
+import { useNavigate } from "react-router-dom";
 
 const certificationSchema = z.object({
   name: z.string().min(1, "Certification name is required"),
@@ -141,6 +142,7 @@ function AddSpecialistForm() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [skills, setSkills] = useState<any>([]);
+  const navigate = useNavigate();
   const fetchSkills = async () => {
     try {
       const response = await specialistService.getSkills();
@@ -217,10 +219,46 @@ function AddSpecialistForm() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setProfileImage(URL.createObjectURL(file));
-      setProfileImageFile(file);
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
+      // Reset the input
+      e.target.value = "";
+      return;
     }
+
+    // Check file size - 5MB limit
+    const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSizeInBytes) {
+      toast.error("Image size must be less than 5MB", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
+      // Reset the input
+      e.target.value = "";
+      return;
+    }
+
+    // File is valid, set it
+    setProfileImage(URL.createObjectURL(file));
+    setProfileImageFile(file);
+
+    // Show success message
+    toast.success("Profile image uploaded successfully", {
+      style: {
+        background: "#3ac76b",
+        color: "#fff",
+      },
+    });
   };
 
   const handleLanguageSelect = (language: string) => {
@@ -304,6 +342,7 @@ function AddSpecialistForm() {
           color: "#fff",
         },
       });
+      navigate(-1);
     } catch (error: unknown) {
       console.error("Error creating specialist account:", error);
       if (
@@ -368,11 +407,11 @@ function AddSpecialistForm() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center">
+                <div className="flex flex-col items-center">
                   <label htmlFor="profile-upload" className="cursor-pointer">
                     <div className="flex items-center gap-2 text-sm text-primary">
                       <Upload size={16} />
-                      <span>Upload photo</span>
+                      <span>Upload photo (max 5MB)</span>
                     </div>
                     <input
                       id="profile-upload"
@@ -382,6 +421,9 @@ function AddSpecialistForm() {
                       onChange={handleImageUpload}
                     />
                   </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Recommended: Square image, 300×300px or larger
+                  </p>
                 </div>
               </div>
 
