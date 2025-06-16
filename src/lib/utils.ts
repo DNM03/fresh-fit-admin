@@ -18,6 +18,7 @@ export async function mapWithThrottle<T, R>(
   const tasks = items?.map((item, index) => limit(() => mapper(item, index)));
   return Promise.all(tasks);
 }
+
 export async function enrichItemsWithImages<T>(
   items: T[],
   getSearchTerm: (item: T) => string,
@@ -36,19 +37,40 @@ export async function enrichItemsWithImages<T>(
       const term = getSearchTerm(item);
 
       // ✅ Check AsyncStorage cache
-      // const cached = await getCachedImage(term);
-      // if (cached) {
-      //   return assignImage(item, cached);
-      // }
+      const cached = await getCachedImage(term);
+      if (cached) {
+        return assignImage(item, cached);
+      }
 
       // 🚀 Fetch and cache
       const imageUrl = await getImageThumbnailLink(term);
       const finalImage = imageUrl || NotFoundLink;
 
-      // await setCachedImage(term, finalImage);
+      await setCachedImage(term, finalImage);
 
       return assignImage(item, finalImage);
     },
     concurrency
   );
+}
+const CACHE_KEY_PREFIX = "image_cache_";
+async function getCachedImage(term: string): Promise<string | null> {
+  try {
+    const cached = await localStorage.getItem(CACHE_KEY_PREFIX + term);
+    console.log(`🚀 ~ getCachedImage ~ ${term}:`, cached);
+
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+async function setCachedImage(term: string, url: string): Promise<void> {
+  try {
+    await localStorage.setItem(CACHE_KEY_PREFIX + term, url);
+    console.log(`🚀 ~ setCachedImage ~ ${term}:`, CACHE_KEY_PREFIX + term);
+  } catch (error) {
+    // Ignore write error
+    console.warn(`Failed to cache image for ${term}:`, error);
+  }
 }

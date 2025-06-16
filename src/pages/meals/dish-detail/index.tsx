@@ -36,6 +36,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import AddIngredientToDishForm from "@/features/meal/add-ingredient-to-dish-form";
 import UpdateDishIngredientForm from "@/features/meal/update-dish-ingredient-form";
 import { toast } from "sonner";
+import { enrichItemsWithImages } from "@/lib/utils";
 
 interface Ingredient {
   _id: string;
@@ -108,7 +109,11 @@ function DishDetail() {
         setLoading(true);
         const response = await dishService.getDishById(id);
         if (response.data?.dish) {
-          setDish(response.data.dish);
+          const enrichedDish = await enrichItemsWithImages<any>(
+            [response.data.dish],
+            (item) => item.name
+          );
+          setDish(enrichedDish[0]);
         } else {
           setError("Dish not found");
         }
