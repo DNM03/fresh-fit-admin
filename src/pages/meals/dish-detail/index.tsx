@@ -79,6 +79,7 @@ interface DishType {
   ingredients: IngredientInDish[];
   created_at?: string;
   updated_at?: string;
+  is_custom?: boolean;
 }
 
 function DishDetail() {
@@ -254,7 +255,11 @@ function DishDetail() {
             onOpenChange={setIsUpdateDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center">
+              <Button
+                variant="outline"
+                className="flex items-center"
+                disabled={dish.is_custom === false}
+              >
                 <Edit className="mr-2 h-4 w-4" /> Edit Dish
               </Button>
             </DialogTrigger>
@@ -358,7 +363,7 @@ function DishDetail() {
                           Prep Time
                         </p>
                         <p className="text-xl font-bold text-green-700">
-                          {dish.prep_time} min
+                          {dish.prep_time / 60} min
                         </p>
                       </div>
                       <div className="bg-blue-50 p-3 rounded-md">

@@ -156,7 +156,11 @@ function ExerciseDetail() {
             onOpenChange={setIsUpdateDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center">
+              <Button
+                variant="outline"
+                className="flex items-center"
+                disabled={exercise.is_custom === false}
+              >
                 <Edit className="mr-2 h-4 w-4" /> Edit Exercise
               </Button>
             </DialogTrigger>
@@ -184,7 +188,11 @@ function ExerciseDetail() {
             onOpenChange={setIsDeleteDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button variant="destructive" className="flex items-center">
+              <Button
+                variant="destructive"
+                className="flex items-center"
+                disabled={exercise.is_custom === false}
+              >
                 <Trash2 className="mr-2 h-4 w-4" /> Delete Exercise
               </Button>
             </DialogTrigger>

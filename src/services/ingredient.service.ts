@@ -41,6 +41,9 @@ class IngredientService {
   deleteIngredient(id: string): Promise<AxiosResponse> {
     return apiService.delete(`/ingredients/${id}`);
   }
+  getIngredientByName(name: string): Promise<AxiosResponse<any>> {
+    return apiService.get<any>(`/ingredients/external?search=${name}`);
+  }
 }
 
 const ingredientService = new IngredientService();

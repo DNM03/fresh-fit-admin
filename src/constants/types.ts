@@ -53,6 +53,7 @@ export type ExerciseType = {
     name: string;
     image?: string;
   };
+  is_custom?: boolean;
 };
 export type CreateExerciseSetType = {
   name: string;
