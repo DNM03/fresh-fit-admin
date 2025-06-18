@@ -196,6 +196,17 @@ export default function DishForm() {
         })),
         image: imageRes ? imageRes?.result?.url : "",
         rating: 0,
+        instruction: data.instruction.replace(/\n/g, "|"),
+        prep_time: Number(data.prep_time) * 60 || 0,
+        calories: Number(data.calories) || 0,
+        fat: Number(data.fat) || 0,
+        saturatedFat: Number(data.saturatedFat) || 0,
+        cholesterol: Number(data.cholesterol) || 0,
+        sodium: Number(data.sodium) || 0,
+        carbohydrate: Number(data.carbohydrate) || 0,
+        fiber: Number(data.fiber) || 0,
+        sugar: Number(data.sugar) || 0,
+        protein: Number(data.protein) || 0,
       };
       const response = await dishService.addDish(finalData);
       if (response) {
