@@ -48,8 +48,11 @@ export default function ChallengeForm() {
     fat_percent: 0,
     weight_loss_target: 0,
     status: "Inactive",
-    start_date: new Date(),
-    end_date: addWeeks(new Date(), 4),
+    start_date: new Date(new Date().setDate(new Date().getDate() + 1)),
+    end_date: addWeeks(
+      new Date(new Date().setDate(new Date().getDate() + 1)),
+      4
+    ),
     weeks_duration: 4,
     health_plan_id: null,
   };
@@ -351,7 +354,7 @@ export default function ChallengeForm() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <InputWithLabel<AddUpdateChallengeData>
                   fieldTitle="Challenge Name"
                   nameInSchema="name"

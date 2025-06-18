@@ -532,6 +532,11 @@ function HealthPlanDetail() {
                                         <div
                                           key={workout._id}
                                           className="border rounded-md p-3 bg-gray-50"
+                                          onClick={() =>
+                                            navigate(
+                                              `/manage-exercises/exercise-sets/${setDetail._id}`
+                                            )
+                                          }
                                         >
                                           <div className="flex justify-between items-center">
                                             <div>
@@ -579,6 +584,11 @@ function HealthPlanDetail() {
                                         <div
                                           key={nutrition._id}
                                           className="border rounded-md p-3 bg-gray-50"
+                                          onClick={() =>
+                                            navigate(
+                                              `/manage-meals/meals/${mealDetail._id}`
+                                            )
+                                          }
                                         >
                                           <div className="flex justify-between items-center">
                                             <div>
