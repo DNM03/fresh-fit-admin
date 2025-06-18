@@ -189,7 +189,8 @@ export default function HealthPlanSelector({
                 </div>
               ) : plans?.length > 0 ? (
                 plans?.map((plan) => (
-                  <div
+                  <button
+                    type="button"
                     key={plan._id}
                     className={`border p-3 rounded-md cursor-pointer ${
                       selectedPlanId === plan._id
@@ -197,6 +198,9 @@ export default function HealthPlanSelector({
                         : ""
                     }`}
                     onClick={() => handleCheckboxChange(plan._id)}
+                    disabled={
+                      plan.challenge !== null || plan.challenge !== undefined
+                    }
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -215,19 +219,23 @@ export default function HealthPlanSelector({
                           </div>
                         </div>
                       </div>
-                      <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          selectedPlanId === plan._id
-                            ? "border-blue-500 bg-blue-500 text-white"
-                            : ""
-                        }`}
-                      >
-                        {selectedPlanId === plan._id && (
-                          <div className="h-3 w-3 rounded-full bg-white" />
-                        )}
-                      </div>
+                      {!(
+                        plan.challenge !== null || plan.challenge !== undefined
+                      ) && (
+                        <div
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                            selectedPlanId === plan._id
+                              ? "border-blue-500 bg-blue-500 text-white"
+                              : ""
+                          }`}
+                        >
+                          {selectedPlanId === plan._id && (
+                            <div className="h-3 w-3 rounded-full bg-white" />
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </button>
                 ))
               ) : (
                 <div className="col-span-2 text-center py-8">
