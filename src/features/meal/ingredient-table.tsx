@@ -66,27 +66,27 @@ function IngredientTable({
         header: "Name",
       },
 
-      {
-        accessorKey: "calories",
-        header: "Calories",
-      },
+      // {
+      //   accessorKey: "calories",
+      //   header: "Calories",
+      // },
 
-      {
-        accessorKey: "protein",
-        header: "Protein",
-      },
-      {
-        accessorKey: "description",
-        header: "Description",
-        Cell: ({ row }) => (
-          <p>
-            {row.original.description.length > 25
-              ? `${row.original.description.substring(0, 25)}...`
-              : row.original.description}
-          </p>
-        ),
-        enableSorting: false,
-      },
+      // {
+      //   accessorKey: "protein",
+      //   header: "Protein",
+      // },
+      // {
+      //   accessorKey: "description",
+      //   header: "Description",
+      //   Cell: ({ row }) => (
+      //     <p>
+      //       {row.original.description.length > 25
+      //         ? `${row.original.description.substring(0, 25)}...`
+      //         : row.original.description}
+      //     </p>
+      //   ),
+      //   enableSorting: false,
+      // },
     ],
     []
   );
@@ -101,7 +101,11 @@ function IngredientTable({
       state={{ pagination, isLoading, globalFilter, sorting }}
       enableRowActions={true}
       onActionClick={(row) => {
-        navigate(`/manage-meals/ingredients/${row.original._id}`);
+        navigate(`/manage-meals/ingredients/${row.original._id}`, {
+          state: {
+            ingredientData: row.original,
+          },
+        });
       }}
       onGlobalFilterChange={setGlobalFilter}
       enableColumnFilters={false}

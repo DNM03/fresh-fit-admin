@@ -1,13 +1,27 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React, { useRef, useState } from "react"; // Add useRef and useState
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, RefreshCw } from "lucide-react"; // Add RefreshCw
+import { PlusCircle, RefreshCw, Loader2 } from "lucide-react";
 import IngredientTable from "./ingredient-table";
 import DishTable from "./dish-table";
 import MealTable from "./meal-table";
+
+// Import additional components for the dialog
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import ingredientService from "@/services/ingredient.service"; // Import your ingredient service
 
 function MealTab() {
   const [activeTab, setActiveTab] = React.useState("meals");
@@ -21,9 +35,16 @@ function MealTab() {
   // Add refs to store refetch functions
   const refetchMealsRef = useRef<(() => void | Promise<any>) | null>(null);
   const refetchDishesRef = useRef<(() => void | Promise<any>) | null>(null);
-  const refetchIngredientsRef = useRef<(() => void | Promise<any>) | null>(null);
+  const refetchIngredientsRef = useRef<(() => void | Promise<any>) | null>(
+    null
+  );
 
-  // Add handlers for refresh buttons
+  // Add state for the ingredient dialog
+  const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
+  const [ingredientName, setIngredientName] = useState("");
+  const [isAddingIngredient, setIsAddingIngredient] = useState(false);
+
+  // Existing code for refetch handlers...
   const handleRefetchMeals = () => {
     if (refetchMealsRef.current) {
       setIsRefetchingMeals(true);
@@ -67,21 +88,62 @@ function MealTab() {
   };
 
   // Add functions to register refetch callbacks
-  const registerMealRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerMealRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchMealsRef.current = refetchFn;
   };
 
-  const registerDishRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerDishRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchDishesRef.current = refetchFn;
   };
 
-  const registerIngredientRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerIngredientRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchIngredientsRef.current = refetchFn;
+  };
+
+  // Add function to handle adding an ingredient
+  const handleAddIngredient = async () => {
+    if (!ingredientName.trim()) {
+      toast.error("Please enter an ingredient name");
+      return;
+    }
+
+    setIsAddingIngredient(true);
+    try {
+      const response = await ingredientService.addIngredient({
+        name: ingredientName.trim(),
+        description: "t",
+        calories: 0,
+        image:
+          "https://sahabatlautlestari.com/wp-content/uploads/2023/05/Tuna-Species-Overview-2048x1311.png",
+      });
+
+      toast.success("Ingredient added successfully");
+      setIngredientName("");
+      setIsAddIngredientOpen(false);
+
+      if (refetchIngredientsRef.current) {
+        refetchIngredientsRef.current();
+      }
+
+      console.log("Ingredient created:", response);
+    } catch (error) {
+      console.error("Error adding ingredient:", error);
+      toast.error("Failed to add ingredient. Please try again.");
+    } finally {
+      setIsAddingIngredient(false);
+    }
   };
 
   return (
     <div className="w-full space-y-6 max-w-6xl mx-auto">
       <Tabs className="w-full" value={activeTab} onValueChange={setActiveTab}>
+        {/* Existing code for tab headers */}
         <div className="border-b">
           <div className="px-6 relative">
             <TabsList className="grid grid-cols-3 mb-6 bg-muted shadow-md overflow-hidden w-full relative !px-0">
@@ -125,6 +187,7 @@ function MealTab() {
           </div>
         </div>
         <div className="container mx-auto px-4 py-6">
+          {/* Meals tab content */}
           <TabsContent value="meals" className="mt-0 p-0">
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
@@ -142,7 +205,9 @@ function MealTab() {
                         isRefetchingMeals ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingMeals ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingMeals ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -161,6 +226,7 @@ function MealTab() {
             </Card>
           </TabsContent>
 
+          {/* Dishes tab content */}
           <TabsContent value="dishes" className="mt-0 p-0">
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
@@ -178,7 +244,9 @@ function MealTab() {
                         isRefetchingDishes ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingDishes ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingDishes ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -197,6 +265,7 @@ function MealTab() {
             </Card>
           </TabsContent>
 
+          {/* Ingredients tab content */}
           <TabsContent value="ingredients" className="mt-0 p-0">
             <Card className="border-none shadow-sm bg-background">
               <CardHeader className="px-6 py-4 flex flex-row items-center justify-between space-y-0 rounded-t-lg">
@@ -204,7 +273,6 @@ function MealTab() {
                   Ingredients
                 </h2>
                 <div className="flex gap-2">
-                  {/* Add refresh button for ingredients */}
                   <Button
                     className="flex items-center gap-2 px-4"
                     variant={"outline"}
@@ -216,11 +284,15 @@ function MealTab() {
                         isRefetchingIngredients ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingIngredients ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingIngredients ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
+
+                  {/* Change this to open the dialog */}
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
-                    onClick={() => navigate("add-ingredient")}
+                    onClick={() => setIsAddIngredientOpen(true)}
                   >
                     <PlusCircle className="h-4 w-4" />
                     <span>Add Ingredient</span>
@@ -229,13 +301,72 @@ function MealTab() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <IngredientTable onRefetchTriggered={registerIngredientRefetchFunction} />
+                  <IngredientTable
+                    onRefetchTriggered={registerIngredientRefetchFunction}
+                  />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </div>
       </Tabs>
+
+      {/* Add Ingredient Dialog */}
+      <Dialog open={isAddIngredientOpen} onOpenChange={setIsAddIngredientOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Ingredient</DialogTitle>
+            <DialogDescription>
+              Enter the name of the ingredient you want to add.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col  gap-4">
+              <Label htmlFor="ingredient-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="ingredient-name"
+                value={ingredientName}
+                onChange={(e) => setIngredientName(e.target.value)}
+                className="col-span-3"
+                placeholder="Eg, Chicken Breast"
+                autoComplete="off"
+                disabled={isAddingIngredient}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isAddingIngredient) {
+                    e.preventDefault();
+                    handleAddIngredient();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddIngredientOpen(false)}
+              disabled={isAddingIngredient}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddIngredient}
+              disabled={!ingredientName.trim() || isAddingIngredient}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              {isAddingIngredient ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Ingredient"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
