@@ -316,7 +316,7 @@ function IngredientDetail() {
               <DialogHeader>
                 <DialogTitle>Confirm Deletion</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete "{displayName}"? This action
+                  Are you sure you want to delete "{passedState}"? This action
                   cannot be undone.
                 </DialogDescription>
               </DialogHeader>
@@ -345,7 +345,7 @@ function IngredientDetail() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-2xl font-bold">
-                {displayName}
+                {passedState}
               </CardTitle>
               <div className="flex items-center mt-2">
                 <Badge className="bg-primary/10 text-primary mr-2">

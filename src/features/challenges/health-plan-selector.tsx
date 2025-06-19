@@ -192,10 +192,14 @@ export default function HealthPlanSelector({
                   <button
                     type="button"
                     key={plan._id}
-                    className={`border p-3 rounded-md cursor-pointer ${
-                      selectedPlanId === plan._id
-                        ? "border-blue-500 bg-blue-50"
-                        : ""
+                    className={`border p-3 rounded-md transition-all duration-200 ${
+                      plan.challenge !== null && plan.challenge !== undefined
+                        ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                        : `cursor-pointer ${
+                            selectedPlanId === plan._id
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                          }`
                     }`}
                     onClick={() => handleCheckboxChange(plan._id)}
                     disabled={
@@ -204,17 +208,54 @@ export default function HealthPlanSelector({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="font-medium">{plan.name}</div>
-                        <div className="text-sm text-gray-500 line-clamp-1">
+                        <div
+                          className={`font-medium ${
+                            plan.challenge !== null &&
+                            plan.challenge !== undefined
+                              ? "text-gray-400"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {plan.name}
+                        </div>
+                        <div
+                          className={`text-sm line-clamp-1 ${
+                            plan.challenge !== null &&
+                            plan.challenge !== undefined
+                              ? "text-gray-300"
+                              : "text-gray-500"
+                          }`}
+                        >
                           {plan.description}
                         </div>
-                        <div className="flex items-center mt-1 text-xs text-gray-600 space-x-3">
+                        <div
+                          className={`flex items-center mt-1 text-xs space-x-3 ${
+                            plan.challenge !== null &&
+                            plan.challenge !== undefined
+                              ? "text-gray-300"
+                              : "text-gray-600"
+                          }`}
+                        >
                           <div className="flex items-center">
-                            <CalendarRange className="h-3.5 w-3.5 mr-1 text-blue-600" />
+                            <CalendarRange
+                              className={`h-3.5 w-3.5 mr-1 ${
+                                plan.challenge !== null &&
+                                plan.challenge !== undefined
+                                  ? "text-gray-300"
+                                  : "text-blue-600"
+                              }`}
+                            />
                             <span>{plan.number_of_weeks} weeks</span>
                           </div>
                           <div className="flex items-center">
-                            <Dumbbell className="h-3.5 w-3.5 mr-1 text-green-600" />
+                            <Dumbbell
+                              className={`h-3.5 w-3.5 mr-1 ${
+                                plan.challenge !== null &&
+                                plan.challenge !== undefined
+                                  ? "text-gray-300"
+                                  : "text-green-600"
+                              }`}
+                            />
                             <span>{plan.level}</span>
                           </div>
                         </div>
@@ -226,7 +267,7 @@ export default function HealthPlanSelector({
                           className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                             selectedPlanId === plan._id
                               ? "border-blue-500 bg-blue-500 text-white"
-                              : ""
+                              : "border-gray-300"
                           }`}
                         >
                           {selectedPlanId === plan._id && (

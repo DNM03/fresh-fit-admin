@@ -11,6 +11,8 @@ class MealService {
     order_by,
     meal_type,
     search,
+    min_calories,
+    max_calories,
   }: {
     page?: number;
     limit?: number;
@@ -19,13 +21,17 @@ class MealService {
     order_by?: string;
     search?: string;
     meal_type?: string;
+    min_calories?: number;
+    max_calories?: number;
   }): Promise<AxiosResponse<any>> {
     return apiService.get<any>(
       `/meals?page=${page}&limit=${limit}${type ? `&type=${type}` : ""}${
         sort_by ? `&sort_by=${sort_by}` : ""
       }${order_by ? `&order_by=${order_by}` : ""}${
         meal_type ? `&meal_type=${meal_type}` : ""
-      }${search ? `&search=${search}` : ""}`
+      }${search ? `&search=${search}` : ""}${
+        min_calories ? `&min_calories=${min_calories}` : ""
+      }${max_calories ? `&max_calories=${max_calories}` : ""}`
     );
   }
   getMealById(id: string): Promise<AxiosResponse<any>> {
