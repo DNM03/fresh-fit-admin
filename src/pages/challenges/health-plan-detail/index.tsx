@@ -213,7 +213,12 @@ function HealthPlanDetail() {
       navigate(-1);
     } catch (err) {
       console.error("Error deleting health plan:", err);
-      toast.error("Failed to delete health plan. Please try again.", {
+      let errorMessage = "An error occurred";
+      if (err && typeof err === "object" && "response" in err) {
+        const response = (err as any).response;
+        errorMessage = response?.data?.message || "An error occurred";
+      }
+      toast.error(errorMessage, {
         style: {
           background: "#cc3131",
           color: "#fff",
