@@ -29,7 +29,7 @@ function IngredientTable({
     try {
       setIsLoading(true);
       const sortParams =
-        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
+        sorting.length > 0 ? sorting[0] : { id: "name", desc: true };
       const response = await ingredientService.getIngredients({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
