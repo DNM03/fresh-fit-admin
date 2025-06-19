@@ -241,6 +241,7 @@ export function NutritionTab({ timeRange }: NutritionTabProps) {
               dataKey="value"
               nameKey="name"
               width={600}
+              showLabels={false}
             />
           </CardContent>
           <CardFooter className="pt-0 border-t px-6 py-4">

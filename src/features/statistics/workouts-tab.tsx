@@ -282,8 +282,9 @@ export function WorkoutsTab({ timeRange }: WorkoutsTabProps) {
                   dataKey="value"
                   nameKey="name"
                   width={600}
+                  showLabels={false}
                 />
-                <div className="grid grid-cols-2 gap-2 mt-4">
+                {/* <div className="grid grid-cols-2 gap-2 mt-4">
                   {exerciseTypeData
                     .slice(0, 6) // Show just the top 6 to avoid overcrowding
                     .map((type) => (
@@ -294,7 +295,7 @@ export function WorkoutsTab({ timeRange }: WorkoutsTabProps) {
                         {type.name}: {type.value}
                       </Badge>
                     ))}
-                </div>
+                </div> */}
               </div>
             ) : (
               <div className="flex items-center justify-center h-[200px] text-muted-foreground">

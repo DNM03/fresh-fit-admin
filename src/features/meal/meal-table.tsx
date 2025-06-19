@@ -17,6 +17,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Filter, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function MealTable({
   onRefetchTriggered,
@@ -41,6 +48,9 @@ function MealTable({
     min?: number;
     max?: number;
   } | null>(null);
+
+  // Add state for meal type filter
+  const [mealTypeFilter, setMealTypeFilter] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Convert to useCallback to enable reuse through ref
@@ -55,12 +65,10 @@ function MealTable({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
         type: "System",
-        meal_type: "All",
+        meal_type: mealTypeFilter || "All",
         sort_by: sortParams.id,
         order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
-        min_calories: caloriesFilter?.min,
-        max_calories: caloriesFilter?.max,
       };
 
       // Add calories filter if it exists
@@ -90,6 +98,7 @@ function MealTable({
     globalFilter,
     sorting,
     caloriesFilter,
+    mealTypeFilter,
   ]);
 
   useEffect(() => {
@@ -126,7 +135,6 @@ function MealTable({
 
     // Apply filter
     setCaloriesFilter({ min, max });
-    setFilterOpen(false);
     // Reset to first page when filter changes
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   };
@@ -136,6 +144,26 @@ function MealTable({
     setCaloriesFilter(null);
     setMinCalories("");
     setMaxCalories("");
+  };
+
+  // Handle applying the meal type filter
+  const handleApplyMealTypeFilter = (type: string) => {
+    setMealTypeFilter(type === "All" ? null : type);
+    // Reset to first page when filter changes
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
+
+  // Handle removing the meal type filter
+  const handleRemoveMealTypeFilter = () => {
+    setMealTypeFilter(null);
+  };
+
+  // Handle clearing all filters
+  const handleClearAllFilters = () => {
+    setCaloriesFilter(null);
+    setMinCalories("");
+    setMaxCalories("");
+    setMealTypeFilter(null);
     setFilterOpen(false);
   };
 
@@ -145,12 +173,10 @@ function MealTable({
         accessorKey: "name",
         header: "Name",
       },
-
       {
         accessorKey: "calories",
         header: "Calories",
       },
-
       {
         accessorKey: "meal_type",
         header: "Meal Type",
@@ -172,7 +198,7 @@ function MealTable({
   );
 
   // Create filter indicator text
-  const getFilterText = () => {
+  const getCaloriesFilterText = () => {
     if (!caloriesFilter) return null;
 
     if (caloriesFilter.min !== undefined && caloriesFilter.max !== undefined) {
@@ -184,6 +210,11 @@ function MealTable({
     }
 
     return null;
+  };
+
+  // Create filter indicator text for meal type
+  const getMealTypeFilterText = () => {
+    return mealTypeFilter ? `Type: ${mealTypeFilter}` : null;
   };
 
   return (
@@ -202,54 +233,100 @@ function MealTable({
           </PopoverTrigger>
           <PopoverContent className="w-80 ml-62">
             <div className="space-y-4 p-1">
-              <h4 className="font-medium leading-none">Calories Range</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="min-calories">Min Calories</Label>
-                  <Input
-                    id="min-calories"
-                    placeholder="e.g., 100"
-                    type="number"
-                    min={0}
-                    value={minCalories}
-                    onChange={(e) => setMinCalories(e.target.value)}
-                  />
+              <h4 className="font-medium leading-none">Filters</h4>
+
+              {/* Meal Type Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="meal-type">Meal Type</Label>
+                <Select
+                  onValueChange={handleApplyMealTypeFilter}
+                  value={mealTypeFilter || "All"}
+                  defaultValue="All"
+                >
+                  <SelectTrigger id="meal-type" className="w-full">
+                    <SelectValue placeholder="Select meal type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    <SelectItem value="Breakfast">Breakfast</SelectItem>
+                    <SelectItem value="Lunch">Lunch</SelectItem>
+                    <SelectItem value="Dinner">Dinner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-medium leading-none mb-3">
+                  Calories Range
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min-calories">Min Calories</Label>
+                    <Input
+                      id="min-calories"
+                      placeholder="e.g., 100"
+                      type="number"
+                      min={0}
+                      value={minCalories}
+                      onChange={(e) => setMinCalories(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="max-calories">Max Calories</Label>
+                    <Input
+                      id="max-calories"
+                      placeholder="e.g., 800"
+                      type="number"
+                      min={0}
+                      value={maxCalories}
+                      onChange={(e) => setMaxCalories(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="max-calories">Max Calories</Label>
-                  <Input
-                    id="max-calories"
-                    placeholder="e.g., 800"
-                    type="number"
-                    min={0}
-                    value={maxCalories}
-                    onChange={(e) => setMaxCalories(e.target.value)}
-                  />
+                <div className="flex justify-end mt-3">
+                  <Button size="sm" onClick={handleApplyCaloriesFilter}>
+                    Apply Calories Filter
+                  </Button>
                 </div>
               </div>
-              <div className="flex justify-between">
+
+              <div className="flex justify-between border-t pt-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRemoveCaloriesFilter}
-                  disabled={!caloriesFilter}
+                  onClick={handleClearAllFilters}
+                  disabled={!caloriesFilter && !mealTypeFilter}
                 >
-                  Clear
+                  Clear All Filters
                 </Button>
-                <Button size="sm" onClick={handleApplyCaloriesFilter}>
-                  Apply
+                <Button size="sm" onClick={() => setFilterOpen(false)}>
+                  Close
                 </Button>
               </div>
             </div>
           </PopoverContent>
         </Popover>
 
+        {/* Calories filter badge */}
         {caloriesFilter && (
           <Badge variant="outline" className="gap-1 px-2 py-1">
-            <span>{getFilterText()}</span>
+            <span>{getCaloriesFilterText()}</span>
             <button
               className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
               onClick={handleRemoveCaloriesFilter}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        )}
+
+        {/* Meal type filter badge */}
+        {mealTypeFilter && (
+          <Badge variant="outline" className="gap-1 px-2 py-1">
+            <span>{getMealTypeFilterText()}</span>
+            <button
+              className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+              onClick={handleRemoveMealTypeFilter}
             >
               <X className="h-3 w-3" />
             </button>

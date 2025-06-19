@@ -113,7 +113,7 @@ export default function PostCard({
                         key={feedback._id || index}
                         className="text-sm text-red-700"
                       >
-                        {post.postFeedBacks.length > 1 && (
+                        {post.postFeedBacks.length > 0 && (
                           <span className="font-medium">{index + 1}. </span>
                         )}
                         {feedback.comment}

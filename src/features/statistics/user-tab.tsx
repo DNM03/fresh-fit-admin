@@ -67,36 +67,36 @@ export function UsersTab({ timeRange }: UsersTabProps) {
     })) || [];
 
   // Helper to get color based on user level
-  const getLevelColor = (level: string): string => {
-    switch (level) {
-      case "Beginner":
-        return "bg-green-100 text-green-800";
-      case "Intermediate":
-        return "bg-blue-100 text-blue-800";
-      case "Advanced":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // const getLevelColor = (level: string): string => {
+  //   switch (level) {
+  //     case "Beginner":
+  //       return "bg-green-100 text-green-800";
+  //     case "Intermediate":
+  //       return "bg-blue-100 text-blue-800";
+  //     case "Advanced":
+  //       return "bg-purple-100 text-purple-800";
+  //     default:
+  //       return "bg-gray-100 text-gray-800";
+  //   }
+  // };
 
-  // Helper to get color based on intensity level
-  const getIntensityColor = (intensity: string): string => {
-    switch (intensity) {
-      case "Sedentary":
-        return "bg-gray-100 text-gray-800";
-      case "Light":
-        return "bg-blue-100 text-blue-800";
-      case "Moderate":
-        return "bg-green-100 text-green-800";
-      case "Active":
-        return "bg-yellow-100 text-yellow-800";
-      case "Very Active":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // // Helper to get color based on intensity level
+  // const getIntensityColor = (intensity: string): string => {
+  //   switch (intensity) {
+  //     case "Sedentary":
+  //       return "bg-gray-100 text-gray-800";
+  //     case "Light":
+  //       return "bg-blue-100 text-blue-800";
+  //     case "Moderate":
+  //       return "bg-green-100 text-green-800";
+  //     case "Active":
+  //       return "bg-yellow-100 text-yellow-800";
+  //     case "Very Active":
+  //       return "bg-orange-100 text-orange-800";
+  //     default:
+  //       return "bg-gray-100 text-gray-800";
+  //   }
+  // };
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -155,8 +155,9 @@ export function UsersTab({ timeRange }: UsersTabProps) {
                   dataKey="value"
                   nameKey="name"
                   width={600}
+                  showLabels={false}
                 />
-                <div className="grid grid-cols-3 gap-2 mt-4">
+                {/* <div className="grid grid-cols-3 gap-2 mt-4">
                   {userLevels.map((level) => (
                     <Badge
                       key={level.name}
@@ -165,7 +166,7 @@ export function UsersTab({ timeRange }: UsersTabProps) {
                       {level.name}: {level.value}
                     </Badge>
                   ))}
-                </div>
+                </div> */}
               </div>
             ) : (
               <div className="flex items-center justify-center h-[200px] text-muted-foreground">
@@ -190,8 +191,9 @@ export function UsersTab({ timeRange }: UsersTabProps) {
                   dataKey="value"
                   nameKey="name"
                   width={600}
+                  showLabels={false}
                 />
-                <div className="grid grid-cols-3 gap-2 mt-4">
+                {/* <div className="grid grid-cols-3 gap-2 mt-4">
                   {intensityLevels.map((intensity) => (
                     <Badge
                       key={intensity.name}
@@ -200,7 +202,7 @@ export function UsersTab({ timeRange }: UsersTabProps) {
                       {intensity.name}: {intensity.value}
                     </Badge>
                   ))}
-                </div>
+                </div> */}
               </div>
             ) : (
               <div className="flex items-center justify-center h-[200px] text-muted-foreground">
