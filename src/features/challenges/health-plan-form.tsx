@@ -624,10 +624,12 @@ function HealthPlanForm() {
                     Total Calories Burned:
                   </span>
                   <span className="font-medium">
-                    {dayPlans.reduce(
-                      (sum, day) => sum + day.estimated_calories_burned,
-                      0
-                    )}{" "}
+                    {dayPlans
+                      .reduce(
+                        (sum, day) => sum + day.estimated_calories_burned,
+                        0
+                      )
+                      .toFixed(2)}{" "}
                     calories
                   </span>
                 </div>
@@ -636,10 +638,12 @@ function HealthPlanForm() {
                     Total Calories Intake:
                   </span>
                   <span className="font-medium">
-                    {dayPlans.reduce(
-                      (sum, day) => sum + day.estimated_calories_intake,
-                      0
-                    )}{" "}
+                    {dayPlans
+                      .reduce(
+                        (sum, day) => sum + day.estimated_calories_intake,
+                        0
+                      )
+                      .toFixed(2)}{" "}
                     calories
                   </span>
                 </div>

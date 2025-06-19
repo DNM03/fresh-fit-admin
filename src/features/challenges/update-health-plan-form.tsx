@@ -800,10 +800,12 @@ function UpdateHealthPlanForm({
                             Total Calories Burned:
                           </span>
                           <span className="font-medium">
-                            {selectedSets.reduce(
-                              (sum, set) => sum + (set.total_calories || 0),
-                              0
-                            )}{" "}
+                            {selectedSets
+                              .reduce(
+                                (sum, set) => sum + (set.total_calories || 0),
+                                0
+                              )
+                              .toFixed(2)}{" "}
                             calories
                           </span>
                         </div>
@@ -812,10 +814,12 @@ function UpdateHealthPlanForm({
                             Total Calories Intake:
                           </span>
                           <span className="font-medium">
-                            {selectedMeals.reduce(
-                              (sum, meal) => sum + (meal.calories || 0),
-                              0
-                            )}{" "}
+                            {selectedMeals
+                              .reduce(
+                                (sum, meal) => sum + (meal.calories || 0),
+                                0
+                              )
+                              .toFixed(2)}{" "}
                             calories
                           </span>
                         </div>

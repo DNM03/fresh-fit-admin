@@ -4,7 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, X, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  X,
+  Loader2,
+  ArrowDown,
+  ArrowUp,
+  Filter,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Activity } from "lucide-react";
 import setService from "@/services/set.service";
 
@@ -45,6 +58,15 @@ export default function SetSelector({
   const [sortBy, setSortBy] = useState("name");
   const [orderBy, setOrderBy] = useState("asc");
 
+  // Add states for calories range filter
+  const [minCalories, setMinCalories] = useState<string>("");
+  const [maxCalories, setMaxCalories] = useState<string>("");
+  const [caloriesFilter, setCaloriesFilter] = useState<{
+    min?: number;
+    max?: number;
+  } | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+
   const [sets, setSets] = useState<any[]>(availableSets);
   const [isLoading, setIsLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -67,21 +89,39 @@ export default function SetSelector({
   useEffect(() => {
     if (!dialogOpen) {
       setSelectedSetIds([]);
+      setFilterOpen(false);
     }
   }, [dialogOpen]);
+
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setOrderBy(orderBy === "asc" ? "desc" : "asc");
+  };
 
   const fetchSets = async (page = 1, search = "") => {
     try {
       setIsLoading(true);
 
-      const response = await setService.searchSet({
+      const requestParams: any = {
         page,
         limit: pagination.limit,
         search,
         type: "System",
         sort_by: sortBy,
         order_by: orderBy.toUpperCase(),
-      });
+      };
+
+      // Add calories filter parameters if they exist
+      if (caloriesFilter) {
+        if (caloriesFilter.min !== undefined) {
+          requestParams.min_calories = caloriesFilter.min;
+        }
+        if (caloriesFilter.max !== undefined) {
+          requestParams.max_calories = caloriesFilter.max;
+        }
+      }
+
+      const response = await setService.searchSet(requestParams);
 
       if (response?.data?.result) {
         const {
@@ -111,10 +151,59 @@ export default function SetSelector({
     if (dialogOpen) {
       fetchSets(1, debouncedSearchQuery);
     }
-  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy]);
+  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy, caloriesFilter]);
 
   const handlePageChange = (newPage: number) => {
     fetchSets(newPage, debouncedSearchQuery);
+  };
+
+  // Handle applying the calories filter
+  const handleApplyCaloriesFilter = () => {
+    const min = minCalories.trim() !== "" ? Number(minCalories) : undefined;
+    const max = maxCalories.trim() !== "" ? Number(maxCalories) : undefined;
+
+    // Validate input
+    if (min !== undefined && isNaN(min)) {
+      alert("Please enter a valid number for minimum calories");
+      return;
+    }
+
+    if (max !== undefined && isNaN(max)) {
+      alert("Please enter a valid number for maximum calories");
+      return;
+    }
+
+    if (min !== undefined && max !== undefined && min > max) {
+      alert("Minimum calories cannot be greater than maximum calories");
+      return;
+    }
+
+    // Apply filter
+    setCaloriesFilter({ min, max });
+    setFilterOpen(false);
+  };
+
+  // Handle removing the calories filter
+  const handleRemoveCaloriesFilter = () => {
+    setCaloriesFilter(null);
+    setMinCalories("");
+    setMaxCalories("");
+    setFilterOpen(false);
+  };
+
+  // Create filter indicator text
+  const getCaloriesFilterText = () => {
+    if (!caloriesFilter) return null;
+
+    if (caloriesFilter.min !== undefined && caloriesFilter.max !== undefined) {
+      return `${caloriesFilter.min} - ${caloriesFilter.max} calories`;
+    } else if (caloriesFilter.min !== undefined) {
+      return `≥ ${caloriesFilter.min} calories`;
+    } else if (caloriesFilter.max !== undefined) {
+      return `≤ ${caloriesFilter.max} calories`;
+    }
+
+    return null;
   };
 
   const handleCheckboxChange = (setId: string) => {
@@ -136,7 +225,7 @@ export default function SetSelector({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <Label className="text-base font-medium flex items-center">
           <Activity className="mr-2 h-4 w-4 text-green-600" />
@@ -168,7 +257,7 @@ export default function SetSelector({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ">
               <div className="relative col-span-1 md:col-span-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -179,25 +268,41 @@ export default function SetSelector({
                 />
               </div>
 
-              <div className="col-span-1 md:col-span-1">
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => setSortBy(value)}
+              <div className="col-span-1 md:col-span-1 flex space-x-2">
+                <div className="flex-1">
+                  <Select
+                    value={sortBy}
+                    onValueChange={(value) => setSortBy(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="rating">Rating</SelectItem>
+                      <SelectItem value="number_of_exercises">
+                        Number of Exercises
+                      </SelectItem>
+                      <SelectItem value="total_calories">
+                        Total Calories
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleSortOrder}
+                  title={
+                    orderBy === "asc" ? "Sort Ascending" : "Sort Descending"
+                  }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="rating">Rating</SelectItem>
-                    <SelectItem value="number_of_exercises">
-                      Number of Exercises
-                    </SelectItem>
-                    <SelectItem value="total_calories">
-                      Total Calories
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                  {orderBy === "asc" ? (
+                    <ArrowDown className="h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
 
               <div className="col-span-1 md:col-span-1">
@@ -217,6 +322,81 @@ export default function SetSelector({
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Calories filter */}
+            <div className="flex items-center justify-between ">
+              <div className="flex items-center gap-2">
+                <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 px-2 lg:px-3"
+                    >
+                      <Filter className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Calories Filter</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 ml-48">
+                    <div className="space-y-4 p-1">
+                      <h4 className="font-medium leading-none">
+                        Calories Range
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="min-calories">Min Calories</Label>
+                          <Input
+                            id="min-calories"
+                            placeholder="e.g., 100"
+                            type="number"
+                            min={0}
+                            value={minCalories}
+                            onChange={(e) => setMinCalories(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="max-calories">Max Calories</Label>
+                          <Input
+                            id="max-calories"
+                            placeholder="e.g., 800"
+                            type="number"
+                            min={0}
+                            value={maxCalories}
+                            onChange={(e) => setMaxCalories(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemoveCaloriesFilter}
+                          disabled={!caloriesFilter}
+                        >
+                          Clear
+                        </Button>
+                        <Button size="sm" onClick={handleApplyCaloriesFilter}>
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Display active filters */}
+                {caloriesFilter && (
+                  <div className="bg-muted text-muted-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+                    {getCaloriesFilterText()}
+                    <button
+                      onClick={handleRemoveCaloriesFilter}
+                      className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -243,7 +423,6 @@ export default function SetSelector({
                         <div className="flex gap-4 text-xs text-gray-500 mt-1">
                           <span>{set.total_calories} calories</span>
                           <span>{set.number_of_exercises || 0} exercises</span>
-                          {/* <span>{set.rating || 0} ★</span> */}
                           <span>{set.type || "Beginner"}</span>
                         </div>
                       </div>
