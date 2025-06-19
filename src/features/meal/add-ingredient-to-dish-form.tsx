@@ -178,7 +178,13 @@ function AddIngredientToDishForm({
           <Input
             id="unit"
             value={unit}
-            onChange={(e) => setUnit(e.target.value)}
+            onChange={(e) => {
+              console.log("Unit input changed:", e.target.value);
+              const value = e.target.value;
+              if (!/\d/.test(value)) {
+                setUnit(value);
+              }
+            }}
             placeholder="E.g., cups, tbsp"
           />
         </div>

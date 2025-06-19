@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import dishService from "@/services/dish.service";
 import mediaService from "@/services/media.service";
 import { toast } from "sonner";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function DishForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -41,10 +43,48 @@ export default function DishForm() {
     protein: 0,
   };
 
+  const formSchema = z.object({
+    name: z.string().nonempty("Dish name is required"),
+    description: z.string().nonempty("Description is required"),
+    image: z.string().optional(),
+    calories: z.coerce.number().nonnegative("Calories cannot be negative"),
+    instruction: z.string().nonempty("Instructions are required"),
+    prep_time: z.coerce
+      .number()
+      .nonnegative("Preparation time cannot be negative"),
+    fat: z.coerce.number().nonnegative("Fat cannot be negative").optional(),
+    saturatedFat: z.coerce
+      .number()
+      .nonnegative("Saturated fat cannot be negative")
+      .optional(),
+    cholesterol: z.coerce
+      .number()
+      .nonnegative("Cholesterol cannot be negative")
+      .optional(),
+    sodium: z.coerce
+      .number()
+      .nonnegative("Sodium cannot be negative")
+      .optional(),
+    carbohydrate: z.coerce
+      .number()
+      .nonnegative("Carbohydrate cannot be negative")
+      .optional(),
+    fiber: z.coerce.number().nonnegative("Fiber cannot be negative").optional(),
+    sugar: z.coerce.number().nonnegative("Sugar cannot be negative").optional(),
+    protein: z.coerce
+      .number()
+      .nonnegative("Protein cannot be negative")
+      .optional(),
+  });
+
   const form = useForm<DishType>({
     defaultValues: defaultValues as DishType,
+    resolver: zodResolver(formSchema as any),
     mode: "onChange",
   });
+
+  const { formState } = form;
+  const { errors } = formState;
 
   const [ingredients, setIngredients] = useState<
     Array<DishIngredientType & { name: string }>
@@ -173,6 +213,20 @@ export default function DishForm() {
   async function submitForm(data: DishType) {
     try {
       setLoading(true);
+
+      // Validate the form one more time
+      const isFormValid = await form.trigger();
+      if (!isFormValid) {
+        toast.error("Please fix validation errors before submitting", {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        });
+        setLoading(false);
+        return;
+      }
+
       if (ingredients.length === 0) {
         toast.error("Please add at least one ingredient", {
           style: {
@@ -180,8 +234,10 @@ export default function DishForm() {
             color: "#fff",
           },
         });
+        setLoading(false);
         return;
       }
+
       let imageRes = null;
       if (imageFiles[0]?.file) {
         imageRes = await mediaService.backupUploadImage(imageFiles[0].file);
@@ -223,34 +279,55 @@ export default function DishForm() {
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to create dish. Please try again.", {
-        style: {
-          background: "#cc3131",
-          color: "#fff",
-        },
-      });
+      toast.error(
+        "Failed to create dish, make sure you have your image. Please try again.",
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
+      );
       return;
     } finally {
       setLoading(false);
     }
   }
 
-  const nextStep = () => {
-    const fieldsToValidate: (keyof DishType)[] = [];
+  const nextStep = async () => {
+    let fieldsToValidate: (keyof DishType)[] = [];
 
     if (currentStep === 1) {
-      fieldsToValidate.push("name", "description", "calories", "prep_time");
+      fieldsToValidate = [
+        "name",
+        "description",
+        "calories",
+        "prep_time",
+        "fat",
+        "saturatedFat",
+        "cholesterol",
+        "sodium",
+        "carbohydrate",
+        "fiber",
+        "sugar",
+        "protein",
+      ];
     } else if (currentStep === 2) {
-      fieldsToValidate.push("instruction");
+      fieldsToValidate = ["instruction"];
     }
 
-    const isValid = fieldsToValidate.every((field) => {
-      const valid = form.trigger(field);
-      return valid;
-    });
+    const isValid = await form.trigger(fieldsToValidate);
 
     if (isValid) {
       setCurrentStep((prev) => prev + 1);
+    } else {
+      // Show error notification
+      toast.error("Please fill all required fields correctly", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
     }
   };
 
@@ -309,7 +386,7 @@ export default function DishForm() {
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <InputWithLabel<DishType>
                   fieldTitle="Dish Name"
                   nameInSchema="name"
@@ -344,7 +421,7 @@ export default function DishForm() {
                 type="number"
                 required
               />
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 items-start">
                 <InputWithLabel<DishType>
                   fieldTitle="Fat (g)"
                   nameInSchema="fat"
@@ -504,12 +581,16 @@ export default function DishForm() {
                       id="unit"
                       placeholder="E.g., cups, tbsp"
                       value={newIngredient.unit}
-                      onChange={(e) =>
-                        setNewIngredient((prev) => ({
-                          ...prev,
-                          unit: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Only allow non-numeric characters
+                        if (!/\d/.test(value)) {
+                          setNewIngredient((prev) => ({
+                            ...prev,
+                            unit: value,
+                          }));
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -566,6 +647,24 @@ export default function DishForm() {
     }
   };
 
+  // Add this near the top of your component to track errors by step
+  const hasStep1Errors = !!(
+    errors.name ||
+    errors.description ||
+    errors.calories ||
+    errors.prep_time ||
+    errors.fat ||
+    errors.saturatedFat ||
+    errors.cholesterol ||
+    errors.sodium ||
+    errors.carbohydrate ||
+    errors.fiber ||
+    errors.sugar ||
+    errors.protein
+  );
+
+  const hasStep2Errors = !!errors.instruction;
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center mb-6">
@@ -584,9 +683,12 @@ export default function DishForm() {
                         currentStep >= 1
                           ? "bg-primary text-white"
                           : "bg-gray-200"
-                      } mr-2`}
+                      } mr-2 relative`}
                     >
                       1
+                      {hasStep1Errors && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+                      )}
                     </div>
                     <span
                       className={
@@ -611,9 +713,12 @@ export default function DishForm() {
                         currentStep >= 2
                           ? "bg-primary text-white"
                           : "bg-gray-100 text-gray-400"
-                      } mr-2`}
+                      } mr-2 relative`}
                     >
                       2
+                      {hasStep2Errors && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+                      )}
                     </div>
                     <span
                       className={

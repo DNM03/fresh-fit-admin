@@ -100,7 +100,10 @@ function UpdateDishIngredientForm({
           <Input
             id="unit"
             value={unit}
-            onChange={(e) => setUnit(e.target.value)}
+            onChange={(e) => {
+              const noNumbers = e.target.value.replace(/[0-9]/g, "");
+              setUnit(noNumbers);
+            }}
             placeholder="E.g., cups, tbsp"
           />
         </div>
