@@ -1,10 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Plus, X, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  X,
+  Loader2,
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  Filter,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,13 +30,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Utensils } from "lucide-react";
-import mealService from "@/services/meal.service"; // Import the meal service
+import mealService from "@/services/meal.service";
 
 type MealType = {
   _id: string;
   name: string;
   calories: number;
+  meal_type?: string;
 };
 
 type MealSelectorProps = {
@@ -50,6 +65,16 @@ export default function MealSelector({
   const [selectedMealIds, setSelectedMealIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("name");
   const [orderBy, setOrderBy] = useState("asc");
+  const [mealTypeFilter, setMealTypeFilter] = useState<string | null>(null);
+
+  // Add states for calories range filter
+  const [minCalories, setMinCalories] = useState<string>("");
+  const [maxCalories, setMaxCalories] = useState<string>("");
+  const [caloriesFilter, setCaloriesFilter] = useState<{
+    min?: number;
+    max?: number;
+  } | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const [meals, setMeals] = useState<MealType[]>(availableMeals);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,6 +86,17 @@ export default function MealSelector({
   });
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Calculate what meal types are already selected
+  const selectedMealTypes = useMemo(() => {
+    const types: Record<string, boolean> = {};
+    selectedMeals.forEach((meal) => {
+      if (meal.meal_type) {
+        types[meal.meal_type] = true;
+      }
+    });
+    return types;
+  }, [selectedMeals]);
 
   // Handle search debounce
   useEffect(() => {
@@ -75,6 +111,7 @@ export default function MealSelector({
   useEffect(() => {
     if (!dialogOpen) {
       setSelectedMealIds([]);
+      setFilterOpen(false);
     }
   }, [dialogOpen]);
 
@@ -84,15 +121,27 @@ export default function MealSelector({
       setIsLoading(true);
 
       // Call the API to get meals with sorting parameters
-      const response = await mealService.getMeals({
+      const requestParams: any = {
         page,
         limit: pagination.limit,
         search,
         type: "System",
-        meal_type: "All",
+        meal_type: mealTypeFilter || "All",
         sort_by: sortBy,
         order_by: orderBy.toUpperCase(),
-      });
+      };
+
+      // Add calories filter parameters if they exist
+      if (caloriesFilter) {
+        if (caloriesFilter.min !== undefined) {
+          requestParams.min_calories = caloriesFilter.min;
+        }
+        if (caloriesFilter.max !== undefined) {
+          requestParams.max_calories = caloriesFilter.max;
+        }
+      }
+
+      const response = await mealService.getMeals(requestParams);
 
       if (response.data?.result) {
         const {
@@ -122,28 +171,201 @@ export default function MealSelector({
     if (dialogOpen) {
       fetchMeals(1, debouncedSearchQuery);
     }
-  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy]);
+  }, [
+    dialogOpen,
+    debouncedSearchQuery,
+    sortBy,
+    orderBy,
+    mealTypeFilter,
+    caloriesFilter,
+  ]);
 
   const handlePageChange = (newPage: number) => {
     fetchMeals(newPage, debouncedSearchQuery);
   };
 
-  const handleCheckboxChange = (mealId: string) => {
-    setSelectedMealIds((prev) =>
-      prev.includes(mealId)
-        ? prev.filter((id) => id !== mealId)
-        : [...prev, mealId]
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setOrderBy(orderBy === "asc" ? "desc" : "asc");
+  };
+
+  // Handle applying the calories filter
+  const handleApplyCaloriesFilter = () => {
+    const min = minCalories.trim() !== "" ? Number(minCalories) : undefined;
+    const max = maxCalories.trim() !== "" ? Number(maxCalories) : undefined;
+
+    // Validate input
+    if (min !== undefined && isNaN(min)) {
+      alert("Please enter a valid number for minimum calories");
+      return;
+    }
+
+    if (max !== undefined && isNaN(max)) {
+      alert("Please enter a valid number for maximum calories");
+      return;
+    }
+
+    if (min !== undefined && max !== undefined && min > max) {
+      alert("Minimum calories cannot be greater than maximum calories");
+      return;
+    }
+
+    // Apply filter
+    setCaloriesFilter({ min, max });
+    setFilterOpen(false);
+  };
+
+  // Handle removing the calories filter
+  const handleRemoveCaloriesFilter = () => {
+    setCaloriesFilter(null);
+    setMinCalories("");
+    setMaxCalories("");
+    setFilterOpen(false);
+  };
+
+  // Create filter indicator text
+  const getCaloriesFilterText = () => {
+    if (!caloriesFilter) return null;
+
+    if (caloriesFilter.min !== undefined && caloriesFilter.max !== undefined) {
+      return `${caloriesFilter.min} - ${caloriesFilter.max} calories`;
+    } else if (caloriesFilter.min !== undefined) {
+      return `≥ ${caloriesFilter.min} calories`;
+    } else if (caloriesFilter.max !== undefined) {
+      return `≤ ${caloriesFilter.max} calories`;
+    }
+
+    return null;
+  };
+
+  // Check if meal can be selected based on meal type restrictions
+  const canSelectMeal = (meal: MealType): boolean => {
+    // If meal has no type or is Snack, allow selection
+    if (!meal.meal_type || meal.meal_type === "Snack") {
+      return true;
+    }
+
+    // Check if we already have a meal of this type selected
+    // Either in already selected meals or in current selection
+    const isAlreadySelected = selectedMealTypes[meal.meal_type];
+
+    // For currently selected meals in the dialog
+    const selectedMealsInDialog = meals.filter(
+      (m) => selectedMealIds.includes(m._id) && m.meal_type === meal.meal_type
     );
+
+    // If this meal type is already in selected meals or
+    // we've already selected a meal of this type in the dialog
+    if (
+      isAlreadySelected ||
+      (selectedMealsInDialog.length > 0 && !selectedMealIds.includes(meal._id))
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleCheckboxChange = (mealId: string) => {
+    const meal = meals.find((m) => m._id === mealId);
+
+    if (!meal) return;
+
+    // If meal is already selected, always allow deselection
+    if (selectedMealIds.includes(mealId)) {
+      setSelectedMealIds((prev) => prev.filter((id) => id !== mealId));
+      return;
+    }
+
+    // Check if we can select this meal based on type restrictions
+    if (!canSelectMeal(meal)) {
+      return; // Don't allow selection
+    }
+
+    // If selecting a main meal type, deselect any other meals of the same type
+    if (
+      meal.meal_type &&
+      ["Breakfast", "Lunch", "Dinner"].includes(meal.meal_type)
+    ) {
+      setSelectedMealIds((prev) => {
+        // Remove other meals of the same type from selection
+        const filteredIds = prev.filter((id) => {
+          const selectedMeal = meals.find((m) => m._id === id);
+          return !selectedMeal || selectedMeal.meal_type !== meal.meal_type;
+        });
+
+        // Add this meal to selection
+        return [...filteredIds, mealId];
+      });
+    } else {
+      // For other types, just add to selection
+      setSelectedMealIds((prev) => [...prev, mealId]);
+    }
   };
 
   const handleAddSelected = () => {
+    // First, verify selections don't conflict with existing meals
+    let canAdd = true;
+    const mealTypeCounts: Record<string, number> = {};
+
+    // Count existing meal types
+    selectedMeals.forEach((meal) => {
+      if (meal.meal_type) {
+        mealTypeCounts[meal.meal_type] =
+          (mealTypeCounts[meal.meal_type] || 0) + 1;
+      }
+    });
+
+    // Check that adding selected meals won't exceed limits
+    selectedMealIds.forEach((id) => {
+      const meal = meals.find((m) => m._id === id);
+      if (
+        meal?.meal_type &&
+        ["Breakfast", "Lunch", "Dinner"].includes(meal.meal_type)
+      ) {
+        mealTypeCounts[meal.meal_type] =
+          (mealTypeCounts[meal.meal_type] || 0) + 1;
+        if (mealTypeCounts[meal.meal_type] > 1) {
+          canAdd = false;
+        }
+      }
+    });
+
+    if (!canAdd) {
+      alert(
+        "You can only select one meal for each main meal type (Breakfast, Lunch, Dinner)."
+      );
+      return;
+    }
+
+    // Add the selected meals
     selectedMealIds.forEach((id) => {
       const meal = meals.find((m) => m._id === id);
       if (meal && !selectedMeals.some((m) => m._id === id)) {
         onAddMeal(meal);
       }
     });
+
     setDialogOpen(false);
+  };
+
+  // Get meal type display label for the cards
+  const getMealTypeLabel = (meal: MealType) => {
+    return meal.meal_type ? (
+      <span
+        className={`inline-block px-2 py-0.5 rounded text-xs ${
+          meal.meal_type === "Breakfast"
+            ? "bg-blue-100 text-blue-800"
+            : meal.meal_type === "Lunch"
+            ? "bg-amber-100 text-amber-800"
+            : meal.meal_type === "Dinner"
+            ? "bg-purple-100 text-purple-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {meal.meal_type}
+      </span>
+    ) : null;
   };
 
   return (
@@ -174,7 +396,8 @@ export default function MealSelector({
                 Add Meals {dayId ? `to Day ${dayId.split("-").pop()}` : ""}
               </DialogTitle>
               <DialogDescription>
-                Select one or more meals to add.
+                Select meals to add. You can only select one meal for each main
+                meal type (Breakfast, Lunch, Dinner).
               </DialogDescription>
             </DialogHeader>
 
@@ -189,40 +412,148 @@ export default function MealSelector({
                 />
               </div>
 
-              <div className="col-span-1 md:col-span-1">
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => setSortBy(value)}
+              <div className="col-span-1 md:col-span-1 flex space-x-2">
+                <div className="flex-1">
+                  <Select
+                    value={sortBy}
+                    onValueChange={(value) => setSortBy(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="calories">Calories</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleSortOrder}
+                  title={
+                    orderBy === "asc" ? "Sort Ascending" : "Sort Descending"
+                  }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="calories">Calories</SelectItem>
-                  </SelectContent>
-                </Select>
+                  {orderBy === "asc" ? (
+                    <ArrowDown className="h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
 
               <div className="col-span-1 md:col-span-1">
                 <Select
-                  value={orderBy}
-                  onValueChange={(value) => setOrderBy(value)}
+                  value={mealTypeFilter || "All"}
+                  onValueChange={(value) =>
+                    setMealTypeFilter(value === "All" ? null : value)
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Order" />
+                    <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="asc">
-                      Ascending (A-Z, Low-High)
-                    </SelectItem>
-                    <SelectItem value="desc">
-                      Descending (Z-A, High-Low)
-                    </SelectItem>
+                    <SelectItem value="All">All Types</SelectItem>
+                    <SelectItem value="Breakfast">Breakfast</SelectItem>
+                    <SelectItem value="Lunch">Lunch</SelectItem>
+                    <SelectItem value="Dinner">Dinner</SelectItem>
+                    <SelectItem value="Snack">Snack</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {/* Calories filter */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1 px-2 lg:px-3"
+                    >
+                      <Filter className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Calories Filter</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 ml-48">
+                    <div className="space-y-4 p-1">
+                      <h4 className="font-medium leading-none">
+                        Calories Range
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="min-calories">Min Calories</Label>
+                          <Input
+                            id="min-calories"
+                            placeholder="e.g., 100"
+                            type="number"
+                            min={0}
+                            value={minCalories}
+                            onChange={(e) => setMinCalories(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="max-calories">Max Calories</Label>
+                          <Input
+                            id="max-calories"
+                            placeholder="e.g., 800"
+                            type="number"
+                            min={0}
+                            value={maxCalories}
+                            onChange={(e) => setMaxCalories(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRemoveCaloriesFilter}
+                          disabled={!caloriesFilter}
+                        >
+                          Clear
+                        </Button>
+                        <Button size="sm" onClick={handleApplyCaloriesFilter}>
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Display active filters */}
+                {caloriesFilter && (
+                  <div className="bg-muted text-muted-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+                    {getCaloriesFilterText()}
+                    <button
+                      onClick={handleRemoveCaloriesFilter}
+                      className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {Object.entries(selectedMealTypes).length > 0 && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start">
+                <AlertCircle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-900">
+                    Already selected:
+                  </p>
+                  <ul className="mt-1 text-sm text-amber-800">
+                    {Object.keys(selectedMealTypes).map((type) => (
+                      <li key={type}>• {type}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto">
               {isLoading ? (
@@ -231,40 +562,52 @@ export default function MealSelector({
                   <span className="ml-2">Loading meals...</span>
                 </div>
               ) : meals.length > 0 ? (
-                meals.map((meal) => (
-                  <div
-                    key={meal._id}
-                    className={`border p-3 rounded-md cursor-pointer ${
-                      selectedMealIds.includes(meal._id)
-                        ? "border-amber-500 bg-amber-50"
-                        : ""
-                    }`}
-                    onClick={() => handleCheckboxChange(meal._id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{meal.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {meal.calories} calories
+                meals.map((meal) => {
+                  const isDisabled =
+                    !canSelectMeal(meal) && !selectedMealIds.includes(meal._id);
+
+                  return (
+                    <div
+                      key={meal._id}
+                      className={`border p-3 rounded-md ${
+                        isDisabled
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      } ${
+                        selectedMealIds.includes(meal._id)
+                          ? "border-amber-500 bg-amber-50"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        !isDisabled && handleCheckboxChange(meal._id)
+                      }
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{meal.name}</div>
+                          <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+                            <span>{meal.calories} calories</span>
+                            {getMealTypeLabel(meal)}
+                          </div>
+                        </div>
+                        <div
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                            selectedMealIds.includes(meal._id)
+                              ? "border-amber-500 bg-amber-500 text-white"
+                              : ""
+                          }`}
+                        >
+                          {selectedMealIds.includes(meal._id) && (
+                            <Checkbox
+                              checked
+                              className="h-3.5 w-3.5 text-white"
+                            />
+                          )}
                         </div>
                       </div>
-                      <div
-                        className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          selectedMealIds.includes(meal._id)
-                            ? "border-amber-500 bg-amber-500 text-white"
-                            : ""
-                        }`}
-                      >
-                        {selectedMealIds.includes(meal._id) && (
-                          <Checkbox
-                            checked
-                            className="h-3.5 w-3.5 text-white"
-                          />
-                        )}
-                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="col-span-2 text-center py-8">
                   <p className="text-gray-500">
@@ -326,7 +669,10 @@ export default function MealSelector({
             <Card key={meal._id} className="p-2 hover:bg-gray-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-sm">{meal.name}</div>
+                  <div className="font-medium text-sm flex items-center gap-2">
+                    {meal.name}
+                    {getMealTypeLabel(meal)}
+                  </div>
                   <div className="text-xs text-gray-500">
                     {meal.calories} calories
                   </div>
