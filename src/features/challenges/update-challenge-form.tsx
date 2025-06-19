@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { AlertCircle, ImageIcon, Trophy } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { addWeeks, differenceInWeeks } from "date-fns";
 
 import InputWithLabel from "@/components/inputs/input-with-label";
 import SelectWithLabel from "@/components/inputs/select-with-label";
@@ -37,13 +38,22 @@ export default function UpdateChallengeForm({
   const [prizeImage, setPrizeImage] = useState<ImageFile[]>([]);
   const [targetImage] = useState<ImageFile[]>([]);
 
-  // Dates
+  // Dates and duration
   const [startDate, setStartDate] = useState<Date | undefined>(
     challenge.start_date ? new Date(challenge.start_date) : new Date()
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
     challenge.end_date ? new Date(challenge.end_date) : new Date()
   );
+
+  // Calculate initial weeks duration based on start and end dates
+  const initialWeeksDuration =
+    startDate && endDate
+      ? Math.max(1, Math.round(differenceInWeeks(endDate, startDate)))
+      : 4;
+
+  const [weeksDuration, setWeeksDuration] =
+    useState<number>(initialWeeksDuration);
 
   // Health plan
   const [selectedHealthPlan, setSelectedHealthPlan] = useState<any | null>(
@@ -66,6 +76,10 @@ export default function UpdateChallengeForm({
       required_error: "Status is required",
     }),
     start_date: z.date(),
+    weeks_duration: z
+      .number()
+      .min(1, "Duration must be at least 1 week")
+      .max(52, "Duration cannot exceed 52 weeks"),
     end_date: z.date(),
     image: z.string().optional(),
     prize_image: z.string().optional(),
@@ -84,6 +98,7 @@ export default function UpdateChallengeForm({
       weight_loss_target: challenge.weight_loss_target || 0,
       status: challenge.status || "Inactive",
       start_date: startDate,
+      weeks_duration: initialWeeksDuration,
       end_date: endDate,
       image: challenge.image || "",
       prize_image: challenge.prize_image || "",
@@ -102,7 +117,7 @@ export default function UpdateChallengeForm({
     errors.description ||
     errors.type ||
     errors.start_date ||
-    errors.end_date ||
+    errors.weeks_duration ||
     errors.status
   );
 
@@ -113,13 +128,27 @@ export default function UpdateChallengeForm({
     errors.weight_loss_target
   );
 
+  // Watch for changes to start date and weeks duration
+  const watchStartDate = form.watch("start_date");
+  const watchWeeksDuration = form.watch("weeks_duration");
+
+  // Update end date when start date or weeks duration changes
+  useEffect(() => {
+    if (watchStartDate && watchWeeksDuration) {
+      const newEndDate = addWeeks(watchStartDate, watchWeeksDuration);
+      setEndDate(newEndDate);
+      form.setValue("end_date", newEndDate);
+    }
+  }, [watchStartDate, watchWeeksDuration, form]);
+
+  // Listen for form field changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "start_date" && value.start_date) {
         setStartDate(value.start_date as Date);
       }
-      if (name === "end_date" && value.end_date) {
-        setEndDate(value.end_date as Date);
+      if (name === "weeks_duration" && value.weeks_duration) {
+        setWeeksDuration(value.weeks_duration as number);
       }
     });
 
@@ -167,21 +196,27 @@ export default function UpdateChallengeForm({
 
       const healthPlanId = selectedHealthPlan?._id || null;
 
+      // Calculate end date based on start date and weeks duration
+      const calculatedEndDate = addWeeks(data.start_date, data.weeks_duration);
+
       const updateData = {
         ...data,
         image: imageUrl,
         prize_image: prizeImageUrl,
         target_image: targetImageUrl,
-        start_date: startDate?.toISOString(),
-        end_date: endDate?.toISOString(),
+        start_date: data.start_date.toISOString(),
+        end_date: calculatedEndDate.toISOString(),
         health_plan_id: healthPlanId,
       };
 
-      console.log("Updating challenge with data:", updateData);
+      // Remove weeks_duration as it's not needed in the API
+      const { weeks_duration, ...dataToSend } = updateData;
+
+      console.log("Updating challenge with data:", dataToSend);
 
       const response = await challengeService.updateChallenge(
         challenge._id,
-        updateData
+        dataToSend
       );
       console.log("Challenge updated successfully:", response);
       toast.success("Challenge updated successfully!", {
@@ -208,13 +243,33 @@ export default function UpdateChallengeForm({
   const nextStep = async () => {
     const fieldsToValidate: string[] = [];
 
+    console.log(form.getValues("weeks_duration"));
+    console.log(selectedHealthPlan.number_of_weeks);
+
+    if (
+      form.getValues("weeks_duration") !== selectedHealthPlan.number_of_weeks
+    ) {
+      // Handle the case where the weeks duration is different
+      toast.error(
+        "The weeks duration must match the selected health plan's duration: " +
+          selectedHealthPlan.number_of_weeks,
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
+      );
+      return;
+    }
+
     if (activeTab === "details") {
       fieldsToValidate.push(
         "name",
         "description",
         "type",
         "start_date",
-        "end_date",
+        "weeks_duration",
         "status"
       );
     } else if (activeTab === "targetprize") {
@@ -341,17 +396,52 @@ export default function UpdateChallengeForm({
                 <DatePickerWithLabel
                   fieldTitle="Start Date"
                   nameInSchema="start_date"
-                  //   onChange={(date) => setStartDate(date)}
-                  //   value={startDate}
                   required
                 />
 
-                <DatePickerWithLabel
-                  fieldTitle="End Date"
-                  nameInSchema="end_date"
-                  //   onChange={(date) => setEndDate(date)}
-                  //   value={endDate}
-                  required
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="weeks_duration"
+                    className="text-base font-medium"
+                  >
+                    Duration (weeks)<span className="text-red-500">*</span>
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      id="weeks_duration"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      min="1"
+                      max="52"
+                      value={weeksDuration}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value > 0) {
+                          setWeeksDuration(value);
+                          form.setValue("weeks_duration", value);
+                        }
+                      }}
+                    />
+                  </div>
+                  {form.formState.errors.weeks_duration && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.weeks_duration.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Display calculated end date as read-only */}
+              <div className="space-y-2">
+                <Label className="text-base font-medium">
+                  End Date (calculated)
+                </Label>
+                <input
+                  type="text"
+                  className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm cursor-not-allowed opacity-70"
+                  value={endDate ? endDate.toLocaleDateString() : ""}
+                  readOnly
+                  disabled
                 />
               </div>
 
@@ -436,36 +526,6 @@ export default function UpdateChallengeForm({
                     icon={<Trophy className="h-16 w-16 text-gray-300 mb-4" />}
                   />
                 </div>
-
-                {/* <div className="space-y-2">
-                  <Label>Target Image</Label>
-                  {challenge.target_image && (
-                    <div className="mb-3">
-                      <span className="text-sm text-muted-foreground">
-                        Current image:
-                      </span>
-                      <div className="mt-2 border rounded-md w-40 h-40 overflow-hidden">
-                        <img
-                          src={challenge.target_image}
-                          alt="Current target"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://placehold.co/200x200/efe/6c6?text=Target";
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <ImageDropzone
-                    maxImages={1}
-                    maxSizeInMB={20}
-                    onImagesChange={(value) => {
-                      setTargetImage(value);
-                    }}
-                    icon={<Target className="h-16 w-16 text-gray-300 mb-4" />}
-                  />
-                </div> */}
               </div>
 
               <SelectWithLabel
@@ -480,24 +540,6 @@ export default function UpdateChallengeForm({
                 className="w-full"
                 required
               />
-
-              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputWithLabel
-                  fieldTitle="Weight Loss Target (kg)"
-                  nameInSchema="weight_loss_target"
-                  placeholder="E.g., 5"
-                  type="number"
-                  className="w-full"
-                />
-
-                <InputWithLabel
-                  fieldTitle="Fat Percentage (%)"
-                  nameInSchema="fat_percent"
-                  placeholder="E.g., 10"
-                  type="number"
-                  className="w-full"
-                />
-              </div> */}
             </TabsContent>
 
             <TabsContent value="healthplan" className="mt-0 space-y-6">

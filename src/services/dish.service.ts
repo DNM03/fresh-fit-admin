@@ -8,17 +8,23 @@ class DishService {
     limit,
     sort_by,
     order_by,
+    min_calories,
+    max_calories,
   }: {
     search?: string;
     page?: number;
     limit?: number;
     sort_by?: string;
     order_by?: string;
+    min_calories?: number;
+    max_calories?: number;
   }): Promise<any> {
     return apiService.get(
       `/dishes?page=${page}${search ? `&search=${search}` : ""}&limit=${limit}${
         sort_by ? `&sort_by=${sort_by}` : ""
-      }${order_by ? `&order_by=${order_by}` : ""}`
+      }${order_by ? `&order_by=${order_by}` : ""}${
+        min_calories ? `&min_calories=${min_calories}` : ""
+      }${max_calories ? `&max_calories=${max_calories}` : ""}`
     );
   }
   searchDishByIngredient({
