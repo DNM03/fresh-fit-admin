@@ -244,15 +244,16 @@ export default function UpdateChallengeForm({
     const fieldsToValidate: string[] = [];
 
     console.log(form.getValues("weeks_duration"));
-    console.log(selectedHealthPlan.number_of_weeks);
+    console.log(selectedHealthPlan?.number_of_weeks || 4);
 
     if (
-      form.getValues("weeks_duration") !== selectedHealthPlan.number_of_weeks
+      form.getValues("weeks_duration") !==
+      (selectedHealthPlan?.number_of_weeks || 4)
     ) {
       // Handle the case where the weeks duration is different
       toast.error(
         "The weeks duration must match the selected health plan's duration: " +
-          selectedHealthPlan.number_of_weeks,
+          (selectedHealthPlan?.number_of_weeks || 4),
         {
           style: {
             background: "#cc3131",

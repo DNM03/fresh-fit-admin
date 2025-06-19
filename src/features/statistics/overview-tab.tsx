@@ -313,7 +313,14 @@ export function OverviewTab({ timeRange }: OverviewTabProps) {
           </CardHeader>
           <CardContent className="flex justify-center">
             {ageDistribution.length > 0 ? (
-              <PieChart data={ageDistribution} dataKey="value" nameKey="name" />
+              <PieChart
+                data={ageDistribution}
+                dataKey="value"
+                nameKey="name"
+                width={600}
+                height={200}
+                showLabels={false}
+              />
             ) : (
               <div className="flex items-center justify-center h-[250px] text-muted-foreground">
                 No demographic data available

@@ -1,5 +1,6 @@
 import {
   Cell,
+  Legend,
   Pie,
   PieChart as RechartsPieChart,
   ResponsiveContainer,
@@ -14,6 +15,8 @@ interface PieChartProps {
   dataKey: string;
   nameKey: string;
   showLabels?: boolean;
+  showLegend?: boolean;
+  legendPosition?: "top" | "bottom" | "left" | "right";
 }
 
 export function PieChart({
@@ -23,11 +26,46 @@ export function PieChart({
   dataKey,
   nameKey,
   showLabels = true,
+  showLegend = true,
+  legendPosition = "bottom",
 }: PieChartProps) {
+  // Custom Legend formatter to display values with percentages
+  const renderLegendContent = (props: any) => {
+    const { payload } = props;
+
+    // Calculate total for percentage
+    const total = data.reduce((sum, entry) => sum + entry[dataKey], 0);
+
+    return (
+      <ul className="flex flex-wrap gap-4 justify-center mt-4">
+        {payload.map((entry: any, index: number) => {
+          const percentValue = ((data[index][dataKey] / total) * 100).toFixed(
+            1
+          );
+
+          return (
+            <li
+              key={`legend-item-${index}`}
+              className="flex items-center gap-2"
+            >
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-sm">
+                {entry.value} ({percentValue}%)
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   return (
     <div
       style={{
-        height: height,
+        height: height + (showLegend && legendPosition === "bottom" ? 60 : 0),
         width: "100%",
         maxWidth: width,
         margin: "0 auto",
@@ -58,7 +96,22 @@ export function PieChart({
               />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip formatter={(value) => [`${value}`, ""]} />
+          {showLegend && (
+            <Legend
+              content={renderLegendContent}
+              verticalAlign={
+                legendPosition === "top" || legendPosition === "bottom"
+                  ? legendPosition
+                  : "middle"
+              }
+              align={
+                legendPosition === "left" || legendPosition === "right"
+                  ? legendPosition
+                  : "center"
+              }
+            />
+          )}
         </RechartsPieChart>
       </ResponsiveContainer>
     </div>

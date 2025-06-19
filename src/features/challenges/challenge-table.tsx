@@ -131,6 +131,32 @@ function ChallengeTable({
         header: "Status",
       },
       {
+        accessorKey: "start_date",
+        header: "Start Date",
+        Cell: ({ row }: { row: any }) => {
+          console.log("Row data:", row.original.start_date);
+          const date = new Date(row.original.start_date);
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          });
+        },
+      },
+      {
+        accessorKey: "end_date",
+        header: "End Date",
+        Cell: ({ row }: { row: any }) => {
+          console.log("Row data:", row.original.end_date);
+          const date = new Date(row.original.end_date);
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          });
+        },
+      },
+      {
         accessorKey: "description",
         header: "Description",
         Cell: ({ row }: { row: any }) => (

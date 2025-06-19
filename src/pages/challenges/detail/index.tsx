@@ -144,6 +144,14 @@ function ChallengeDetail() {
     }
   };
 
+  const calculateWeeks = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffInTime = end.getTime() - start.getTime();
+    const diffInDays = diffInTime / (1000 * 3600 * 24);
+    return Math.ceil(diffInDays / 7);
+  };
+
   const getProgressPercentage = () => {
     if (!challenge?.start_date || !challenge?.end_date) return 0;
 
@@ -432,7 +440,9 @@ function ChallengeDetail() {
               <Badge variant="outline" className="flex items-center gap-1">
                 <CalendarRange className="h-3.5 w-3.5" />
                 {formatDate(challenge.start_date)} -{" "}
-                {formatDate(challenge.end_date)}
+                {formatDate(challenge.end_date)} (
+                {calculateWeeks(challenge.start_date, challenge.end_date)}{" "}
+                weeks)
               </Badge>
             </div>
           </div>
