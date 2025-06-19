@@ -48,7 +48,7 @@ function DishTable({
     try {
       setIsLoading(true);
       const sortParams =
-        sorting.length > 0 ? sorting[0] : { id: "created_at", desc: true };
+        sorting.length > 0 ? sorting[0] : { id: "name", desc: true };
 
       // Prepare request parameters
       const requestParams: any = {
