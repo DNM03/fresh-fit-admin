@@ -109,37 +109,80 @@ function IngredientDetail() {
 
         // Get FatSecret data by name if available
         if (passedState) {
-          try {
-            const fatSecretResponse =
-              await ingredientService.getIngredientByName(passedState);
-            console.log("FatSecret response:", fatSecretResponse);
+          // Add retry logic for FatSecret API
+          let retryCount = 0;
+          const maxRetries = 3;
+          let fatSecretSuccess = false;
+          let fatSecretError = null;
 
-            if (fatSecretResponse.data?.ingredient) {
-              const fsIngredient = fatSecretResponse.data
-                .ingredient as FatSecretIngredient;
+          while (retryCount < maxRetries && !fatSecretSuccess) {
+            try {
+              console.log(
+                `Attempting FatSecret API call (attempt ${
+                  retryCount + 1
+                }/${maxRetries})...`
+              );
 
-              // Extract the first serving data
-              let servingData: ServingData | null = null;
+              const fatSecretResponse =
+                await ingredientService.getIngredientByName(passedState);
+              console.log(
+                `FatSecret response attempt ${retryCount + 1}:`,
+                fatSecretResponse
+              );
 
-              if (Array.isArray(fsIngredient.servings.serving)) {
-                // If there are multiple servings, take the first one
-                servingData = fsIngredient.servings.serving[0];
-              } else if (fsIngredient.servings.serving) {
-                // If there's only one serving
-                servingData = fsIngredient.servings.serving;
+              if (fatSecretResponse.data?.ingredient) {
+                const fsIngredient = fatSecretResponse.data
+                  .ingredient as FatSecretIngredient;
+
+                // Extract the first serving data
+                let servingData: ServingData | null = null;
+
+                if (Array.isArray(fsIngredient.servings.serving)) {
+                  // If there are multiple servings, take the first one
+                  servingData = fsIngredient.servings.serving[0];
+                } else if (fsIngredient.servings.serving) {
+                  // If there's only one serving
+                  servingData = fsIngredient.servings.serving;
+                }
+
+                if (servingData) {
+                  setFatSecretData(servingData);
+                  setFoodDetails({
+                    name: fsIngredient.food_name,
+                    type: fsIngredient.food_type,
+                    url: fsIngredient.food_url,
+                  });
+                  fatSecretSuccess = true;
+                }
               }
 
-              if (servingData) {
-                setFatSecretData(servingData);
-                setFoodDetails({
-                  name: fsIngredient.food_name,
-                  type: fsIngredient.food_type,
-                  url: fsIngredient.food_url,
-                });
+              // If we get here without throwing an error, we can exit the retry loop
+              break;
+            } catch (err) {
+              fatSecretError = err;
+              retryCount++;
+              console.error(
+                `FatSecret API call failed (attempt ${retryCount}/${maxRetries}):`,
+                err
+              );
+
+              if (retryCount < maxRetries) {
+                // Wait a bit before retrying (using exponential backoff)
+                const delayMs = Math.min(
+                  1000 * Math.pow(2, retryCount - 1),
+                  5000
+                );
+                console.log(`Retrying in ${delayMs}ms...`);
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
               }
             }
-          } catch (err) {
-            console.error("Error fetching FatSecret data:", err);
+          }
+
+          if (!fatSecretSuccess && retryCount === maxRetries) {
+            console.error(
+              `All ${maxRetries} attempts to call FatSecret API failed:`,
+              fatSecretError
+            );
             // Don't set error here, we'll fall back to the original data
           }
         }
