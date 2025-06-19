@@ -11,14 +11,17 @@ import ExerciseSetTable from "./exercise-set-table";
 function ExerciseTabs() {
   const [activeTab, setActiveTab] = React.useState("sets");
   const navigate = useNavigate();
-  
+
   // Add state for refresh indicators
   const [isRefetchingExercises, setIsRefetchingExercises] = useState(false);
-  const [isRefetchingExerciseSets, setIsRefetchingExerciseSets] = useState(false);
-  
+  const [isRefetchingExerciseSets, setIsRefetchingExerciseSets] =
+    useState(false);
+
   // Add refs to store refetch functions
   const refetchExercisesRef = useRef<(() => void | Promise<any>) | null>(null);
-  const refetchExerciseSetsRef = useRef<(() => void | Promise<any>) | null>(null);
+  const refetchExerciseSetsRef = useRef<(() => void | Promise<any>) | null>(
+    null
+  );
 
   // Add handlers for refresh buttons
   const handleRefetchExercises = () => {
@@ -50,14 +53,18 @@ function ExerciseTabs() {
   };
 
   // Add functions to register refetch callbacks
-  const registerExerciseRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerExerciseRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchExercisesRef.current = refetchFn;
   };
 
-  const registerExerciseSetRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerExerciseSetRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchExerciseSetsRef.current = refetchFn;
   };
-  
+
   return (
     <div className="w-full space-y-6 max-w-6xl mx-auto">
       <Tabs className="w-full" value={activeTab} onValueChange={setActiveTab}>
@@ -112,7 +119,9 @@ function ExerciseTabs() {
                         isRefetchingExerciseSets ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingExerciseSets ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingExerciseSets ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -124,8 +133,8 @@ function ExerciseTabs() {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="rounded-md border bg-card shadow-sm">
-                  <ExerciseSetTable 
+                <div className="">
+                  <ExerciseSetTable
                     onRefetchTriggered={registerExerciseSetRefetchFunction}
                   />
                 </div>
@@ -150,7 +159,9 @@ function ExerciseTabs() {
                         isRefetchingExercises ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingExercises ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingExercises ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -163,7 +174,7 @@ function ExerciseTabs() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm overflow-auto">
-                  <ExerciseTable 
+                  <ExerciseTable
                     onRefetchTriggered={registerExerciseRefetchFunction}
                   />
                 </div>

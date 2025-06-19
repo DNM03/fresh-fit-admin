@@ -463,7 +463,7 @@ function HealthPlanDetail() {
                   Calories Burned
                 </div>
                 <div className="text-lg font-medium">
-                  {healthPlan.estimated_calories_burned || 0}
+                  {healthPlan.estimated_calories_burned.toFixed(2) || 0}
                 </div>
               </div>
             </div>
@@ -474,7 +474,7 @@ function HealthPlanDetail() {
                   Calories Intake
                 </div>
                 <div className="text-lg font-medium">
-                  {healthPlan.estimated_calories_intake || 0}
+                  {healthPlan.estimated_calories_intake.toFixed(2) || 0}
                 </div>
               </div>
             </div>
@@ -631,7 +631,7 @@ function HealthPlanDetail() {
                               </div>
                               <div className="text-lg font-medium flex items-center">
                                 <Flame className="h-4 w-4 mr-1 text-amber-500" />
-                                {day.estimated_calories_burned || 0}
+                                {day.estimated_calories_burned.toFixed(2) || 0}
                               </div>
                             </div>
                             <div className="border rounded-md p-3 bg-green-50/50">
@@ -640,7 +640,7 @@ function HealthPlanDetail() {
                               </div>
                               <div className="text-lg font-medium flex items-center">
                                 <HeartPulse className="h-4 w-4 mr-1 text-green-500" />
-                                {day.estimated_calories_intake || 0}
+                                {day.estimated_calories_intake.toFixed(2) || 0}
                               </div>
                             </div>
                           </div>

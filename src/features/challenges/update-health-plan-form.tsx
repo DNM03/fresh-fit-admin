@@ -327,25 +327,38 @@ function UpdateHealthPlanForm({
 
     // Validate day and week values before proceeding
     const maxWeeks = form.getValues().number_of_weeks || 12;
-    if (newDay.day < 1 || newDay.day > 7 || newDay.week < 1 || newDay.week > maxWeeks) {
-      toast.error("Invalid day or week value. Days must be 1-7 and weeks must not exceed plan length.", {
-        style: {
-          background: "#cc3131",
-          color: "#fff",
-        },
-      });
+    if (
+      newDay.day < 1 ||
+      newDay.day > 7 ||
+      newDay.week < 1 ||
+      newDay.week > maxWeeks
+    ) {
+      toast.error(
+        "Invalid day or week value. Days must be 1-7 and weeks must not exceed plan length.",
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
+      );
       return;
     }
 
     // Check if a day with the same day and week already exists
-    const dayExists = dayPlans.some(day => day.day === newDay.day && day.week === newDay.week);
+    const dayExists = dayPlans.some(
+      (day) => day.day === newDay.day && day.week === newDay.week
+    );
     if (dayExists) {
-      toast.error(`Day ${newDay.day} Week ${newDay.week} already exists in the plan.`, {
-        style: {
-          background: "#cc3131",
-          color: "#fff",
-        },
-      });
+      toast.error(
+        `Day ${newDay.day} Week ${newDay.week} already exists in the plan.`,
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
+      );
       return;
     }
 
@@ -387,6 +400,13 @@ function UpdateHealthPlanForm({
         healthPlan._id,
         newDayData
       );
+
+      await healthPlanService.updateHealthPlan(healthPlan._id, {
+        estimated_calories_burned:
+          healthPlan.estimated_calories_burned + estimatedCaloriesBurned,
+        estimated_calories_intake:
+          healthPlan.estimated_calories_intake + estimatedCaloriesIntake,
+      });
 
       if (response.data?.health_plan_detail) {
         // Add the new day to the state
@@ -482,6 +502,15 @@ function UpdateHealthPlanForm({
         healthPlan._id,
         dayToDelete._id
       );
+
+      await healthPlanService.updateHealthPlan(healthPlan._id, {
+        estimated_calories_burned:
+          healthPlan.estimated_calories_burned -
+          dayToDelete.estimated_calories_burned,
+        estimated_calories_intake:
+          healthPlan.estimated_calories_intake -
+          dayToDelete.estimated_calories_intake,
+      });
 
       // Remove the day from state
       setDayPlans((prev) => prev.filter((day) => day._id !== dayId));
@@ -725,7 +754,8 @@ function UpdateHealthPlanForm({
                             onChange={(e) => {
                               // Restrict week values to be between 1 and the number of weeks
                               const weekValue = parseInt(e.target.value) || 1;
-                              const maxWeeks = form.getValues().number_of_weeks || 12;
+                              const maxWeeks =
+                                form.getValues().number_of_weeks || 12;
                               const validWeekValue = Math.min(
                                 Math.max(weekValue, 1),
                                 maxWeeks
@@ -737,7 +767,8 @@ function UpdateHealthPlanForm({
                             }}
                           />
                           <p className="text-xs text-muted-foreground mt-1">
-                            Weeks must be between 1-{form.getValues().number_of_weeks || 12}
+                            Weeks must be between 1-
+                            {form.getValues().number_of_weeks || 12}
                           </p>
                         </div>
                       </div>
