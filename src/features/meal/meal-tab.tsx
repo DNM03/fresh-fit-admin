@@ -219,7 +219,7 @@ function MealTab() {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="rounded-md border bg-card shadow-sm">
+                <div className="">
                   <MealTable onRefetchTriggered={registerMealRefetchFunction} />
                 </div>
               </CardContent>
