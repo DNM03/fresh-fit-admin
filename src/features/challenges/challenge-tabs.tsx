@@ -14,7 +14,9 @@ function ChallengeTabs() {
   const [isRefetchingChallenges, setIsRefetchingChallenges] = useState(false);
   const [isRefetchingHealthPlans, setIsRefetchingHealthPlans] = useState(false);
   const refetchChallengesRef = useRef<(() => void | Promise<any>) | null>(null);
-  const refetchHealthPlansRef = useRef<(() => void | Promise<any>) | null>(null);
+  const refetchHealthPlansRef = useRef<(() => void | Promise<any>) | null>(
+    null
+  );
 
   const handleRefetchChallenges = () => {
     if (refetchChallengesRef.current) {
@@ -44,11 +46,15 @@ function ChallengeTabs() {
     }
   };
 
-  const registerChallengeRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerChallengeRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchChallengesRef.current = refetchFn;
   };
 
-  const registerHealthPlanRefetchFunction = (refetchFn: () => void | Promise<any>) => {
+  const registerHealthPlanRefetchFunction = (
+    refetchFn: () => void | Promise<any>
+  ) => {
     refetchHealthPlansRef.current = refetchFn;
   };
 
@@ -103,7 +109,9 @@ function ChallengeTabs() {
                         isRefetchingChallenges ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingChallenges ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingChallenges ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -115,7 +123,7 @@ function ChallengeTabs() {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="rounded-md border bg-card shadow-sm">
+                <div className="">
                   <ChallengeTable
                     onRefetchTriggered={registerChallengeRefetchFunction}
                   />
@@ -142,7 +150,9 @@ function ChallengeTabs() {
                         isRefetchingHealthPlans ? "animate-spin" : ""
                       }`}
                     />
-                    <span>{isRefetchingHealthPlans ? "Refreshing..." : "Refresh"}</span>
+                    <span>
+                      {isRefetchingHealthPlans ? "Refreshing..." : "Refresh"}
+                    </span>
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 px-4"
@@ -155,7 +165,7 @@ function ChallengeTabs() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="rounded-md border bg-card shadow-sm">
-                  <HealthPlanTable 
+                  <HealthPlanTable
                     onRefetchTriggered={registerHealthPlanRefetchFunction}
                   />
                 </div>

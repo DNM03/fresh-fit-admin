@@ -106,6 +106,17 @@ export default function ChallengeForm() {
 
   const handleAddHealthPlan = (plan: any) => {
     setSelectedHealthPlan(plan);
+    setWeeksDuration(plan.number_of_weeks || 4);
+    form.setValue("weeks_duration", plan.number_of_weeks || 4);
+    toast.success(
+      "Update challenge weeks duration to " + (plan.number_of_weeks || 4),
+      {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      }
+    );
   };
 
   const handleRemoveHealthPlan = () => {
@@ -393,10 +404,10 @@ export default function ChallengeForm() {
                   required
                 />
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label
                     htmlFor="weeks_duration"
-                    className="text-sm font-medium"
+                    className="text-base font-medium"
                   >
                     Duration (weeks)<span className="text-red-500">*</span>
                   </Label>
@@ -417,12 +428,17 @@ export default function ChallengeForm() {
                       }}
                     />
                   </div>
+                  {form.formState.errors.weeks_duration && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.weeks_duration.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Display calculated end date as read-only */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">
+                <Label className="text-base font-medium">
                   End Date (calculated)
                 </Label>
                 <input
