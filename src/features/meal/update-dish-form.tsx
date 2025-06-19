@@ -227,7 +227,7 @@ function UpdateDishForm({ dish, onSuccess }: UpdateDishFormProps) {
 
             <CardContent className="pb-4">
               <TabsContent value="basic" className="mt-0 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                   <InputWithLabel
                     fieldTitle="Dish Name"
                     nameInSchema="name"
@@ -321,7 +321,7 @@ function UpdateDishForm({ dish, onSuccess }: UpdateDishFormProps) {
               </TabsContent>
 
               <TabsContent value="nutrition" className="mt-0 space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-start">
                   <InputWithLabel
                     fieldTitle="Fat (g)"
                     nameInSchema="fat"
@@ -352,7 +352,7 @@ function UpdateDishForm({ dish, onSuccess }: UpdateDishFormProps) {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-start">
                   <InputWithLabel
                     fieldTitle="Carbohydrates (g)"
                     nameInSchema="carbohydrate"
