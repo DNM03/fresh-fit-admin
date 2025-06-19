@@ -201,7 +201,7 @@ function ExerciseSetTable({
               <span className="hidden sm:inline">Filter</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80">
+          <PopoverContent className="w-80 ml-62">
             <div className="space-y-4 p-1">
               <h4 className="font-medium leading-none">Exercise Count Range</h4>
               <div className="grid grid-cols-2 gap-4">

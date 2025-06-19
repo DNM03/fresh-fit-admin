@@ -169,10 +169,10 @@ function ChallengeTable({
               <span className="hidden sm:inline">Filter</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80">
+          <PopoverContent className="w-80 ml-62">
             <div className="space-y-4 p-1">
               <h4 className="font-medium leading-none">Challenge Filters</h4>
-              
+
               {/* Status Filter */}
               <div className="space-y-2">
                 <Label htmlFor="status-filter">Status</Label>
@@ -192,7 +192,7 @@ function ChallengeTable({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Type Filter */}
               <div className="space-y-2">
                 <Label htmlFor="type-filter">Type</Label>
@@ -212,7 +212,7 @@ function ChallengeTable({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex justify-between">
                 <Button
                   variant="outline"
@@ -239,7 +239,7 @@ function ChallengeTable({
             </button>
           </Badge>
         )}
-        
+
         {/* Type filter badge */}
         {typeFilter && (
           <Badge variant="outline" className="gap-1 px-2 py-1">
