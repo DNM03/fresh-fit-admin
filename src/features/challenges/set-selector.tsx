@@ -243,7 +243,8 @@ export default function SetSelector({
                         <div className="flex gap-4 text-xs text-gray-500 mt-1">
                           <span>{set.total_calories} calories</span>
                           <span>{set.number_of_exercises || 0} exercises</span>
-                          <span>Rating: {set.rating || 0}</span>
+                          {/* <span>{set.rating || 0} ★</span> */}
+                          <span>{set.type || "Beginner"}</span>
                         </div>
                       </div>
                       <div
