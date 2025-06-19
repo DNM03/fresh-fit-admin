@@ -11,10 +11,7 @@ class HealthPlanService {
   ): Promise<AxiosResponse> {
     return apiService.post("/health-plans", healthPlanData);
   }
-  updateHealthPlan(
-    id: string,
-    healthPlanData: AddUpdateHealthPlanData
-  ): Promise<AxiosResponse> {
+  updateHealthPlan(id: string, healthPlanData: any): Promise<AxiosResponse> {
     return apiService.patch(`/health-plans/${id}`, healthPlanData);
   }
   searchHealthPlan({
