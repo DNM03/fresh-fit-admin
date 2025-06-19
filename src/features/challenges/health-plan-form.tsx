@@ -292,6 +292,7 @@ function HealthPlanForm() {
             nutrition_details: day.nutrition_details,
             estimated_calories_burned: day.estimated_calories_burned,
             estimated_calories_intake: day.estimated_calories_intake,
+            name: day.name,
           });
         }
       }
