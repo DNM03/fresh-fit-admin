@@ -199,7 +199,7 @@ export default function HealthPlanSelector({
                     }`}
                     onClick={() => handleCheckboxChange(plan._id)}
                     disabled={
-                      plan.challenge !== null || plan.challenge !== undefined
+                      plan.challenge !== null && plan.challenge !== undefined
                     }
                   >
                     <div className="flex items-center justify-between">
@@ -220,7 +220,7 @@ export default function HealthPlanSelector({
                         </div>
                       </div>
                       {!(
-                        plan.challenge !== null || plan.challenge !== undefined
+                        plan.challenge !== null && plan.challenge !== undefined
                       ) && (
                         <div
                           className={`w-5 h-5 rounded-full border flex items-center justify-center ${
