@@ -504,7 +504,7 @@ export default function SetSelector({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-sm">{set.name}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 mt-2">
                     {set.total_calories} calories
                   </div>
                 </div>

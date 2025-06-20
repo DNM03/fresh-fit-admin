@@ -157,6 +157,31 @@ export default function UpdateChallengeForm({
 
   const handleAddHealthPlan = (plan: any) => {
     setSelectedHealthPlan(plan);
+
+    // Update weeks duration to match the selected health plan
+    if (plan && plan.number_of_weeks) {
+      const planWeeks = plan.number_of_weeks;
+      setWeeksDuration(planWeeks);
+      form.setValue("weeks_duration", planWeeks);
+
+      // Also update end date based on new duration
+      if (watchStartDate) {
+        const newEndDate = addWeeks(watchStartDate, planWeeks);
+        setEndDate(newEndDate);
+        form.setValue("end_date", newEndDate);
+      }
+
+      // Show success notification
+      toast.success(
+        `Challenge duration updated to ${planWeeks} weeks to match health plan`,
+        {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        }
+      );
+    }
   };
 
   const handleRemoveHealthPlan = () => {
@@ -243,25 +268,40 @@ export default function UpdateChallengeForm({
   const nextStep = async () => {
     const fieldsToValidate: string[] = [];
 
-    console.log(form.getValues("weeks_duration"));
-    console.log(selectedHealthPlan?.number_of_weeks || 4);
+    // Only check health plan match when moving to the health plan tab
+    if (activeTab === "details" && selectedHealthPlan?.number_of_weeks) {
+      const currentWeeksDuration = form.getValues("weeks_duration");
+      const planWeeks = selectedHealthPlan.number_of_weeks;
 
-    if (
-      form.getValues("weeks_duration") !==
-      (selectedHealthPlan?.number_of_weeks || 4)
-    ) {
-      // Handle the case where the weeks duration is different
-      toast.error(
-        "The weeks duration must match the selected health plan's duration: " +
-          (selectedHealthPlan?.number_of_weeks || 4),
-        {
-          style: {
-            background: "#cc3131",
-            color: "#fff",
-          },
+      if (currentWeeksDuration !== planWeeks) {
+        // Offer to update the duration to match
+        if (
+          confirm(
+            `The health plan's duration is ${planWeeks} weeks. Would you like to update the challenge duration to match?`
+          )
+        ) {
+          setWeeksDuration(planWeeks);
+          form.setValue("weeks_duration", planWeeks);
+
+          // Update end date
+          if (watchStartDate) {
+            const newEndDate = addWeeks(watchStartDate, planWeeks);
+            setEndDate(newEndDate);
+            form.setValue("end_date", newEndDate);
+          }
+        } else {
+          // User chose not to update, show warning but allow to continue
+          toast.warning(
+            "The challenge duration doesn't match the health plan duration. This may cause inconsistencies.",
+            {
+              style: {
+                background: "#eab308",
+                color: "#fff",
+              },
+            }
+          );
         }
-      );
-      return;
+      }
     }
 
     if (activeTab === "details") {

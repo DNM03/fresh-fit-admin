@@ -369,7 +369,7 @@ export default function MealSelector({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <Label className="text-base font-medium flex items-center">
           <Utensils className="mr-2 h-4 w-4 text-amber-600" />
@@ -671,10 +671,11 @@ export default function MealSelector({
                 <div>
                   <div className="font-medium text-sm flex items-center gap-2">
                     {meal.name}
-                    {getMealTypeLabel(meal)}
+                    {/* {getMealTypeLabel(meal)} */}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 mt-2">
                     {meal.calories} calories
+                    <span className="ml-2">{getMealTypeLabel(meal)}</span>
                   </div>
                 </div>
                 <Button
