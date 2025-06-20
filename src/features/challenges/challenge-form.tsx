@@ -420,10 +420,15 @@ export default function ChallengeForm() {
                       max="52"
                       value={weeksDuration}
                       onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value > 0) {
-                          setWeeksDuration(value);
-                          form.setValue("weeks_duration", value);
+                        let value = parseInt(e.target.value);
+                        if (!isNaN(value)) {
+                          if (value > 52) {
+                            value = 52;
+                          }
+                          if (value > 0) {
+                            setWeeksDuration(value);
+                            form.setValue("weeks_duration", value);
+                          }
                         }
                       }}
                     />
