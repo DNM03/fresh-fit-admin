@@ -17,6 +17,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Filter, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function ExerciseSetTable({
   onRefetchTriggered,
@@ -41,6 +48,9 @@ function ExerciseSetTable({
     min?: number;
     max?: number;
   } | null>(null);
+
+  // Add state for level filter
+  const [levelFilter, setLevelFilter] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Convert to useCallback to enable reuse through ref
@@ -58,8 +68,6 @@ function ExerciseSetTable({
         sort_by: sortParams.id,
         order_by: sortParams.desc ? "DESC" : "ASC",
         search: globalFilter,
-        min_calories: exercisesFilter?.min,
-        max_calories: exercisesFilter?.max,
       };
 
       // Add exercises count filter if it exists
@@ -70,6 +78,11 @@ function ExerciseSetTable({
         if (exercisesFilter.max !== undefined) {
           requestParams.max_exercises = exercisesFilter.max;
         }
+      }
+
+      // Add level filter if it exists
+      if (levelFilter) {
+        requestParams.level = levelFilter;
       }
 
       const response = await setService.searchSet(requestParams);
@@ -89,6 +102,7 @@ function ExerciseSetTable({
     globalFilter,
     sorting,
     exercisesFilter,
+    levelFilter,
   ]);
 
   useEffect(() => {
@@ -135,7 +149,18 @@ function ExerciseSetTable({
     setExercisesFilter(null);
     setMinExercises("");
     setMaxExercises("");
-    setFilterOpen(false);
+  };
+
+  // Handle changing level filter
+  const handleLevelFilterChange = (value: string) => {
+    setLevelFilter(value === "All" ? null : value);
+    // Reset to first page when filter changes
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  };
+
+  // Handle removing the level filter
+  const handleRemoveLevelFilter = () => {
+    setLevelFilter(null);
   };
 
   const columns = useMemo<MRT_ColumnDef<any>[]>(
@@ -151,14 +176,6 @@ function ExerciseSetTable({
       {
         accessorKey: "total_calories",
         header: "Calories",
-        // Cell: ({ row }) => (
-        //   <p>
-        //     {row.original.description.length > 25
-        //       ? `${row.original.description.substring(0, 25)}...`
-        //       : row.original.description}
-        //   </p>
-        // ),
-        // enableSorting: false,
       },
       {
         accessorKey: "type",
@@ -169,8 +186,8 @@ function ExerciseSetTable({
     []
   );
 
-  // Create filter indicator text
-  const getFilterText = () => {
+  // Create filter indicator text for exercise count
+  const getExerciseFilterText = () => {
     if (!exercisesFilter) return null;
 
     if (
@@ -185,6 +202,11 @@ function ExerciseSetTable({
     }
 
     return null;
+  };
+
+  // Create filter indicator text for level
+  const getLevelFilterText = () => {
+    return levelFilter ? `Level: ${levelFilter}` : null;
   };
 
   return (
@@ -203,54 +225,103 @@ function ExerciseSetTable({
           </PopoverTrigger>
           <PopoverContent className="w-80 ml-62">
             <div className="space-y-4 p-1">
-              <h4 className="font-medium leading-none">Exercise Count Range</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="min-exercises">Min Exercises</Label>
-                  <Input
-                    id="min-exercises"
-                    placeholder="e.g., 1"
-                    type="number"
-                    min={0}
-                    value={minExercises}
-                    onChange={(e) => setMinExercises(e.target.value)}
-                  />
+              {/* Level Filter */}
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">Exercise Level</h4>
+                <Select
+                  value={levelFilter || "All"}
+                  onValueChange={handleLevelFilterChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Levels</SelectItem>
+                    <SelectItem value="Beginner">Beginner</SelectItem>
+                    <SelectItem value="Intermediate">Intermediate</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Exercise Count Filter */}
+              <div className="space-y-2 pt-2 border-t">
+                <h4 className="font-medium leading-none">
+                  Exercise Count Range
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min-exercises">Min Exercises</Label>
+                    <Input
+                      id="min-exercises"
+                      placeholder="e.g., 1"
+                      type="number"
+                      min={0}
+                      value={minExercises}
+                      onChange={(e) => setMinExercises(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="max-exercises">Max Exercises</Label>
+                    <Input
+                      id="max-exercises"
+                      placeholder="e.g., 10"
+                      type="number"
+                      min={0}
+                      value={maxExercises}
+                      onChange={(e) => setMaxExercises(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="max-exercises">Max Exercises</Label>
-                  <Input
-                    id="max-exercises"
-                    placeholder="e.g., 10"
-                    type="number"
-                    min={0}
-                    value={maxExercises}
-                    onChange={(e) => setMaxExercises(e.target.value)}
-                  />
+                <div className="flex justify-end pt-2">
+                  <Button size="sm" onClick={handleApplyExercisesFilter}>
+                    Apply Count Filter
+                  </Button>
                 </div>
               </div>
-              <div className="flex justify-between">
+
+              {/* Clear All Filters Button */}
+              <div className="flex justify-between border-t pt-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRemoveExercisesFilter}
-                  disabled={!exercisesFilter}
+                  onClick={() => {
+                    handleRemoveExercisesFilter();
+                    handleRemoveLevelFilter();
+                    setFilterOpen(false);
+                  }}
+                  disabled={!exercisesFilter && !levelFilter}
                 >
-                  Clear
+                  Clear All Filters
                 </Button>
-                <Button size="sm" onClick={handleApplyExercisesFilter}>
-                  Apply
+                <Button size="sm" onClick={() => setFilterOpen(false)}>
+                  Close
                 </Button>
               </div>
             </div>
           </PopoverContent>
         </Popover>
 
+        {/* Exercise count filter badge */}
         {exercisesFilter && (
           <Badge variant="outline" className="gap-1 px-2 py-1">
-            <span>{getFilterText()}</span>
+            <span>{getExerciseFilterText()}</span>
             <button
               className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
               onClick={handleRemoveExercisesFilter}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        )}
+
+        {/* Level filter badge */}
+        {levelFilter && (
+          <Badge variant="outline" className="gap-1 px-2 py-1">
+            <span>{getLevelFilterText()}</span>
+            <button
+              className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+              onClick={handleRemoveLevelFilter}
             >
               <X className="h-3 w-3" />
             </button>

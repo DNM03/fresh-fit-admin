@@ -65,6 +65,10 @@ export default function SetSelector({
     min?: number;
     max?: number;
   } | null>(null);
+
+  // Add state for level filter
+  const [levelFilter, setLevelFilter] = useState<string | null>(null);
+
   const [filterOpen, setFilterOpen] = useState(false);
 
   const [sets, setSets] = useState<any[]>(availableSets);
@@ -121,6 +125,11 @@ export default function SetSelector({
         }
       }
 
+      // Add level filter if it exists
+      if (levelFilter) {
+        requestParams.level = levelFilter;
+      }
+
       const response = await setService.searchSet(requestParams);
 
       if (response?.data?.result) {
@@ -151,7 +160,14 @@ export default function SetSelector({
     if (dialogOpen) {
       fetchSets(1, debouncedSearchQuery);
     }
-  }, [dialogOpen, debouncedSearchQuery, sortBy, orderBy, caloriesFilter]);
+  }, [
+    dialogOpen,
+    debouncedSearchQuery,
+    sortBy,
+    orderBy,
+    caloriesFilter,
+    levelFilter,
+  ]);
 
   const handlePageChange = (newPage: number) => {
     fetchSets(newPage, debouncedSearchQuery);
@@ -191,7 +207,26 @@ export default function SetSelector({
     setFilterOpen(false);
   };
 
-  // Create filter indicator text
+  // Handle changing level filter
+  const handleLevelFilterChange = (value: string) => {
+    setLevelFilter(value === "All" ? null : value);
+    // Reset to first page when filter changes
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  };
+
+  // Handle removing the level filter
+  const handleRemoveLevelFilter = () => {
+    setLevelFilter(null);
+  };
+
+  // Handle clearing all filters
+  const handleClearAllFilters = () => {
+    handleRemoveCaloriesFilter();
+    handleRemoveLevelFilter();
+    setFilterOpen(false);
+  };
+
+  // Create filter indicator text for calories
   const getCaloriesFilterText = () => {
     if (!caloriesFilter) return null;
 
@@ -204,6 +239,11 @@ export default function SetSelector({
     }
 
     return null;
+  };
+
+  // Create filter indicator text for level
+  const getLevelFilterText = () => {
+    return levelFilter ? `Level: ${levelFilter}` : null;
   };
 
   const handleCheckboxChange = (setId: string) => {
@@ -257,7 +297,7 @@ export default function SetSelector({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
               <div className="relative col-span-1 md:col-span-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -305,28 +345,27 @@ export default function SetSelector({
                 </Button>
               </div>
 
+              {/* Exercise Level Filter */}
               <div className="col-span-1 md:col-span-1">
                 <Select
-                  value={orderBy}
-                  onValueChange={(value) => setOrderBy(value)}
+                  value={levelFilter || "All"}
+                  onValueChange={handleLevelFilterChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Order" />
+                    <SelectValue placeholder="Filter by level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="asc">
-                      Ascending (A-Z, Low-High)
-                    </SelectItem>
-                    <SelectItem value="desc">
-                      Descending (Z-A, High-Low)
-                    </SelectItem>
+                    <SelectItem value="All">All Levels</SelectItem>
+                    <SelectItem value="Beginner">Beginner</SelectItem>
+                    <SelectItem value="Intermediate">Intermediate</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             {/* Calories filter */}
-            <div className="flex items-center justify-between ">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Popover open={filterOpen} onOpenChange={setFilterOpen}>
                   <PopoverTrigger asChild>
@@ -339,7 +378,7 @@ export default function SetSelector({
                       <span className="hidden sm:inline">Calories Filter</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 ml-48">
+                  <PopoverContent className="w-80">
                     <div className="space-y-4 p-1">
                       <h4 className="font-medium leading-none">
                         Calories Range
@@ -386,16 +425,42 @@ export default function SetSelector({
                 </Popover>
 
                 {/* Display active filters */}
-                {caloriesFilter && (
-                  <div className="bg-muted text-muted-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
-                    {getCaloriesFilterText()}
-                    <button
-                      onClick={handleRemoveCaloriesFilter}
-                      className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {caloriesFilter && (
+                    <div className="bg-muted text-muted-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+                      {getCaloriesFilterText()}
+                      <button
+                        onClick={handleRemoveCaloriesFilter}
+                        className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  {levelFilter && (
+                    <div className="bg-muted text-muted-foreground text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+                      {getLevelFilterText()}
+                      <button
+                        onClick={handleRemoveLevelFilter}
+                        className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Clear all filters button */}
+                {(caloriesFilter || levelFilter) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearAllFilters}
+                    className="h-7 text-xs"
+                  >
+                    Clear All
+                  </Button>
                 )}
               </div>
             </div>
@@ -423,7 +488,19 @@ export default function SetSelector({
                         <div className="flex gap-4 text-xs text-gray-500 mt-1">
                           <span>{set.total_calories} calories</span>
                           <span>{set.number_of_exercises || 0} exercises</span>
-                          <span>{set.type || "Beginner"}</span>
+                          <span
+                            className={`inline-block px-1.5 py-0.5 rounded text-xs ${
+                              set.type === "Beginner"
+                                ? "bg-green-100 text-green-800"
+                                : set.type === "Intermediate"
+                                ? "bg-blue-100 text-blue-800"
+                                : set.type === "Advanced"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {set.type || "Beginner"}
+                          </span>
                         </div>
                       </div>
                       <div
@@ -504,8 +581,25 @@ export default function SetSelector({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-sm">{set.name}</div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    {set.total_calories} calories
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-gray-500">
+                      {set.total_calories} calories
+                    </span>
+                    {set.type && (
+                      <span
+                        className={`inline-block px-1.5 py-0.5 rounded text-xs ${
+                          set.type === "Beginner"
+                            ? "bg-green-100 text-green-800"
+                            : set.type === "Intermediate"
+                            ? "bg-blue-100 text-blue-800"
+                            : set.type === "Advanced"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {set.type}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Button
