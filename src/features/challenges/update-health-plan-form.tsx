@@ -292,8 +292,8 @@ function UpdateHealthPlanForm({
       const updateData = {
         name: data.name,
         description: data.description,
-        estimated_calories_burned: data.estimated_calories_burned,
-        estimated_calories_intake: data.estimated_calories_intake,
+        // estimated_calories_burned: data.estimated_calories_burned,
+        // estimated_calories_intake: data.estimated_calories_intake,
         status: data.status,
         level: data.level,
         start_date: startDate.toISOString(),
@@ -401,11 +401,30 @@ function UpdateHealthPlanForm({
         newDayData
       );
 
+      const finalCaloriesBurned = dayPlans.reduce(
+        (sum, day) => sum + (day.estimated_calories_burned || 0),
+        0
+      );
+
+      const finalCaloriesIntake = dayPlans.reduce(
+        (sum, day) => sum + (day.estimated_calories_intake || 0),
+        0
+      );
+
+      console.log(
+        "Final calories burned:",
+        finalCaloriesBurned + estimatedCaloriesBurned
+      );
+      console.log(
+        "Final calories intake:",
+        finalCaloriesIntake + estimatedCaloriesIntake
+      );
+
       await healthPlanService.updateHealthPlan(healthPlan._id, {
         estimated_calories_burned:
-          healthPlan.estimated_calories_burned + estimatedCaloriesBurned,
+          finalCaloriesBurned + estimatedCaloriesBurned,
         estimated_calories_intake:
-          healthPlan.estimated_calories_intake + estimatedCaloriesIntake,
+          finalCaloriesIntake + estimatedCaloriesIntake,
       });
 
       if (response.data?.health_plan_detail) {
@@ -503,13 +522,30 @@ function UpdateHealthPlanForm({
         dayToDelete._id
       );
 
+      const finalCaloriesBurned = dayPlans.reduce(
+        (sum, day) => sum + (day.estimated_calories_burned || 0),
+        0
+      );
+
+      const finalCaloriesIntake = dayPlans.reduce(
+        (sum, day) => sum + (day.estimated_calories_intake || 0),
+        0
+      );
+
+      console.log(
+        "Final calories burned:",
+        finalCaloriesBurned - dayToDelete.estimated_calories_burned
+      );
+      console.log(
+        "Final calories intake:",
+        finalCaloriesIntake - dayToDelete.estimated_calories_intake
+      );
+
       await healthPlanService.updateHealthPlan(healthPlan._id, {
         estimated_calories_burned:
-          healthPlan.estimated_calories_burned -
-          dayToDelete.estimated_calories_burned,
+          finalCaloriesBurned - dayToDelete.estimated_calories_burned,
         estimated_calories_intake:
-          healthPlan.estimated_calories_intake -
-          dayToDelete.estimated_calories_intake,
+          finalCaloriesIntake - dayToDelete.estimated_calories_intake,
       });
 
       // Remove the day from state
@@ -919,14 +955,18 @@ function UpdateHealthPlanForm({
                                     <div className="flex space-x-4 text-sm text-muted-foreground">
                                       <div className="flex items-center">
                                         <span>
-                                          {day.estimated_calories_burned} cal
-                                          burned
+                                          {day.estimated_calories_burned.toFixed(
+                                            2
+                                          )}{" "}
+                                          cal burned
                                         </span>
                                       </div>
                                       <div className="flex items-center">
                                         <span>
-                                          {day.estimated_calories_intake} cal
-                                          intake
+                                          {day.estimated_calories_intake.toFixed(
+                                            2
+                                          )}{" "}
+                                          cal intake
                                         </span>
                                       </div>
                                     </div>
@@ -1059,10 +1099,13 @@ function UpdateHealthPlanForm({
                     Total Calories Burned:
                   </span>
                   <span className="font-medium">
-                    {dayPlans.reduce(
-                      (sum, day) => sum + (day.estimated_calories_burned || 0),
-                      0
-                    )}{" "}
+                    {dayPlans
+                      .reduce(
+                        (sum, day) =>
+                          sum + (day.estimated_calories_burned || 0),
+                        0
+                      )
+                      .toFixed(2)}{" "}
                     calories
                   </span>
                 </div>
@@ -1071,10 +1114,13 @@ function UpdateHealthPlanForm({
                     Total Calories Intake:
                   </span>
                   <span className="font-medium">
-                    {dayPlans.reduce(
-                      (sum, day) => sum + (day.estimated_calories_intake || 0),
-                      0
-                    )}{" "}
+                    {dayPlans
+                      .reduce(
+                        (sum, day) =>
+                          sum + (day.estimated_calories_intake || 0),
+                        0
+                      )
+                      .toFixed(2)}{" "}
                     calories
                   </span>
                 </div>
