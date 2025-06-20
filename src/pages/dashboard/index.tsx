@@ -22,10 +22,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -35,6 +32,7 @@ import {
 import { useEffect, useState } from "react";
 import statisticService from "@/services/statistic.service";
 import { useNavigate } from "react-router-dom";
+import { PieChart } from "@/features/statistics/pie-chart";
 
 function DashboardPage() {
   const [adminDashboard, setAdminDashboard] = useState<any>();
@@ -65,13 +63,6 @@ function DashboardPage() {
     fetchAdminDashboard();
     fetchChallengesDashboard();
   }, []);
-  const COLORS = [
-    "#FF6B6B", // Coral Red
-    "#4ECDC4", // Turquoise
-    "#45B7D1", // Sky Blue
-    "#96CEB4", // Sage Green
-    "#FFEEAD", // Cream Yellow
-  ];
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -160,55 +151,29 @@ function DashboardPage() {
             <CardDescription>Most popular exercises by users</CardDescription>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={adminDashboard?.top_5_exercises
-                      ?.slice(0, 5)
-                      ?.map((exercise: any) => ({
-                        planName: exercise.name,
-                        value: exercise.chosen_count || 1,
-                        type: exercise.experience_level || "Unknown",
-                        rating: exercise.rating || 0,
-                      }))}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={100}
-                    dataKey="value"
-                    nameKey="planName"
-                    label={({ name, percent }) => {
-                      return percent > 0.1 ? `${name}` : "";
-                    }}
-                  >
-                    {(adminDashboard?.top_5_exercises?.slice(0, 5) || [])?.map(
-                      (_entry: any, index: number) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      )
-                    )}
-                  </Pie>
-                  <Tooltip
-                    content={(props) => {
-                      const { active, payload } = props;
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-background border rounded-md p-2 shadow-md">
-                            <p className="font-medium">{data.planName}</p>
-                            <p>{data.rating} ⭐</p>
-                            <p className="text-sm">Type: {data.type}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="h-[320px] w-full">
+              {adminDashboard?.top_5_exercises &&
+              adminDashboard.top_5_exercises.length > 0 ? (
+                <PieChart
+                  data={adminDashboard.top_5_exercises
+                    .slice(0, 5)
+                    .map((exercise: any) => ({
+                      name: exercise.name,
+                      value: exercise.chosen_count || 1,
+                      type: exercise.experience_level || "Unknown",
+                      rating: exercise.rating || 0,
+                    }))}
+                  dataKey="value"
+                  nameKey="name"
+                  width={600}
+                  height={280}
+                  showLabels={false}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  No exercise data available
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -222,7 +187,7 @@ function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="h-[300px] w-full">
+            <div className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={adminDashboard?.top_5_dishes
