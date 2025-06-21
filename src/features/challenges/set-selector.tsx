@@ -36,12 +36,13 @@ import {
 } from "@/components/ui/popover";
 import { Activity } from "lucide-react";
 import setService from "@/services/set.service";
+import { toast } from "sonner";
 
 type SetSelectorProps = {
   availableSets?: any[];
   selectedSets: any[];
   onAddSet: (set: any) => void;
-  onRemoveSet: (setId: string) => void;
+  onRemoveSet: (set: any) => void;
   dayId?: string;
 };
 
@@ -72,6 +73,7 @@ export default function SetSelector({
   const [filterOpen, setFilterOpen] = useState(false);
 
   const [sets, setSets] = useState<any[]>(availableSets);
+  const [loadedSets, setLoadedSets] = useState<any[]>(availableSets);
   const [isLoading, setIsLoading] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -141,7 +143,14 @@ export default function SetSelector({
           limit,
         } = response.data.result;
         console.log("Fetched sets:", fetchedSets);
+        // Filter only unique sets not already in the list
+        const uniqueSets = fetchedSets.filter(
+          (newSet: any) =>
+            !loadedSets.some((existingSet) => existingSet._id === newSet._id)
+        );
         setSets(fetchedSets);
+        setLoadedSets((prev) => [...prev, ...uniqueSets]);
+
         setPagination({
           currentPage,
           totalPages: total_pages,
@@ -180,17 +189,32 @@ export default function SetSelector({
 
     // Validate input
     if (min !== undefined && isNaN(min)) {
-      alert("Please enter a valid number for minimum calories");
+      toast.error("Please enter a valid number for minimum calories", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
     if (max !== undefined && isNaN(max)) {
-      alert("Please enter a valid number for maximum calories");
+      toast.error("Please enter a valid number for maximum calories", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
     if (min !== undefined && max !== undefined && min > max) {
-      alert("Minimum calories cannot be greater than maximum calories");
+      toast.error("Minimum calories cannot be greater than maximum calories", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -256,7 +280,7 @@ export default function SetSelector({
 
   const handleAddSelected = () => {
     selectedSetIds.forEach((id) => {
-      const set = sets.find((s) => s._id === id);
+      const set = loadedSets.find((s) => s._id === id);
       if (set && !selectedSets.some((s) => s._id === id)) {
         onAddSet(set);
       }
@@ -606,7 +630,7 @@ export default function SetSelector({
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
-                  onClick={() => onRemoveSet(set._id)}
+                  onClick={() => onRemoveSet(set)}
                 >
                   <X size={14} />
                 </Button>
