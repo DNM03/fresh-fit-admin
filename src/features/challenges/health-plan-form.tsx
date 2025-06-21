@@ -143,7 +143,7 @@ function HealthPlanForm() {
     });
   };
 
-  const handleRemoveExerciseFromDay = (dayId: string, exerciseId: string) => {
+  const handleRemoveExerciseFromDay = (dayId: string, set: any) => {
     setDayPlans((prevDays) => {
       return prevDays.map((day) => {
         if (day.id === dayId) {
@@ -151,15 +151,19 @@ function HealthPlanForm() {
           //     (ex) => ex.set === exerciseId
           //   );
           const selectedSet = day.workout_details.find(
-            (ex: any) => ex.set === exerciseId
+            (ex: any) => ex.set === set._id
           );
 
-          const caloriesToSubtract = selectedSet ? 500 : 0;
+          console.log("Selected Set:", selectedSet);
+
+          const caloriesToSubtract = selectedSet?.total_calories
+            ? selectedSet.total_calories
+            : 0;
 
           return {
             ...day,
             workout_details: day.workout_details.filter(
-              (ex: any) => ex.set !== exerciseId
+              (ex: any) => ex.set !== set._id
             ),
             estimated_calories_burned: Math.max(
               0,
@@ -205,26 +209,26 @@ function HealthPlanForm() {
   };
 
   // Handle removing a meal from a day
-  const handleRemoveMealFromDay = (dayId: string, mealId: string) => {
+  const handleRemoveMealFromDay = (dayId: string, meal: any) => {
     setDayPlans((prevDays) => {
       return prevDays.map((day) => {
         if (day.id === dayId) {
           // Find the meal in the day's nutrition_details to get its calories
           const mealDetails = day.nutrition_details.find(
-            (m: any) => m.meal === mealId
+            (m: any) => m.meal === meal._id
           );
 
           // Determine calories to subtract (if available from the meal details)
           const caloriesToSubtract = mealDetails
             ? // In a real app, you might want to fetch this from an API
               // or maintain a local cache of meal details
-              600 // Default or estimated value
+              mealDetails.calories
             : 0;
 
           return {
             ...day,
             nutrition_details: day.nutrition_details.filter(
-              (m: any) => m.meal !== mealId
+              (m: any) => m.meal !== meal._id
             ),
             estimated_calories_intake: Math.max(
               0,
@@ -544,12 +548,14 @@ function HealthPlanForm() {
                                 <div className="flex space-x-4 text-sm text-muted-foreground">
                                   <div className="flex items-center">
                                     <span>
-                                      {day.estimated_calories_burned} cal burned
+                                      {day.estimated_calories_burned.toFixed(2)}{" "}
+                                      cal burned
                                     </span>
                                   </div>
                                   <div className="flex items-center">
                                     <span>
-                                      {day.estimated_calories_intake} cal intake
+                                      {day.estimated_calories_intake.toFixed(2)}{" "}
+                                      cal intake
                                     </span>
                                   </div>
                                 </div>
@@ -574,8 +580,8 @@ function HealthPlanForm() {
                                     onAddSet={(set) =>
                                       handleAddExerciseToDayPlan(day.id, set)
                                     }
-                                    onRemoveSet={(setId) =>
-                                      handleRemoveExerciseFromDay(day.id, setId)
+                                    onRemoveSet={(set) =>
+                                      handleRemoveExerciseFromDay(day.id, set)
                                     }
                                     dayId={day.id}
                                   />
@@ -595,8 +601,8 @@ function HealthPlanForm() {
                                     onAddMeal={(meal) =>
                                       handleAddMealToDayPlan(day.id, meal)
                                     }
-                                    onRemoveMeal={(mealId) =>
-                                      handleRemoveMealFromDay(day.id, mealId)
+                                    onRemoveMeal={(meal) =>
+                                      handleRemoveMealFromDay(day.id, meal)
                                     }
                                     dayId={day.id}
                                   />

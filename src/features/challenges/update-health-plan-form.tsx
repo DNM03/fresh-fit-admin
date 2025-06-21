@@ -610,8 +610,8 @@ function UpdateHealthPlanForm({
   };
 
   // Handle removing a set from the new day form
-  const handleRemoveSetFromNewDay = (setId: string) => {
-    setSelectedSets((prev) => prev.filter((set) => set._id !== setId));
+  const handleRemoveSetFromNewDay = (set: any) => {
+    setSelectedSets((prev) => prev.filter((s) => s._id !== set._id));
   };
 
   // Handle adding a meal to the new day form
@@ -621,8 +621,8 @@ function UpdateHealthPlanForm({
   };
 
   // Handle removing a meal from the new day form
-  const handleRemoveMealFromNewDay = (mealId: string) => {
-    setSelectedMeals((prev) => prev.filter((meal) => meal._id !== mealId));
+  const handleRemoveMealFromNewDay = (meal: any) => {
+    setSelectedMeals((prev) => prev.filter((m) => m._id !== meal._id));
   };
 
   const renderStepContent = () => {

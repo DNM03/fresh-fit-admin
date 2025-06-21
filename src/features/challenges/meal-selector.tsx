@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/popover";
 import { Utensils } from "lucide-react";
 import mealService from "@/services/meal.service";
+import { toast } from "sonner";
 
 type MealType = {
   _id: string;
@@ -49,7 +50,7 @@ type MealSelectorProps = {
   availableMeals?: MealType[];
   selectedMeals: MealType[];
   onAddMeal: (meal: MealType) => void;
-  onRemoveMeal: (mealId: string) => void;
+  onRemoveMeal: (meal: any) => void;
   dayId?: string;
 };
 
@@ -77,6 +78,7 @@ export default function MealSelector({
   const [filterOpen, setFilterOpen] = useState(false);
 
   const [meals, setMeals] = useState<MealType[]>(availableMeals);
+  const [loadedMeals, setLoadedMeals] = useState<MealType[]>(availableMeals);
   const [isLoading, setIsLoading] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -151,8 +153,14 @@ export default function MealSelector({
           total_pages,
           limit,
         } = response.data.result;
-
+        const uniqueMeals = fetchedMeals.filter(
+          (newMeal: any) =>
+            !loadedMeals.some(
+              (existingMeal) => existingMeal._id === newMeal._id
+            )
+        );
         setMeals(fetchedMeals);
+        setLoadedMeals((prev) => [...prev, ...uniqueMeals]);
         setPagination({
           currentPage,
           totalPages: total_pages,
@@ -196,17 +204,32 @@ export default function MealSelector({
 
     // Validate input
     if (min !== undefined && isNaN(min)) {
-      alert("Please enter a valid number for minimum calories");
+      toast.error("Please enter a valid number for minimum calories", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
     if (max !== undefined && isNaN(max)) {
-      alert("Please enter a valid number for maximum calories");
+      toast.error("Please enter a valid number for maximum calories", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
     if (min !== undefined && max !== undefined && min > max) {
-      alert("Minimum calories cannot be greater than maximum calories");
+      toast.error("Minimum calories cannot be greater than maximum calories", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -318,7 +341,7 @@ export default function MealSelector({
 
     // Check that adding selected meals won't exceed limits
     selectedMealIds.forEach((id) => {
-      const meal = meals.find((m) => m._id === id);
+      const meal = loadedMeals.find((m) => m._id === id);
       if (
         meal?.meal_type &&
         ["Breakfast", "Lunch", "Dinner"].includes(meal.meal_type)
@@ -332,15 +355,21 @@ export default function MealSelector({
     });
 
     if (!canAdd) {
-      alert(
-        "You can only select one meal for each main meal type (Breakfast, Lunch, Dinner)."
+      toast.error(
+        "You can only select one meal for each main meal type (Breakfast, Lunch, Dinner).",
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
       );
       return;
     }
 
     // Add the selected meals
     selectedMealIds.forEach((id) => {
-      const meal = meals.find((m) => m._id === id);
+      const meal = loadedMeals.find((m) => m._id === id);
       if (meal && !selectedMeals.some((m) => m._id === id)) {
         onAddMeal(meal);
       }
@@ -682,7 +711,7 @@ export default function MealSelector({
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
-                  onClick={() => onRemoveMeal(meal._id)}
+                  onClick={() => onRemoveMeal(meal)}
                 >
                   <X size={14} />
                 </Button>
