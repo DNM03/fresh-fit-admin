@@ -68,7 +68,7 @@ function DashboardPage() {
     <div className="container mx-auto p-4 space-y-6">
       {/* Dashboard Header */}
       <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Fitness Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
           Track your fitness community's progress and engagement
         </p>
