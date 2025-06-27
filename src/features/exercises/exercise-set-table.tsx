@@ -73,10 +73,10 @@ function ExerciseSetTable({
       // Add exercises count filter if it exists
       if (exercisesFilter) {
         if (exercisesFilter.min !== undefined) {
-          requestParams.min_exercises = exercisesFilter.min;
+          requestParams.min_calories = exercisesFilter.min;
         }
         if (exercisesFilter.max !== undefined) {
-          requestParams.max_exercises = exercisesFilter.max;
+          requestParams.max_calories = exercisesFilter.max;
         }
       }
 
@@ -179,7 +179,7 @@ function ExerciseSetTable({
       },
       {
         accessorKey: "type",
-        header: "Type",
+        header: "Level",
         enableSorting: false,
       },
     ],
@@ -194,11 +194,11 @@ function ExerciseSetTable({
       exercisesFilter.min !== undefined &&
       exercisesFilter.max !== undefined
     ) {
-      return `${exercisesFilter.min} - ${exercisesFilter.max} exercises`;
+      return `${exercisesFilter.min} - ${exercisesFilter.max} calories`;
     } else if (exercisesFilter.min !== undefined) {
-      return `≥ ${exercisesFilter.min} exercises`;
+      return `≥ ${exercisesFilter.min} calories`;
     } else if (exercisesFilter.max !== undefined) {
-      return `≤ ${exercisesFilter.max} exercises`;
+      return `≤ ${exercisesFilter.max} calories`;
     }
 
     return null;
@@ -227,7 +227,7 @@ function ExerciseSetTable({
             <div className="space-y-4 p-1">
               {/* Level Filter */}
               <div className="space-y-2">
-                <h4 className="font-medium leading-none">Exercise Level</h4>
+                <h4 className="font-medium leading-none">Exercise set Level</h4>
                 <Select
                   value={levelFilter || "All"}
                   onValueChange={handleLevelFilterChange}
@@ -246,12 +246,10 @@ function ExerciseSetTable({
 
               {/* Exercise Count Filter */}
               <div className="space-y-2 pt-2 border-t">
-                <h4 className="font-medium leading-none">
-                  Exercise Count Range
-                </h4>
+                <h4 className="font-medium leading-none">Calorie Range</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="min-exercises">Min Exercises</Label>
+                    <Label htmlFor="min-exercises">Min Calories</Label>
                     <Input
                       id="min-exercises"
                       placeholder="e.g., 1"
@@ -262,7 +260,7 @@ function ExerciseSetTable({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="max-exercises">Max Exercises</Label>
+                    <Label htmlFor="max-exercises">Max Calories</Label>
                     <Input
                       id="max-exercises"
                       placeholder="e.g., 10"
@@ -275,7 +273,7 @@ function ExerciseSetTable({
                 </div>
                 <div className="flex justify-end pt-2">
                   <Button size="sm" onClick={handleApplyExercisesFilter}>
-                    Apply Count Filter
+                    Apply Filter
                   </Button>
                 </div>
               </div>
