@@ -192,10 +192,16 @@ function ChallengeDetail() {
         status: newStatus,
       }));
 
-      toast(
+      toast.success(
         `The challenge has been ${
           newStatus === "Active" ? "activated" : "deactivated"
-        } successfully.`
+        } successfully.`,
+        {
+          style: {
+            background: "#3ac76b",
+            color: "#fff",
+          },
+        }
       );
 
       setIsStatusDialogOpen(false);
@@ -206,10 +212,16 @@ function ChallengeDetail() {
         } challenge:`,
         err
       );
-      toast(
+      toast.error(
         `Failed to ${
           newStatus === "Active" ? "activate" : "deactivate"
-        } challenge. Please try again.`
+        } challenge. Please try again.`,
+        {
+          style: {
+            background: "#cc3131",
+            color: "#fff",
+          },
+        }
       );
     } finally {
       setIsStatusUpdating(false);
