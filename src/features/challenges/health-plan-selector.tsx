@@ -406,7 +406,7 @@ export default function HealthPlanSelector({
                       </div>
                       <div className="flex items-center text-sm font-medium">
                         <FlameIcon className="h-3.5 w-3.5 mr-1 text-amber-500" />
-                        {selectedPlans[0].estimated_calories_burned}
+                        {selectedPlans[0].estimated_calories_burned.toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -418,7 +418,7 @@ export default function HealthPlanSelector({
                       </div>
                       <div className="flex items-center text-sm font-medium">
                         <FlameIcon className="h-3.5 w-3.5 mr-1 text-green-500" />
-                        {selectedPlans[0].estimated_calories_intake}
+                        {selectedPlans[0].estimated_calories_intake.toFixed(2)}
                       </div>
                     </div>
                   </div>
