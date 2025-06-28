@@ -109,7 +109,12 @@ function MealTab() {
   // Add function to handle adding an ingredient
   const handleAddIngredient = async () => {
     if (!ingredientName.trim()) {
-      toast.error("Please enter an ingredient name");
+      toast.error("Please enter an ingredient name", {
+        style: {
+          background: "#cc3131",
+          color: "#fff",
+        },
+      });
       return;
     }
 
@@ -123,7 +128,12 @@ function MealTab() {
           "https://sahabatlautlestari.com/wp-content/uploads/2023/05/Tuna-Species-Overview-2048x1311.png",
       });
 
-      toast.success("Ingredient added successfully");
+      toast.success("Ingredient added successfully", {
+        style: {
+          background: "#3ac76b",
+          color: "#fff",
+        },
+      });
       setIngredientName("");
       setIsAddIngredientOpen(false);
 
